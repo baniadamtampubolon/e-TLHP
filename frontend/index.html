@@ -1,0 +1,570 @@
+1
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal e-TLHP Kemenko Pangan</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Roboto -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- External Modular Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        md: {
+                            background: '#FFFBFE',
+                            'on-background': '#1C1B1F',
+                            primary: '#6750A4',
+                            'on-primary': '#FFFFFF',
+                            secondary: '#625B71',
+                            'secondary-container': '#E8DEF8',
+                            'on-secondary-container': '#1D192B',
+                            tertiary: '#7D5260',
+                            'on-tertiary': '#FFFFFF',
+                            surface: '#FFF8FD',
+                            'surface-container': '#F3EDF7',
+                            'surface-container-low': '#E7E0EC',
+                            outline: '#79747E',
+                            'on-surface-variant': '#49454F',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Roboto', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        '3xl': '24px',
+                        '4xl': '32px',
+                        '5xl': '48px',
+                    },
+                    transitionTimingFunction: {
+                        'md-standard': 'cubic-bezier(0.2, 0, 0, 1)'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="min-h-screen flex flex-col relative overflow-x-hidden">
+
+    <!-- Atmospheric background blur shapes -->
+    <div class="fixed top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
+        <div class="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-md-primary/10 blur-[120px]">
+        </div>
+        <div class="absolute bottom-[-10%] left-[-15%] w-[700px] h-[700px] rounded-full bg-md-tertiary/10 blur-[140px]">
+        </div>
+    </div>
+
+    <!-- Header / Top Navbar -->
+    <header
+        class="sticky top-0 z-50 bg-md-background/80 backdrop-blur-md border-b border-md-outline/10 h-16 flex items-center justify-between px-6">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center overflow-hidden shadow-sm">
+                <img src="Kemenkopangan-logo.png" alt="Logo Kemenko Pangan" class="w-8 h-8 object-contain">
+            </div>
+            <div>
+                <h1 class="text-lg font-bold text-md-on-background leading-tight">e-TLHP</h1>
+                <p class="text-xs text-md-on-surface-variant font-medium">Kemenko Bidang Pangan</p>
+            </div>
+        </div>
+
+        <!-- Header Profile Section (Shown when logged in) -->
+        <div id="headerProfileSection" class="hidden flex items-center gap-4">
+            <!-- Mode Peran Selector (Only visible for Auditor for simulation/review convenience) -->
+            <div id="roleSwitcherContainer" class="hidden flex items-center gap-2">
+                <label class="text-xs font-bold text-md-on-surface-variant hidden md:inline">Mode Peran:</label>
+                <select id="roleSelector" onchange="switchRole()"
+                    class="h-9 px-3 text-xs font-semibold rounded-full bg-md-secondary-container text-md-on-secondary-container border border-md-outline/10 focus:outline-none cursor-pointer">
+                    <option value="AUDITOR">Auditor (Itjen)</option>
+                    <option value="SATKER">Satker (Preview)</option>
+                </select>
+            </div>
+
+            <span id="roleBadge"
+                class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-md-primary/10 text-md-primary">
+                <!-- Dynamic Content -->
+            </span>
+
+            <!-- Logout Button -->
+            <button onclick="handleLogout()"
+                class="h-9 px-4 rounded-full bg-md-tertiary/10 text-md-tertiary text-xs font-bold hover:bg-md-tertiary/20 active:scale-95 transition-all flex items-center gap-1.5">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Keluar
+            </button>
+        </div>
+    </header>
+
+    <!-- 1. LOGIN CARD SECTION (Shown when logged out) -->
+    <section id="loginCardSection" class="flex-1 flex items-center justify-center p-4 z-10">
+        <div
+            class="w-full max-w-md bg-md-surface-container rounded-4xl p-8 border border-md-outline/10 shadow-lg flex flex-col gap-6">
+            <div class="text-center">
+                <div
+                    class="w-16 h-16 rounded-full bg-white flex items-center justify-center overflow-hidden shadow-sm mx-auto mb-3 p-1">
+                    <img src="Kemenkopangan-logo.png" alt="Logo Kemenko Pangan" class="w-12 h-12 object-contain">
+                </div>
+                <h2 class="text-xl font-bold text-md-on-background">Sign In e-TLHP</h2>
+                <p class="text-xs text-md-on-surface-variant mt-1.5">Akses Sistem Pemantauan Tindak Lanjut Hasil
+                    Pemeriksaan</p>
+            </div>
+
+            <!-- Login Form -->
+            <form onsubmit="handleLoginSubmit(event)" class="flex flex-col gap-4">
+                <div class="flex flex-col">
+                    <label class="text-xs font-bold text-md-on-surface-variant mb-1 ml-1">Username</label>
+                    <div class="relative">
+                        <input type="text" name="username" required placeholder="Masukkan username..."
+                            class="w-full h-11 pl-10 pr-4 rounded-xl bg-md-surface-container-low text-sm border-b-2 border-md-outline focus:outline-none focus:border-md-primary text-md-on-background">
+                        <i class="fa-solid fa-user absolute left-3.5 top-3.5 text-md-on-surface-variant text-sm"></i>
+                    </div>
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="text-xs font-bold text-md-on-surface-variant mb-1 ml-1">Password</label>
+                    <div class="relative">
+                        <input type="password" name="password" required placeholder="Masukkan password..."
+                            class="w-full h-11 pl-10 pr-4 rounded-xl bg-md-surface-container-low text-sm border-b-2 border-md-outline focus:outline-none focus:border-md-primary text-md-on-background">
+                        <i class="fa-solid fa-key absolute left-3.5 top-3.5 text-md-on-surface-variant text-sm"></i>
+                    </div>
+                </div>
+
+                <!-- Error Message Alert -->
+                <div id="loginErrorMessage"
+                    class="hidden text-xs text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-200 font-medium text-center">
+                    Username atau password salah.
+                </div>
+
+                <button type="submit"
+                    class="mt-2 w-full h-11 rounded-full bg-md-primary text-white text-sm font-bold shadow-md hover:shadow-lg hover:bg-md-primary/95 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    Masuk ke Portal
+                </button>
+            </form>
+
+            <div
+                class="text-[10px] text-md-on-surface-variant/60 text-center border-t border-md-outline/10 pt-4 leading-relaxed">
+                <p class="font-semibold text-md-primary">Daftar Akun Pengujian (Username & Password):</p>
+                <p class="mt-1">Auditor: <span class="font-bold">itjen</span> / <span class="font-bold">admin123</span>
+                </p>
+                <p>Satker SDMO: <span class="font-bold">sdmo</span> / <span class="font-bold">sdmo123</span> | Satker
+                    UKK: <span class="font-bold">ukk</span> / <span class="font-bold">ukk123</span></p>
+                <p>Satker HKS: <span class="font-bold">hks</span> / <span class="font-bold">hks123</span> | Satker
+                    Sesdep: <span class="font-bold">sesdep</span> / <span class="font-bold">sesdep123</span></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. DASHBOARD MAIN SECTION (Shown when logged in) -->
+    <main id="dashboardMainSection"
+        class="hidden flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 z-10 flex flex-col gap-6">
+
+        <!-- Top Welcome & Search Filter Card -->
+        <section class="bg-md-surface-container rounded-4xl p-6 shadow-sm border border-md-outline/5">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-md-on-background">Dashboard Monitoring Tindak Lanjut</h2>
+                    <p class="text-sm text-md-on-surface-variant mt-1">Pemantauan hasil pemeriksaan BPK-RI & Inspektorat
+                        tahun 2025</p>
+                </div>
+
+                <!-- Reset Filter Button -->
+                <button onclick="resetFilters()"
+                    class="self-start md:self-auto px-5 py-2.5 rounded-full bg-md-secondary-container text-md-on-secondary-container text-xs font-semibold shadow-sm hover:shadow-md active:scale-95 transition-all duration-300 flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-rotate-left"></i>
+                    Reset Filter
+                </button>
+            </div>
+
+            <!-- Filters Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Search -->
+                <div class="relative flex flex-col">
+                    <label class="text-xs font-medium text-md-on-surface-variant mb-1.5 ml-1">Cari Kriteria /
+                        Temuan</label>
+                    <div class="relative">
+                        <input type="text" id="searchInput" oninput="applyFilters()"
+                            placeholder="Masukkan kata kunci..."
+                            class="w-full h-11 pl-10 pr-4 rounded-full bg-md-surface-container-low text-sm border-b-2 border-md-outline focus:outline-none focus:border-md-primary text-md-on-background">
+                        <i
+                            class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-md-on-surface-variant text-sm"></i>
+                    </div>
+                </div>
+
+                <!-- LHP Source Filter -->
+                <div class="flex flex-col">
+                    <label class="text-xs font-medium text-md-on-surface-variant mb-1.5 ml-1">Sumber Audit</label>
+                    <select id="sourceFilter" onchange="applyFilters()"
+                        class="w-full h-11 px-4 rounded-full bg-md-surface-container-low text-sm border-b-2 border-md-outline focus:outline-none focus:border-md-primary text-md-on-background cursor-pointer">
+                        <option value="ALL">Semua Sumber</option>
+                        <option value="BPK-RI">BPK-RI</option>
+                        <option value="Inspektorat">Inspektorat</option>
+                    </select>
+                </div>
+
+                <!-- PIC Filter -->
+                <div class="flex flex-col">
+                    <label class="text-xs font-medium text-md-on-surface-variant mb-1.5 ml-1">Unit PIC Penanggung
+                        Jawab</label>
+                    <select id="picFilter" onchange="applyFilters()"
+                        class="w-full h-11 px-4 rounded-full bg-md-surface-container-low text-sm border-b-2 border-md-outline focus:outline-none focus:border-md-primary text-md-on-background cursor-pointer">
+                        <option value="ALL">Semua PIC</option>
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="flex flex-col">
+                    <label class="text-xs font-medium text-md-on-surface-variant mb-1.5 ml-1">Status Tindak
+                        Lanjut</label>
+                    <select id="statusFilter" onchange="applyFilters()"
+                        class="w-full h-11 px-4 rounded-full bg-md-surface-container-low text-sm border-b-2 border-md-outline focus:outline-none focus:border-md-primary text-md-on-background cursor-pointer">
+                        <option value="ALL">Semua Status</option>
+                        <option value="PENDING">PENDING (Belum TL)</option>
+                        <option value="PROSES">PROSES (Dalam Proses)</option>
+                        <option value="TUNTAS">TUNTAS (Selesai)</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- KPI Cards Grid -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Card 1: Total Temuan -->
+            <div
+                class="bg-md-surface-container rounded-3xl p-5 shadow-sm border border-md-outline/5 flex flex-col justify-between group hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all duration-300">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold text-md-on-surface-variant uppercase tracking-wider">Total Temuan
+                        </p>
+                        <h3 id="kpiTotalTemuan" class="text-3xl font-bold text-md-on-background mt-1">0</h3>
+                    </div>
+                    <div
+                        class="p-3 bg-md-secondary-container text-md-on-secondary-container rounded-2xl group-hover:bg-md-primary group-hover:text-white transition-colors duration-300">
+                        <i class="fa-solid fa-magnifying-glass text-lg"></i>
+                    </div>
+                </div>
+                <div class="mt-4 text-xs text-md-on-surface-variant flex items-center gap-1.5">
+                    <span id="kpiSubTemuanCount" class="font-bold text-md-primary">0 Sub-temuan</span>
+                    <span>terdeteksi secara rinci</span>
+                </div>
+            </div>
+
+            <!-- Card 2: Total Rekomendasi -->
+            <div
+                class="bg-md-surface-container rounded-3xl p-5 shadow-sm border border-md-outline/5 flex flex-col justify-between group hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all duration-300">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold text-md-on-surface-variant uppercase tracking-wider">Rekomendasi</p>
+                        <h3 id="kpiTotalRekomendasi" class="text-3xl font-bold text-md-on-background mt-1">0</h3>
+                    </div>
+                    <div
+                        class="p-3 bg-md-secondary-container text-md-on-secondary-container rounded-2xl group-hover:bg-md-primary group-hover:text-white transition-colors duration-300">
+                        <i class="fa-solid fa-clipboard-list text-lg"></i>
+                    </div>
+                </div>
+                <div class="mt-4 text-xs text-md-on-surface-variant flex items-center gap-1.5">
+                    <span id="kpiRencanaAksiCount" class="font-bold text-md-primary">0 Rencana Aksi</span>
+                    <span>ditetapkan</span>
+                </div>
+            </div>
+
+            <!-- Card 3: % Penyelesaian -->
+            <div
+                class="bg-md-surface-container rounded-3xl p-5 shadow-sm border border-md-outline/5 flex flex-col justify-between group hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all duration-300">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold text-md-on-surface-variant uppercase tracking-wider">% Penyelesaian
+                        </p>
+                        <h3 id="kpiPercentPenyelesaian" class="text-3xl font-bold text-md-on-background mt-1">0.0%</h3>
+                    </div>
+                    <div
+                        class="p-3 bg-md-secondary-container text-md-on-secondary-container rounded-2xl group-hover:bg-md-primary group-hover:text-white transition-colors duration-300">
+                        <i class="fa-solid fa-circle-check text-lg"></i>
+                    </div>
+                </div>
+                <div class="mt-4 w-full">
+                    <div class="w-full bg-md-surface-container-low rounded-full h-2 overflow-hidden">
+                        <div id="kpiProgressBar" class="bg-md-primary h-full rounded-full transition-all duration-500"
+                            style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] text-md-on-surface-variant mt-1.5">
+                        <span id="kpiFinishedRecs">0 Selesai</span>
+                        <span>Target: 100%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Pemulihan Finansial -->
+            <div
+                class="bg-md-surface-container rounded-3xl p-5 shadow-sm border border-md-outline/5 flex flex-col justify-between group hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all duration-300">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold text-md-on-surface-variant uppercase tracking-wider">Pemulihan
+                            Finansial</p>
+                        <h3 id="kpiRecoveryRealisasi" class="text-lg font-bold text-md-on-background mt-1">Rp 0</h3>
+                        <p id="kpiRecoveryTarget" class="text-[10px] text-md-on-surface-variant font-medium">dari Target
+                            Rp 0</p>
+                    </div>
+                    <div
+                        class="p-3 bg-md-secondary-container text-md-on-secondary-container rounded-2xl group-hover:bg-md-primary group-hover:text-white transition-colors duration-300">
+                        <i class="fa-solid fa-money-bill-transfer text-lg"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="w-full bg-md-surface-container-low rounded-full h-2 overflow-hidden">
+                        <div id="kpiRecoveryProgressBar"
+                            class="bg-md-tertiary h-full rounded-full transition-all duration-500" style="width: 0%">
+                        </div>
+                    </div>
+                    <div class="flex justify-between text-[9px] text-md-on-surface-variant mt-1">
+                        <span id="kpiRecoveryPercent" class="font-semibold text-md-tertiary">0% Setor</span>
+                        <span id="kpiRecoverySelisih" class="font-semibold text-red-600">Sisa: Rp 0</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Row -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Status Distribution Donut Chart -->
+            <div class="bg-md-surface-container rounded-3xl p-6 shadow-sm border border-md-outline/5 flex flex-col">
+                <h3
+                    class="text-sm font-bold text-md-on-background uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-pie text-md-primary"></i>
+                    Status Penyelesaian Rekomendasi
+                </h3>
+                <div class="flex-1 min-h-[260px] flex items-center justify-center relative">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+
+            <!-- PIC Contribution Bar Chart -->
+            <div class="bg-md-surface-container rounded-3xl p-6 shadow-sm border border-md-outline/5 flex flex-col">
+                <h3
+                    class="text-sm font-bold text-md-on-background uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-column text-md-primary"></i>
+                    Sebaran Rekomendasi per Unit PIC
+                </h3>
+                <div class="flex-1 min-h-[260px] flex items-center justify-center relative">
+                    <canvas id="picChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Data Panel (List and Detail View) - duplicate cleanup -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-12">
+            <!-- Left Side: List of LHA (lg:col-span-5) -->
+            <div
+                class="lg:col-span-5 bg-md-surface-container rounded-3xl shadow-sm border border-md-outline/5 flex flex-col h-[700px]">
+                <div
+                    class="p-5 border-b border-md-outline/10 flex items-center justify-between bg-md-surface-container-low/30 rounded-t-3xl">
+                    <h3 class="text-sm font-bold text-md-on-background flex items-center gap-2">
+                        <i class="fa-solid fa-folder-open text-md-primary"></i>
+                        Daftar Dokumen LHA (<span id="filteredLhaCount">0</span>)
+                    </h3>
+                    <div class="flex gap-1">
+                        <button id="addLhaBtn" onclick="openLhaModal()"
+                            class="hidden px-2.5 py-1.5 rounded-full bg-md-primary text-white text-[10px] font-bold hover:shadow-md active:scale-95 transition-all flex items-center gap-1">
+                            <i class="fa-solid fa-plus text-[9px]"></i> LHA
+                        </button>
+                    </div>
+                </div>
+                <div id="lhaListContainer" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+                    <!-- Dynamic List of LHA -->
+                </div>
+            </div>
+
+            <!-- Right Side: Detail Viewer (lg:col-span-7) -->
+            <div id="detailPanel"
+                class="lg:col-span-7 bg-md-surface-container rounded-3xl shadow-sm border border-md-outline/5 flex flex-col h-[700px] overflow-hidden">
+                <!-- Fallback Initial State -->
+                <div id="detailFallbackState" class="flex-1 flex flex-col items-center justify-center text-center p-8">
+                    <div
+                        class="w-16 h-16 rounded-full bg-md-surface-container-low flex items-center justify-center text-md-primary mb-4 animate-bounce">
+                        <i class="fa-solid fa-hand-pointer text-2xl"></i>
+                    </div>
+                    <h4 class="text-base font-bold text-md-on-background">Pilih Dokumen LHA dari Daftar</h4>
+                    <p class="text-xs text-md-on-surface-variant mt-2 max-w-sm">Klik tombol "Detail" pada salah satu LHA di panel sebelah kiri untuk menampilkan seluruh temuan, rekomendasi, sebab, dan log progres tindak lanjutnya.</p>
+                </div>
+
+                <!-- Real Detail Container (Hidden by default) -->
+                <div id="detailContentState" class="flex-1 flex flex-col h-full hidden">
+                    <!-- Dynamic details will be loaded here -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ========================================== -->
+    <!-- CRUD DIALOG MODALS                         -->
+    <!-- ========================================== -->
+
+    <!-- 1. LHA Modal -->
+    <div id="lhaModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden px-4">
+        <div
+            class="bg-md-surface-container rounded-4xl max-w-md w-full p-6 border border-md-outline/10 shadow-xl flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+            <h3 id="lhaModalTitle" class="text-base font-bold text-md-on-background">Tambah LHA Baru</h3>
+            <form id="lhaForm" onsubmit="handleLhaFormSubmit(event)" class="flex flex-col gap-3.5">
+                <input type="hidden" id="lhaFormIsEdit" value="false">
+                <input type="hidden" id="lhaFormOldKode" value="">
+
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Kode LHP (Unique)</label>
+                    <input type="text" id="lhaFormKode" required placeholder="Contoh: LHP-2025-001..."
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Sumber Audit</label>
+                    <select id="lhaFormSumber" required
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                        <option value="BPK-RI">BPK-RI</option>
+                        <option value="Inspektorat">Inspektorat</option>
+                    </select>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Tahun</label>
+                    <input type="number" id="lhaFormTahun" required min="2000" max="2100"
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Status Laporan</label>
+                    <input type="text" id="lhaFormStatus" required placeholder="Contoh: Dalam Pemantauan..."
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                </div>
+
+                <div class="flex gap-2 justify-end mt-2">
+                    <button type="button" onclick="closeLhaModal()"
+                        class="px-4 py-2 rounded-full text-[10px] font-bold bg-md-secondary-container text-md-on-secondary-container hover:shadow active:scale-95 transition-all">Batal</button>
+                    <button type="submit"
+                        class="px-4 py-2 rounded-full text-[10px] font-bold bg-md-primary text-white hover:shadow active:scale-95 transition-all">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. Temuan Modal -->
+    <div id="temuanModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden px-4">
+        <div
+            class="bg-md-surface-container rounded-4xl max-w-lg w-full p-6 border border-md-outline/10 shadow-xl flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+            <h3 id="temuanModalTitle" class="text-base font-bold text-md-on-background">Tambah Temuan Baru</h3>
+            <form id="temuanForm" onsubmit="handleTemuanFormSubmit(event)" class="flex flex-col gap-3.5">
+                <input type="hidden" id="temuanFormIsEdit" value="false">
+                <input type="hidden" id="temuanFormOldKode" value="">
+                <div class="flex flex-col mb-1" id="temuanFormLhaContainer">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Dokumen LHP Induk</label>
+                    <select id="temuanFormLha" required
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                        <!-- Options dynamically loaded -->
+                    </select>
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Kode Temuan
+                        (Unique)</label>
+                    <input type="text" id="temuanFormKode" required placeholder="Contoh: T-INSP-25001..."
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Kriteria Temuan</label>
+                    <textarea id="temuanFormKriteria" required rows="3"
+                        placeholder="Uraikan kriteria atau deskripsi temuan..."
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary"></textarea>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Penyebab (Sebab) -
+                        Opsional</label>
+                    <textarea id="temuanFormSebab" rows="2" placeholder="Uraikan penyebab temuan..."
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary"></textarea>
+                </div>
+
+                <div class="flex gap-2 justify-end mt-2">
+                    <button type="button" onclick="closeTemuanModal()"
+                        class="px-4 py-2 rounded-full text-[10px] font-bold bg-md-secondary-container text-md-on-secondary-container hover:shadow active:scale-95 transition-all">Batal</button>
+                    <button type="submit"
+                        class="px-4 py-2 rounded-full text-[10px] font-bold bg-md-primary text-white hover:shadow active:scale-95 transition-all">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. Rekomendasi Modal -->
+    <div id="rekomendasiModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden px-4">
+        <div
+            class="bg-md-surface-container rounded-4xl max-w-lg w-full p-6 border border-md-outline/10 shadow-xl flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+            <h3 id="rekomendasiModalTitle" class="text-base font-bold text-md-on-background">Tambah Rekomendasi Baru
+            </h3>
+            <form id="rekomendasiForm" onsubmit="handleRekomendasiFormSubmit(event)" class="flex flex-col gap-3.5">
+                <input type="hidden" id="recFormIsEdit" value="false">
+                <input type="hidden" id="recFormOldKode" value="">
+                <input type="hidden" id="recFormTemuan" value="">
+
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Kode Rekomendasi
+                        (Unique)</label>
+                    <input type="text" id="recFormKode" required placeholder="Contoh: R-INSP-25001-A..."
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Rekomendasi
+                        BPK/Inspektorat</label>
+                    <textarea id="recFormText" required rows="3" placeholder="Teks rekomendasi..."
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary"></textarea>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">PIC Unit Penanggung
+                        Jawab</label>
+                    <select id="recFormPic" required
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                        <option value="Biro SDMO">Biro SDMO</option>
+                        <option value="Biro UKK">Biro UKK</option>
+                        <option value="Biro MKDI">Biro MKDI</option>
+                        <option value="Biro HKS">Biro HKS</option>
+                    </select>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Rencana Aksi Unit Kerja -
+                        Opsional</label>
+                    <textarea id="recFormRencanaAksi" rows="2" placeholder="Uraikan rencana aksi..."
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary"></textarea>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Jadwal Pelaksanaan -
+                        Opsional</label>
+                    <input type="text" id="recFormJadwal" placeholder="Contoh: Triwulan I 2025..."
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Target Nominal Penyetoran
+                        (Untuk Rekomendasi Finansial) - Rp</label>
+                    <input type="number" id="recFormNilaiTemuan" value="0" min="0" step="any"
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                </div>
+
+                <div class="flex gap-2 justify-end mt-2">
+                    <button type="button" onclick="closeRekomendasiModal()"
+                        class="px-4 py-2 rounded-full text-[10px] font-bold bg-md-secondary-container text-md-on-secondary-container hover:shadow active:scale-95 transition-all">Batal</button>
+                    <button type="submit"
+                        class="px-4 py-2 rounded-full text-[10px] font-bold bg-md-primary text-white hover:shadow active:scale-95 transition-all">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- External Modular JavaScript Application Code -->
+    <script src="js/api.js" defer></script>
+    <script src="js/charts.js" defer></script>
+    <script src="js/app.js" defer></script>
+</body>
+
+</html>

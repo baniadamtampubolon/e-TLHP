@@ -1,0 +1,31 @@
+# Python Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+
+# Python Cache & Compiled Files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# SQLite Database
+*.db
+database/*.db
+# Uploaded Files (Tindak Lanjut Bukti PDFs)
+**/database/uploads/*
+!**/database/uploads/.gitkeep
+# macOS System Files
+.DS_Store
+Thumbs.db
+
+# IDE & Editor Settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.ipynb_checkpoints/

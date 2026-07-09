@@ -1,0 +1,44 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #FFFBFE;
+    color: #1C1B1F;
+}
+
+/* Scrollbar customization matching Material You */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #F3EDF7;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #79747E;
+    border-radius: 9999px;
+    border: 2px solid #F3EDF7;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #49454F;
+}
+
+/* Modal Animation Utilities */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes zoomIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.animate-in {
+    animation: fadeIn 0.2s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+.zoom-in-95 {
+    animation: zoomIn 0.2s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
