@@ -820,39 +820,93 @@ function showLhaDetail(kodeLha) {
                 };
                 const sc = statusConfig[status] || statusConfig["PENDING"];
 
+                // Find sub-findings under this parent finding
+                const children = temuanList.filter(c => c["Parent Temuan"] === t["Kode Temuan"]);
+                let childrenHTML = "";
+                if (children.length > 0) {
+                    childrenHTML = `
+                        <div class="flex flex-col gap-3 ml-6 border-l-2 border-dashed border-md-primary/25 pl-4 mt-2">
+                            ${children.map(child => {
+                                const childStatus = computeTemuanStatus(child["Kode Temuan"]);
+                                const childRecs = getRecommendationsForFinding(child["Kode Temuan"]);
+                                const childDateStr = formatTemuanDate(child["Tanggal Input"]);
+                                const childSc = statusConfig[childStatus] || statusConfig["PENDING"];
+
+                                return `
+                                    <div class="bg-md-surface-container-low/50 border border-md-outline/10 p-3.5 rounded-2xl flex flex-col gap-2.5">
+                                        <div class="flex items-center justify-between gap-2 border-b border-md-outline/5 pb-2">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="text-[10px] font-bold text-md-primary bg-md-primary/10 px-2.5 py-0.5 rounded-full">
+                                                    ${child["Kode Temuan"]}
+                                                </span>
+                                                <span class="text-[9px] font-medium text-md-on-surface-variant bg-md-surface-container-low px-2 py-0.5 rounded-full">
+                                                    Sub-temuan
+                                                </span>
+                                            </div>
+                                            <span class="text-[9px] font-bold border px-2 py-0.2 rounded-full ${childSc.bg} flex items-center gap-0.5">
+                                                <i class="fa-solid ${childSc.icon} text-[7px]"></i> ${childStatus}
+                                            </span>
+                                        </div>
+                                        <p class="text-xs text-md-on-surface-variant line-clamp-2 leading-relaxed">
+                                            ${child.Kriteria || 'Tidak ada kriteria'}
+                                        </p>
+                                        <div class="flex items-center justify-between gap-2 border-t border-md-outline/5 pt-2 mt-0.5">
+                                            <span class="text-[9px] text-md-on-surface-variant font-medium">
+                                                <i class="fa-solid fa-clipboard-list text-[8px] mr-0.5"></i> ${childRecs.length} Rekomendasi
+                                            </span>
+                                            <div class="flex gap-1.5 items-center">
+                                                ${currentRole === "AUDITOR" ? `
+                                                <button onclick="openTemuanModal('${kodeLha}', true, '${child["Kode Temuan"]}')" class="p-0.5 rounded-full text-md-primary hover:bg-md-primary/10 active:scale-90 transition-all text-[10px]" title="Edit Temuan"><i class="fa-solid fa-pen"></i></button>
+                                                <button onclick="triggerDeleteTemuan('${child["Kode Temuan"]}')" class="p-0.5 rounded-full text-red-600 hover:bg-red-50 active:scale-90 transition-all text-[10px]" title="Hapus Temuan"><i class="fa-solid fa-trash"></i></button>
+                                                ` : ''}
+                                                <button onclick="selectTemuanDetail('${child["Kode Temuan"]}')" class="px-2.5 py-1 rounded-full bg-md-primary text-white text-[9px] font-bold hover:shadow active:scale-95 transition-all flex items-center gap-1 cursor-pointer">
+                                                    <i class="fa-solid fa-eye text-[8px]"></i> Detail
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                }
+
                 return `
-                    <div class="bg-white border border-md-outline/10 p-5 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col gap-3">
-                        <div class="flex items-center justify-between gap-2 border-b border-md-outline/5 pb-2.5">
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <span class="text-xs font-bold text-md-primary bg-md-primary/10 px-3 py-1 rounded-full flex items-center gap-1.5">
-                                    <i class="fa-solid fa-folder-open text-[10px]"></i>
-                                    ${t["Kode Temuan"]}
-                                </span>
-                                <span class="text-[10px] font-medium text-md-on-surface-variant bg-md-surface-container-low px-2 py-0.5 rounded-full">
-                                    Tanggal: ${dateStr}
+                    <div class="flex flex-col gap-1">
+                        <div class="bg-white border border-md-outline/10 p-5 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col gap-3">
+                            <div class="flex items-center justify-between gap-2 border-b border-md-outline/5 pb-2.5">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="text-xs font-bold text-md-primary bg-md-primary/10 px-3 py-1 rounded-full flex items-center gap-1.5">
+                                        <i class="fa-solid fa-folder-open text-[10px]"></i>
+                                        ${t["Kode Temuan"]}
+                                    </span>
+                                    <span class="text-[10px] font-medium text-md-on-surface-variant bg-md-surface-container-low px-2 py-0.5 rounded-full">
+                                        Tanggal: ${dateStr}
+                                    </span>
+                                </div>
+                                <span class="text-[10px] font-bold border px-2.5 py-0.5 rounded-full ${sc.bg} flex items-center gap-1">
+                                    <i class="fa-solid ${sc.icon} text-[8px]"></i> ${status}
                                 </span>
                             </div>
-                            <span class="text-[10px] font-bold border px-2.5 py-0.5 rounded-full ${sc.bg} flex items-center gap-1">
-                                <i class="fa-solid ${sc.icon} text-[8px]"></i> ${status}
-                            </span>
-                        </div>
-                        <p class="text-xs font-medium text-md-on-background line-clamp-2 leading-relaxed">
-                            ${t.Kriteria || 'Tidak ada kriteria'}
-                        </p>
-                        <div class="flex items-center justify-between gap-2 border-t border-md-outline/5 pt-2.5 mt-1">
-                            <span class="text-[10px] text-md-on-surface-variant font-semibold">
-                                <i class="fa-solid fa-clipboard-list text-[9px] mr-0.5"></i> ${recs.length} Rekomendasi
-                            </span>
-                            <div class="flex gap-1.5 items-center">
-                                ${currentRole === "AUDITOR" ? `
-                                <button onclick="openTemuanModal('${kodeLha}', true, '${t["Kode Temuan"]}')" class="p-1 rounded-full text-md-primary hover:bg-md-primary/10 active:scale-90 transition-all text-xs" title="Edit Temuan"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="triggerDeleteTemuan('${t["Kode Temuan"]}')" class="p-1 rounded-full text-red-600 hover:bg-red-50 active:scale-90 transition-all text-xs" title="Hapus Temuan"><i class="fa-solid fa-trash"></i></button>
-                                ` : ''}
-                                <button onclick="selectTemuanDetail('${t["Kode Temuan"]}')" class="px-3.5 py-1.5 rounded-full bg-md-primary text-white text-[10px] font-bold hover:shadow active:scale-95 transition-all flex items-center gap-1 cursor-pointer">
-                                    <i class="fa-solid fa-eye text-[9px]"></i> Detail Temuan
-                                </button>
+                            <p class="text-xs font-medium text-md-on-background line-clamp-2 leading-relaxed">
+                                ${t.Kriteria || 'Tidak ada kriteria'}
+                            </p>
+                            <div class="flex items-center justify-between gap-2 border-t border-md-outline/5 pt-2.5 mt-1">
+                                <span class="text-[10px] text-md-on-surface-variant font-semibold">
+                                    <i class="fa-solid fa-clipboard-list text-[9px] mr-0.5"></i> ${recs.length} Rekomendasi
+                                </span>
+                                <div class="flex gap-1.5 items-center">
+                                    ${currentRole === "AUDITOR" ? `
+                                    <button onclick="openTemuanModal('${kodeLha}', true, '${t["Kode Temuan"]}')" class="p-1 rounded-full text-md-primary hover:bg-md-primary/10 active:scale-90 transition-all text-xs" title="Edit Temuan"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="triggerDeleteTemuan('${t["Kode Temuan"]}')" class="p-1 rounded-full text-red-600 hover:bg-red-50 active:scale-90 transition-all text-xs" title="Hapus Temuan"><i class="fa-solid fa-trash"></i></button>
+                                    ` : ''}
+                                    <button onclick="selectTemuanDetail('${t["Kode Temuan"]}')" class="px-3.5 py-1.5 rounded-full bg-md-primary text-white text-[10px] font-bold hover:shadow active:scale-95 transition-all flex items-center gap-1 cursor-pointer">
+                                        <i class="fa-solid fa-eye text-[9px]"></i> Detail Temuan
+                                    </button>
+                                </div>
                             </div>
                         </div>
+                        ${childrenHTML}
                     </div>
                 `;
             }).join('');
