@@ -23,14 +23,14 @@ async function loadDataFromAPI() {
                 "Tahun": lha.tahun,
                 "Status Laporan": lha.status_laporan
             });
-            
             lha.temuan.forEach(tem => {
                 tabelTemuan.push({
                     "Kode Temuan": tem.kode_temuan,
                     "Kode LHP": tem.kode_lha,
                     "Parent Temuan": tem.parent_temuan,
                     "Kriteria": tem.kriteria,
-                    "Sebab": tem.sebab
+                    "Sebab": tem.sebab,
+                    "Tanggal Input": tem.tanggal_input
                 });
                 
                 tem.rekomendasi.forEach(rec => {

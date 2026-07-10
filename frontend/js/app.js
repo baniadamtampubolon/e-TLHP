@@ -6,6 +6,7 @@ let tabelProgres = [];
 
 let filteredLHA = [];
 let selectedLhaId = null;
+let selectedTemuanId = null;
 
 let currentRole = "AUDITOR"; // Default Role: AUDITOR or SATKER
 let currentUser = null;      // Logged in user object
@@ -187,10 +188,31 @@ function computeLhaStatus(kodeLha) {
     const allTuntas = uniqueRecs.every(r => r.Status === "TUNTAS");
     if (allTuntas) return "TUNTAS";
     
-    const anyProses = uniqueRecs.some(r => r.Status === "PROSES" || r.Status === "TUNTAS");
+    return "PENDING";
+}
+
+function computeTemuanStatus(temuanId) {
+    const recs = getRecommendationsForFinding(temuanId);
+    if (recs.length === 0) return "KOSONG";
+    
+    const allTuntas = recs.every(r => r.Status === "TUNTAS");
+    if (allTuntas) return "TUNTAS";
+    
+    const anyProses = recs.some(r => r.Status === "PROSES" || r.Status === "TUNTAS");
     if (anyProses) return "PROSES";
     
     return "PENDING";
+}
+
+function formatTemuanDate(dateStr) {
+    if (!dateStr) return "-";
+    try {
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr.split('T')[0];
+        return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    } catch(e) {
+        return dateStr;
+    }
 }
 
 // Get all unique recommendations under an LHA
@@ -422,10 +444,10 @@ function createLhaListEl(lha) {
             <span class="text-[10px] font-semibold text-md-on-surface-variant">${finishedRecs.length}/${recs.length} Tuntas</span>
         </div>
         <!-- Mini Progress Bar -->
-        <div class="w-full bg-md-surface-container-low rounded-full h-1.5">
+        <div class="w-full bg-md-surface-container-low rounded-full h-1.5 mt-2">
             <div class="h-1.5 rounded-full transition-all duration-500 ${lhaStatus === 'TUNTAS' ? 'bg-green-500' : lhaStatus === 'PROSES' ? 'bg-amber-500' : 'bg-red-400'}" style="width: ${progressPercent}%"></div>
         </div>
-        <button onclick="selectLha('${kodeLha}')" class="self-end px-3.5 py-1.5 rounded-full bg-md-primary text-white text-[10px] font-bold hover:shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer">
+        <button onclick="selectLha('${kodeLha}')" class="self-end px-3.5 py-1.5 rounded-full bg-md-primary text-white text-[10px] font-bold hover:shadow-md active:scale-95 transition-all flex items-center gap-1.5 mt-2 cursor-pointer">
             <i class="fa-solid fa-eye text-[9px]"></i> Detail
         </button>
     `;
@@ -434,19 +456,30 @@ function createLhaListEl(lha) {
 
 function selectLha(kodeLha) {
     selectedLhaId = kodeLha;
+    selectedTemuanId = null; // Reset to list of findings
     renderLhaList();
     showLhaDetail(kodeLha);
 }
 
 function closeDetail() {
     selectedLhaId = null;
+    selectedTemuanId = null;
     const fallbackState = document.getElementById('detailFallbackState');
     const contentState = document.getElementById('detailContentState');
     if (fallbackState) fallbackState.classList.remove('hidden');
     if (contentState) contentState.classList.add('hidden');
 }
 
-// Render Detail Panel content — now LHA-centric
+function selectTemuanDetail(temuanId) {
+    selectedTemuanId = temuanId;
+    showLhaDetail(selectedLhaId);
+}
+
+function goBackToFindings() {
+    selectedTemuanId = null;
+    showLhaDetail(selectedLhaId);
+}
+
 function showLhaDetail(kodeLha) {
     const lha = masterLHP.find(l => l["Kode LHP"] === kodeLha);
     if (!lha) return;
@@ -772,12 +805,92 @@ function showLhaDetail(kodeLha) {
             `;
         };
 
-        temuanSectionsHTML = parentTemuan.map(t => processTemuan(t)).join('');
-        
-        // Also handle orphan children (whose parent is not in this LHA)
-        const orphans = temuanList.filter(t => t["Parent Temuan"] !== null && !temuanList.some(p => p["Kode Temuan"] === t["Parent Temuan"]));
-        if (orphans.length > 0) {
-            temuanSectionsHTML += orphans.map(t => processTemuan(t, true)).join('');
+        if (selectedTemuanId === null) {
+            // Render Findings List
+            const listItems = parentTemuan.map(t => {
+                const status = computeTemuanStatus(t["Kode Temuan"]);
+                const recs = getRecommendationsForFinding(t["Kode Temuan"]);
+                const dateStr = formatTemuanDate(t["Tanggal Input"]);
+                
+                const statusConfig = {
+                    "TUNTAS": { bg: "bg-green-100 text-green-800 border-green-200", icon: "fa-circle-check" },
+                    "PROSES": { bg: "bg-amber-100 text-amber-800 border-amber-200", icon: "fa-spinner" },
+                    "PENDING": { bg: "bg-red-100 text-red-800 border-red-200", icon: "fa-clock" },
+                    "KOSONG": { bg: "bg-gray-100 text-gray-500 border-gray-200", icon: "fa-minus" },
+                };
+                const sc = statusConfig[status] || statusConfig["PENDING"];
+
+                return `
+                    <div class="bg-white border border-md-outline/10 p-5 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col gap-3">
+                        <div class="flex items-center justify-between gap-2 border-b border-md-outline/5 pb-2.5">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-xs font-bold text-md-primary bg-md-primary/10 px-3 py-1 rounded-full flex items-center gap-1.5">
+                                    <i class="fa-solid fa-folder-open text-[10px]"></i>
+                                    ${t["Kode Temuan"]}
+                                </span>
+                                <span class="text-[10px] font-medium text-md-on-surface-variant bg-md-surface-container-low px-2 py-0.5 rounded-full">
+                                    Tanggal: ${dateStr}
+                                </span>
+                            </div>
+                            <span class="text-[10px] font-bold border px-2.5 py-0.5 rounded-full ${sc.bg} flex items-center gap-1">
+                                <i class="fa-solid ${sc.icon} text-[8px]"></i> ${status}
+                            </span>
+                        </div>
+                        <p class="text-xs font-medium text-md-on-background line-clamp-2 leading-relaxed">
+                            ${t.Kriteria || 'Tidak ada kriteria'}
+                        </p>
+                        <div class="flex items-center justify-between gap-2 border-t border-md-outline/5 pt-2.5 mt-1">
+                            <span class="text-[10px] text-md-on-surface-variant font-semibold">
+                                <i class="fa-solid fa-clipboard-list text-[9px] mr-0.5"></i> ${recs.length} Rekomendasi
+                            </span>
+                            <div class="flex gap-1.5 items-center">
+                                ${currentRole === "AUDITOR" ? `
+                                <button onclick="openTemuanModal('${kodeLha}', true, '${t["Kode Temuan"]}')" class="p-1 rounded-full text-md-primary hover:bg-md-primary/10 active:scale-90 transition-all text-xs" title="Edit Temuan"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="triggerDeleteTemuan('${t["Kode Temuan"]}')" class="p-1 rounded-full text-red-600 hover:bg-red-50 active:scale-90 transition-all text-xs" title="Hapus Temuan"><i class="fa-solid fa-trash"></i></button>
+                                ` : ''}
+                                <button onclick="selectTemuanDetail('${t["Kode Temuan"]}')" class="px-3.5 py-1.5 rounded-full bg-md-primary text-white text-[10px] font-bold hover:shadow active:scale-95 transition-all flex items-center gap-1 cursor-pointer">
+                                    <i class="fa-solid fa-eye text-[9px]"></i> Detail Temuan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            temuanSectionsHTML = `
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-bold text-md-on-background tracking-wider uppercase flex items-center gap-1.5">
+                            <i class="fa-solid fa-list-check text-md-primary"></i>
+                            Daftar Temuan (${parentTemuan.length})
+                        </h3>
+                        ${currentRole === "AUDITOR" ? `
+                        <button onclick="openTemuanModal('${kodeLha}', false)" class="px-3 py-1 rounded-full bg-md-primary text-white text-[10px] font-bold hover:shadow active:scale-90 transition-all flex items-center gap-1 cursor-pointer">
+                            <i class="fa-solid fa-plus text-[9px]"></i> Temuan
+                        </button>` : ''}
+                    </div>
+                    <div class="flex flex-col gap-4">
+                        ${listItems}
+                    </div>
+                </div>
+            `;
+        } else {
+            // Render specific Temuan Details
+            const t = temuanList.find(x => x["Kode Temuan"] === selectedTemuanId);
+            if (!t) {
+                selectedTemuanId = null;
+                showLhaDetail(kodeLha);
+                return;
+            }
+            
+            temuanSectionsHTML = `
+                <div class="flex flex-col gap-4">
+                    <button onclick="goBackToFindings()" class="self-start px-3.5 py-1.5 rounded-full bg-md-primary/10 text-md-primary text-[10px] font-bold hover:bg-md-primary/20 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-arrow-left text-[9px]"></i> Kembali ke Daftar Temuan
+                    </button>
+                    ${processTemuan(t)}
+                </div>
+            `;
         }
     }
 
@@ -817,12 +930,8 @@ function showLhaDetail(kodeLha) {
             ${batlHTML}
             ${batlHTML ? '<hr class="border-md-outline/15">' : ''}
 
-            <!-- All Temuan under this LHA -->
+            <!-- Dynamically Loaded Findings List or Finding Details -->
             <div class="flex flex-col gap-5">
-                <h3 class="text-xs font-bold text-md-on-background tracking-wider uppercase flex items-center gap-1.5">
-                    <i class="fa-solid fa-list-check text-md-primary"></i>
-                    Daftar Temuan (${temuanList.length})
-                </h3>
                 ${temuanSectionsHTML}
             </div>
         </div>
