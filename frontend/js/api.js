@@ -1,5 +1,6 @@
-const API_BASE = "http://127.0.0.1:8000/api";
-const UPLOADS_BASE = "http://127.0.0.1:8000/uploads";
+const host = window.location.hostname || "127.0.0.1";
+const API_BASE = `http://${host}:8000/api`;
+const UPLOADS_BASE = `http://${host}:8000/uploads`;
 
 // Load data from FastAPI Backend
 async function loadDataFromAPI() {

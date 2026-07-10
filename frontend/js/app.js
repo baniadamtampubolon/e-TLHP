@@ -692,19 +692,19 @@ function showLhaDetail(kodeLha) {
                 childrenHTML = childTemuan.map(child => processTemuan(child, true)).join('');
             }
 
-            const borderStyle = isChild ? "ml-4 border-l-2 border-md-primary/20 pl-4" : "";
+            const borderStyle = isChild ? "ml-6 border-l-2 border-dashed border-md-primary/25 pl-4 bg-md-surface-container-low/30" : "bg-white border border-md-outline/10 shadow-sm";
 
             return `
-                <div class="flex flex-col gap-3 ${borderStyle}">
+                <div class="flex flex-col gap-4 p-5 rounded-3xl transition-all duration-300 ${borderStyle}">
                     <!-- Temuan Header -->
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1.5 flex-wrap">
-                                <span class="text-xs font-bold text-md-on-background bg-md-surface-container-low/75 px-2.5 py-0.5 rounded-full">${t["Kode Temuan"]}</span>
-                                ${isChild ? '<span class="text-[9px] font-medium text-md-on-surface-variant bg-md-surface-container-low px-2 py-0.5 rounded-full">Sub-temuan</span>' : ''}
-                            </div>
-                            <h4 class="text-xs font-bold text-md-primary tracking-wider uppercase mb-1">Kriteria Temuan:</h4>
-                            <p class="text-xs font-medium text-md-on-background leading-relaxed whitespace-pre-line">${t.Kriteria || 'Tidak ada kriteria'}</p>
+                    <div class="flex items-center justify-between border-b border-md-outline/5 pb-3">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-xs font-bold text-md-primary bg-md-primary/10 px-3 py-1 rounded-full flex items-center gap-1.5">
+                                <i class="fa-solid fa-folder-open text-[10px]"></i>
+                                ${t["Kode Temuan"]}
+                            </span>
+                            ${isChild ? '<span class="text-[9px] font-bold text-md-tertiary bg-md-tertiary/10 px-2 py-0.5 rounded-full">Sub-temuan</span>' : ''}
+                            <span class="text-[10px] font-bold text-md-on-surface-variant uppercase tracking-wider">Temuan Pemeriksaan</span>
                         </div>
                         ${currentRole === "AUDITOR" ? `
                         <div class="flex gap-1 shrink-0">
@@ -713,47 +713,71 @@ function showLhaDetail(kodeLha) {
                         </div>` : ''}
                     </div>
 
-                    ${t.Sebab ? `
-                    <div>
-                        <h4 class="text-xs font-bold text-md-primary tracking-wider uppercase mb-1">Penyebab (Sebab):</h4>
-                        <p class="text-xs text-md-on-surface-variant leading-relaxed whitespace-pre-line">${t.Sebab}</p>
-                    </div>` : ''}
+                    <!-- Kriteria & Sebab Content Block -->
+                    <div class="flex flex-col gap-3">
+                        <!-- Kriteria -->
+                        <div class="border-l-4 border-md-primary bg-md-primary/5 p-4 rounded-r-2xl">
+                            <h4 class="text-[9px] font-bold text-md-primary tracking-wider uppercase mb-1 flex items-center gap-1">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Kriteria Temuan (Masalah / Kondisi)
+                            </h4>
+                            <p class="text-xs font-medium text-md-on-background leading-relaxed whitespace-pre-line">${t.Kriteria || 'Tidak ada kriteria'}</p>
+                        </div>
+
+                        <!-- Sebab -->
+                        ${t.Sebab ? `
+                        <div class="border-l-4 border-amber-500 bg-amber-500/5 p-4 rounded-r-2xl">
+                            <h4 class="text-[9px] font-bold text-amber-700 tracking-wider uppercase mb-1 flex items-center gap-1">
+                                <i class="fa-solid fa-circle-question"></i> Penyebab (Sebab)
+                            </h4>
+                            <p class="text-xs text-md-on-surface-variant leading-relaxed whitespace-pre-line">${t.Sebab}</p>
+                        </div>` : ''}
+                    </div>
 
                     <!-- Recommendations under this temuan -->
-                    ${recs.length > 0 ? `
-                    <div class="flex flex-col gap-3">
-                        <h4 class="text-xs font-bold text-md-on-background tracking-wider uppercase flex items-center justify-between gap-1.5">
-                            <span class="flex items-center gap-1.5">
-                                <i class="fa-solid fa-clipboard-check text-md-primary"></i>
+                    <div class="flex flex-col gap-3 border-t border-md-outline/5 pt-4 mt-1">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-xs font-bold text-md-on-background tracking-wider uppercase flex items-center gap-1.5">
+                                <i class="fa-solid fa-clipboard-list text-md-primary"></i>
                                 Rekomendasi (${recs.length})
-                            </span>
+                            </h4>
                             ${currentRole === "AUDITOR" ? `
-                            <button onclick="openRekomendasiModal('${t["Kode Temuan"]}', false)" class="px-2.5 py-1 rounded-full bg-md-primary text-white text-[10px] font-semibold hover:shadow active:scale-90 transition-all flex items-center gap-1">
+                            <button onclick="openRekomendasiModal('${t["Kode Temuan"]}', false)" class="px-3 py-1 rounded-full bg-md-primary text-white text-[10px] font-bold hover:shadow active:scale-90 transition-all flex items-center gap-1 cursor-pointer">
                                 <i class="fa-solid fa-plus text-[9px]"></i> Rekomendasi
                             </button>` : ''}
-                        </h4>
-                        <div class="flex flex-col gap-3">
-                            ${recsHTML}
                         </div>
-                    </div>` : `
-                    ${currentRole === "AUDITOR" ? `
-                    <button onclick="openRekomendasiModal('${t["Kode Temuan"]}', false)" class="self-start px-3 py-1.5 rounded-full bg-md-primary/10 text-md-primary text-[10px] font-bold hover:bg-md-primary/20 active:scale-95 transition-all flex items-center gap-1">
-                        <i class="fa-solid fa-plus text-[9px]"></i> Tambah Rekomendasi
-                    </button>` : ''}
-                    `}
+                        
+                        ${recs.length > 0 ? `
+                        <div class="flex flex-col gap-3.5 mt-1">
+                            ${recsHTML}
+                        </div>` : `
+                        <div class="text-center py-4 bg-md-surface-container-low/30 rounded-2xl border border-dashed border-md-outline/10">
+                            <p class="text-[10px] text-md-on-surface-variant/60">Belum ada rekomendasi untuk temuan ini.</p>
+                            ${currentRole === "AUDITOR" ? `
+                            <button onclick="openRekomendasiModal('${t["Kode Temuan"]}', false)" class="mt-2 px-3 py-1 rounded-full bg-md-primary/10 text-md-primary text-[10px] font-bold hover:bg-md-primary/20 active:scale-95 transition-all inline-flex items-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-plus text-[9px]"></i> Tambah Rekomendasi
+                            </button>` : ''}
+                        </div>
+                        `}
+                    </div>
 
-                    ${childrenHTML}
+                    <!-- Child sub-findings nested -->
+                    ${childrenHTML ? `
+                    <div class="flex flex-col gap-3 border-t border-md-outline/5 pt-4 mt-1">
+                        <h5 class="text-[10px] font-bold text-md-on-surface-variant uppercase tracking-wider">Sub-Temuan Turunan:</h5>
+                        <div class="flex flex-col gap-4">
+                            ${childrenHTML}
+                        </div>
+                    </div>` : ''}
                 </div>
             `;
         };
 
-        temuanSectionsHTML = parentTemuan.map(t => processTemuan(t)).join('<hr class="border-md-outline/15 my-3">');
+        temuanSectionsHTML = parentTemuan.map(t => processTemuan(t)).join('');
         
         // Also handle orphan children (whose parent is not in this LHA)
         const orphans = temuanList.filter(t => t["Parent Temuan"] !== null && !temuanList.some(p => p["Kode Temuan"] === t["Parent Temuan"]));
         if (orphans.length > 0) {
-            temuanSectionsHTML += '<hr class="border-md-outline/15 my-3">';
-            temuanSectionsHTML += orphans.map(t => processTemuan(t, true)).join('<hr class="border-md-outline/15 my-3">');
+            temuanSectionsHTML += orphans.map(t => processTemuan(t, true)).join('');
         }
     }
 
