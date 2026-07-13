@@ -97,7 +97,7 @@ Kami telah membangun fondasi API Backend menggunakan **FastAPI** yang berjalan s
 | `sdmo` | `sdmo123` | SATKER | Biro SDMO |
 | `ukk` | `ukk123` | SATKER | Biro UKK |
 | `mkdi` | `mkdi123` | SATKER | Biro MKDI |
-| `hks` | `hks123` | SATKER | Biro HKS |
+| `hks` | `hks123` | SATKER | HKS |
 | `sesdep` | `sesdep123` | SATKER | Sesdep |
 
 ---
