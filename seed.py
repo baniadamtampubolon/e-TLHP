@@ -270,6 +270,14 @@ def seed_database():
             {"username": "mkdi", "password": "mkdi123", "role": "SATKER", "pic": "Biro MKDI"},
             {"username": "hks", "password": "hks123", "role": "SATKER", "pic": "HKS"},
             {"username": "sesdep", "password": "sesdep123", "role": "SATKER", "pic": "Sesdep"},
+            {"username": "deputi1", "password": "deputi1123", "role": "SATKER", "pic": "Deputi 1"},
+            {"username": "deputi2", "password": "deputi2123", "role": "SATKER", "pic": "Deputi 2"},
+            {"username": "deputi3", "password": "deputi3123", "role": "SATKER", "pic": "Deputi 3"},
+            {"username": "deputi4", "password": "deputi4123", "role": "SATKER", "pic": "Deputi 4"},
+            {"username": "staf_konektifitas", "password": "staf123", "role": "SATKER", "pic": "Staf Ahli Bid. Konektifitas"},
+            {"username": "biro_lingkup", "password": "biro123", "role": "SATKER", "pic": "Biro lingkup kemenko pangan"},
+            {"username": "inspektorat", "password": "insp123", "role": "SATKER", "pic": "Inspektorat"},
+            {"username": "semua_deputi", "password": "deputi123", "role": "SATKER", "pic": "semua Deputi"},
         ]
         
         for u in default_users:

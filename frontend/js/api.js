@@ -62,10 +62,20 @@ async function loadDataFromAPI() {
             });
         });
 
-        // Apply RBAC filtering if user is SATKER
-        if (typeof currentUser !== "undefined" && currentUser && currentUser.role === "SATKER" && currentUser.pic) {
-            const userPic = currentUser.pic;
-            tabelRekomendasi = tabelRekomendasi.filter(r => r.PIC && r.PIC.includes(userPic));
+        // Apply RBAC filtering if user is SATKER (or simulating SATKER)
+        let targetPic = null;
+        let isSatker = false;
+        
+        if (typeof simulatedPic !== "undefined" && simulatedPic) {
+            targetPic = simulatedPic;
+            isSatker = true;
+        } else if (typeof currentUser !== "undefined" && currentUser && currentUser.role === "SATKER" && currentUser.pic) {
+            targetPic = currentUser.pic;
+            isSatker = true;
+        }
+        
+        if (isSatker && targetPic) {
+            tabelRekomendasi = tabelRekomendasi.filter(r => r.PIC === targetPic);
             
             const validTemuanIds = new Set(tabelRekomendasi.map(r => r["Kode Temuan"]));
             tabelTemuan = tabelTemuan.filter(t => validTemuanIds.has(t["Kode Temuan"]) || 

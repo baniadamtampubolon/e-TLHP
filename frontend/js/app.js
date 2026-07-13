@@ -10,6 +10,7 @@ let selectedTemuanId = null;
 
 let currentRole = "AUDITOR"; // Default Role: AUDITOR or SATKER
 let currentUser = null;      // Logged in user object
+let simulatedPic = null;     // Simulated Satker PIC in Dev Mode
 
 // Initialize App
 window.addEventListener('DOMContentLoaded', () => {
@@ -111,28 +112,29 @@ function handleLogout() {
 }
 
 // Switch user role (Only visible for Auditor for simulation/review convenience)
-function switchRole() {
+async function switchRole() {
     if (!currentUser || currentUser.role !== "AUDITOR") return;
-    const role = document.getElementById('roleSelector').value;
-    currentRole = role;
+    const roleVal = document.getElementById('roleSelector').value;
     
     const badge = document.getElementById('roleBadge');
     const addLhaBtn = document.getElementById("addLhaBtn");
     
-    if (role === "AUDITOR") {
+    if (roleVal === "AUDITOR") {
+        currentRole = "AUDITOR";
+        simulatedPic = null;
         badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-md-primary/10 text-md-primary";
         badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-md-primary animate-pulse"></span> Auditor: ${currentUser.username.toUpperCase()}`;
         if (addLhaBtn) addLhaBtn.classList.remove("hidden");
-    } else {
+    } else if (roleVal.startsWith("SATKER:")) {
+        currentRole = "SATKER";
+        simulatedPic = roleVal.substring(7);
         badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-md-tertiary/10 text-md-tertiary";
-        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-md-tertiary animate-pulse"></span> Satker (Preview)`;
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-md-tertiary animate-pulse"></span> Simulasi: ${simulatedPic}`;
         if (addLhaBtn) addLhaBtn.classList.add("hidden");
     }
     
-    // Refresh detail view to load appropriate role buttons
-    if (selectedLhaId) {
-        showLhaDetail(selectedLhaId);
-    }
+    // Reload and refilter data based on simulatedPic
+    await loadDataFromAPI();
 }
 
 // Generate PIC options dynamically based on dataset

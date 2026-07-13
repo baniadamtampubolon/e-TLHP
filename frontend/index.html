@@ -87,7 +87,19 @@
                 <select id="roleSelector" onchange="switchRole()"
                     class="h-9 px-3 text-xs font-semibold rounded-full bg-md-secondary-container text-md-on-secondary-container border border-md-outline/10 focus:outline-none cursor-pointer">
                     <option value="AUDITOR">Auditor (Itjen)</option>
-                    <option value="SATKER">Satker (Preview)</option>
+                    <option value="SATKER:Biro SDMO">Simulasi: Biro SDMO</option>
+                    <option value="SATKER:Biro UKK">Simulasi: Biro UKK</option>
+                    <option value="SATKER:Biro MKDI">Simulasi: Biro MKDI</option>
+                    <option value="SATKER:HKS">Simulasi: HKS</option>
+                    <option value="SATKER:Sesdep">Simulasi: Sesdep</option>
+                    <option value="SATKER:Deputi 1">Simulasi: Deputi 1</option>
+                    <option value="SATKER:Deputi 2">Simulasi: Deputi 2</option>
+                    <option value="SATKER:Deputi 3">Simulasi: Deputi 3</option>
+                    <option value="SATKER:Deputi 4">Simulasi: Deputi 4</option>
+                    <option value="SATKER:Staf Ahli Bid. Konektifitas">Simulasi: Staf Ahli Bid. Konektifitas</option>
+                    <option value="SATKER:Biro lingkup kemenko pangan">Simulasi: Biro lingkup kemenko pangan</option>
+                    <option value="SATKER:Inspektorat">Simulasi: Inspektorat</option>
+                    <option value="SATKER:semua Deputi">Simulasi: semua Deputi</option>
                 </select>
             </div>
 
@@ -153,14 +165,12 @@
             </form>
 
             <div
-                class="text-[10px] text-md-on-surface-variant/60 text-center border-t border-md-outline/10 pt-4 leading-relaxed">
+                class="text-[10px] text-md-on-surface-variant/60 text-center border-t border-md-outline/10 pt-4 leading-relaxed max-h-32 overflow-y-auto">
                 <p class="font-semibold text-md-primary">Daftar Akun Pengujian (Username & Password):</p>
-                <p class="mt-1">Auditor: <span class="font-bold">itjen</span> / <span class="font-bold">admin123</span>
+                <p class="mt-1">Auditor: <span class="font-bold">itjen</span> / <span class="font-bold">admin123</span></p>
+                <p class="mt-1">
+                    Satker: <span class="font-bold">sdmo/sdmo123</span>, <span class="font-bold">ukk/ukk123</span>, <span class="font-bold">mkdi/mkdi123</span>, <span class="font-bold">hks/hks123</span>, <span class="font-bold">sesdep/sesdep123</span>, <span class="font-bold">deputi1/deputi1123</span>, <span class="font-bold">deputi2/deputi2123</span>, <span class="font-bold">deputi3/deputi3123</span>, <span class="font-bold">deputi4/deputi4123</span>, <span class="font-bold">staf_konektifitas/staf123</span>, <span class="font-bold">biro_lingkup/biro123</span>, <span class="font-bold">inspektorat/insp123</span>, <span class="font-bold">semua_deputi/deputi123</span>
                 </p>
-                <p>Satker SDMO: <span class="font-bold">sdmo</span> / <span class="font-bold">sdmo123</span> | Satker
-                    UKK: <span class="font-bold">ukk</span> / <span class="font-bold">ukk123</span></p>
-                <p>Satker HKS: <span class="font-bold">hks</span> / <span class="font-bold">hks123</span> | Satker
-                    Sesdep: <span class="font-bold">sesdep</span> / <span class="font-bold">sesdep123</span></p>
             </div>
         </div>
     </section>
