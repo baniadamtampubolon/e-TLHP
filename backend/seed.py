@@ -31,7 +31,8 @@ def split_pics(pic_str):
     exceptions = [
         "Biro Hukum dan Kerja Sama",
         "Deputi Bidang Koordinasi Keterjangkauan dan Pangan",
-        "Deputi Bidang Koordinasi Tata Niaga dan Distribusi Pangan"
+        "Deputi Bidang Koordinasi Tata Niaga dan Distribusi Pangan",
+        "Deputi Bidang Koordinasi Tata Nidaga dan Distribusi Pangan"
     ]
     
     # Temporarily mask these exceptions to avoid splitting them
@@ -59,6 +60,40 @@ def split_pics(pic_str):
         unmasked_parts.append(part)
         
     return unmasked_parts
+
+def map_pic_name(pic):
+    if not pic:
+        return "Belum Ditentukan"
+    pic = str(pic).strip()
+    
+    mapping = {
+        # Hukum -> HKS
+        "Hukum": "HKS",
+        "Biro Hukum": "HKS",
+        "Hukum dan Kerjasama": "HKS",
+        "Biro Hukum dan Kerja Sama": "HKS",
+        "Biro HKS": "HKS",
+        "HKS": "HKS",
+        
+        # Distribusi Pangan, Deputi Bidang Tata Niaga -> Deputi 1
+        "Deputi Bidang Koordinasi Tata Nidaga dan Distribusi Pangan": "Deputi 1",
+        "Deputi Bidang Koordinasi Tata Niaga dan Distribusi Pangan": "Deputi 1",
+        "Deputi Bidang Tata Niaga": "Deputi 1",
+        "Deputi Bidang Tata Nidaga": "Deputi 1",
+        "Distribusi Pangan": "Deputi 1",
+        "Deputi 1": "Deputi 1",
+        
+        # Deputi Bidang Koordinasi Keterjangkauan dan Pangan -> Deputi 3
+        "Deputi Bidang Koordinasi Keterjangkauan dan Pangan": "Deputi 3",
+        "Deputi 3": "Deputi 3",
+        
+        # Staf Ahli Bidang Konektivitas -> Staf Ahli Bid. Konektifitas
+        "Staf Ahli Bidang Konektivitas": "Staf Ahli Bid. Konektifitas",
+        "Staf Ahli Bid. Konektivitas": "Staf Ahli Bid. Konektifitas",
+        "Staf Ahli Bid. Konektifitas": "Staf Ahli Bid. Konektifitas",
+    }
+    
+    return mapping.get(pic, pic)
 
 def seed_database():
     print("Memulai proses seeding data dari Excel ke SQLite...")
@@ -131,6 +166,11 @@ def seed_database():
                 
             raw_pic = clean_value(row["PIC"]) or "Belum Ditentukan"
             pics = split_pics(raw_pic)
+            
+            # Map PIC names to unified names and deduplicate
+            mapped_pics = [map_pic_name(p) for p in pics]
+            pics = list(dict.fromkeys(mapped_pics))
+            
             if not pics:
                 pics = ["Belum Ditentukan"]
                 
@@ -228,7 +268,7 @@ def seed_database():
             {"username": "sdmo", "password": "sdmo123", "role": "SATKER", "pic": "Biro SDMO"},
             {"username": "ukk", "password": "ukk123", "role": "SATKER", "pic": "Biro UKK"},
             {"username": "mkdi", "password": "mkdi123", "role": "SATKER", "pic": "Biro MKDI"},
-            {"username": "hks", "password": "hks123", "role": "SATKER", "pic": "Biro HKS"},
+            {"username": "hks", "password": "hks123", "role": "SATKER", "pic": "HKS"},
             {"username": "sesdep", "password": "sesdep123", "role": "SATKER", "pic": "Sesdep"},
         ]
         
