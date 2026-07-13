@@ -29,3 +29,8 @@ Thumbs.db
 *.sublime-project
 *.sublime-workspace
 .ipynb_checkpoints/
+
+# Data
+Data-TLHP-Normalized.xlsx
+data/
+
