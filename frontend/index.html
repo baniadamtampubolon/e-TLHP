@@ -370,75 +370,114 @@
             </div>
         </section>
 
-        <!-- Data Panel (List and Detail View) - Data Table Layout -->
-        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-12">
-            <!-- Left Side: List of LHA Data Table (lg:col-span-6) -->
-            <div
-                class="lg:col-span-6 bg-md-surface-container rounded-3xl shadow-sm border border-md-outline/5 flex flex-col h-[700px] overflow-hidden">
-                <!-- Panel Header -->
-                <div
-                    class="p-4 px-5 border-b border-md-outline/10 flex items-center justify-between bg-md-surface-container-low/30">
-                    <h3 class="text-sm font-bold text-md-on-background flex items-center gap-2">
-                        <i class="fa-solid fa-table-list text-md-primary"></i>
-                        Tabel Dokumen LHA (<span id="filteredLhaCount">0</span>)
-                    </h3>
-                    <div class="flex gap-1">
+        <!-- Full-Width Data Panel (Full-Size Table & Detail View Switcher) -->
+        <section class="w-full flex flex-col gap-6 pb-12">
+            <!-- 1. Full-Size LHA Data Table Section (Shown when no LHA is selected) -->
+            <div id="lhaTableViewSection"
+                class="w-full bg-md-surface-container rounded-3xl shadow-sm border border-md-outline/5 flex flex-col overflow-hidden transition-all duration-300">
+                
+                <!-- Top Status Filter Chips (Match Reference Screenshot) -->
+                <div class="px-6 pt-5 pb-3 flex items-center gap-2 overflow-x-auto border-b border-md-outline/10 bg-md-surface-container-low/20">
+                    <span class="text-[11px] font-bold text-md-on-surface-variant/70 uppercase tracking-wider mr-2 shrink-0">FILTER STATUS:</span>
+                    <button onclick="filterLhaStatusChip('ALL')" id="chipStatusALL" class="lha-status-chip active px-4 py-1.5 rounded-full text-xs font-bold bg-md-primary text-white transition-all shadow-xs shrink-0">Semua</button>
+                    <button onclick="filterLhaStatusChip('PROSES')" id="chipStatusPROSES" class="lha-status-chip px-4 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 hover:bg-amber-200 transition-all shrink-0">On Progress</button>
+                    <button onclick="filterLhaStatusChip('TUNTAS')" id="chipStatusTUNTAS" class="lha-status-chip px-4 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-900 hover:bg-green-200 transition-all shrink-0">Selesai</button>
+                    <button onclick="filterLhaStatusChip('PENDING')" id="chipStatusPENDING" class="lha-status-chip px-4 py-1.5 rounded-full text-xs font-bold bg-red-100 text-red-900 hover:bg-red-200 transition-all shrink-0">Belum TL</button>
+                </div>
+
+                <!-- Sub-bar: Search, Filters & Stats Header -->
+                <div class="px-6 py-4 border-b border-md-outline/10 flex flex-col sm:flex-row items-center justify-between gap-4 bg-md-surface-container-low/40">
+                    <div class="flex items-center gap-3 w-full sm:w-auto flex-1 max-w-xl">
+                        <div class="relative w-full">
+                            <input type="text" id="tableSearchInput" oninput="syncTableSearch(this.value)"
+                                placeholder="Cari No LHA, kegiatan, PIC LHA..."
+                                class="w-full h-10 pl-10 pr-4 rounded-full bg-white text-xs border border-md-outline/20 focus:outline-none focus:border-md-primary text-md-on-background shadow-xs">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-md-on-surface-variant text-xs"></i>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                        <span class="text-xs font-semibold text-md-on-surface-variant">
+                            Menampilkan <span id="filteredLhaCount" class="font-bold text-md-primary">0</span> dari <span id="totalLhaCount" class="font-bold">0</span> LHA
+                        </span>
+
                         <button id="addLhaBtn" onclick="openLhaModal()"
-                            class="hidden px-2.5 py-1.5 rounded-full bg-md-primary text-white text-[10px] font-bold hover:shadow-md active:scale-95 transition-all flex items-center gap-1">
-                            <i class="fa-solid fa-plus text-[9px]"></i> LHA
+                            class="hidden px-4 py-2 rounded-full bg-md-primary text-white text-xs font-bold hover:shadow-md active:scale-95 transition-all flex items-center gap-1.5 shrink-0">
+                            <i class="fa-solid fa-plus text-xs"></i> Tambah LHA
                         </button>
                     </div>
                 </div>
 
-                <!-- Status Filter Chips Toolbar -->
-                <div class="px-4 py-2.5 flex items-center gap-1.5 overflow-x-auto border-b border-md-outline/10 bg-md-surface-container-low/20 text-xs">
-                    <span class="text-[10px] font-bold text-md-on-surface-variant uppercase tracking-wider mr-1 shrink-0"><i class="fa-solid fa-filter text-[9px] mr-1"></i>Status:</span>
-                    <button onclick="filterLhaStatusChip('ALL')" id="chipStatusALL" class="lha-status-chip active px-3 py-1 rounded-full text-xs font-semibold bg-md-primary text-white transition-all shadow-xs shrink-0">Semua</button>
-                    <button onclick="filterLhaStatusChip('PROSES')" id="chipStatusPROSES" class="lha-status-chip px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 hover:bg-amber-200 transition-all shrink-0">On Progress</button>
-                    <button onclick="filterLhaStatusChip('TUNTAS')" id="chipStatusTUNTAS" class="lha-status-chip px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 hover:bg-green-200 transition-all shrink-0">Selesai</button>
-                    <button onclick="filterLhaStatusChip('PENDING')" id="chipStatusPENDING" class="lha-status-chip px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 hover:bg-red-200 transition-all shrink-0">Belum TL</button>
-                </div>
-
-                <!-- Data Table Container -->
-                <div id="lhaListContainer" class="flex-1 overflow-x-auto overflow-y-auto">
+                <!-- Full Size Data Table Container -->
+                <div id="lhaListContainer" class="w-full overflow-x-auto min-h-[400px]">
                     <table class="w-full text-left text-xs border-collapse">
-                        <thead class="sticky top-0 bg-md-surface-container-low/90 backdrop-blur-md border-b border-md-outline/10 text-md-on-surface-variant text-[11px] font-bold z-10">
+                        <thead class="bg-md-surface-container-low/80 border-b border-md-outline/10 text-md-on-surface-variant text-[11px] font-bold tracking-wide uppercase">
                             <tr>
-                                <th class="py-3 px-3.5">Dokumen LHA</th>
-                                <th class="py-3 px-2">Sumber & Thn</th>
-                                <th class="py-3 px-2">Unit PIC</th>
-                                <th class="py-3 px-2">Status LHA</th>
-                                <th class="py-3 px-2">Kelengkapan TL</th>
-                                <th class="py-3 px-3 text-right">Aksi</th>
+                                <th class="py-3.5 px-4 w-10 text-center">
+                                    <input type="checkbox" class="rounded border-md-outline/30 text-md-primary focus:ring-0 cursor-pointer">
+                                </th>
+                                <th class="py-3.5 px-4 font-bold whitespace-nowrap">No. LHA <i class="fa-solid fa-arrow-down-up-lock text-[9px] ml-1 opacity-50"></i></th>
+                                <th class="py-3.5 px-4 font-bold">Uraian & Jenis Audit</th>
+                                <th class="py-3.5 px-4 font-bold whitespace-nowrap">Sumber Audit</th>
+                                <th class="py-3.5 px-4 font-bold whitespace-nowrap">PIC SPJ / Unit Kerja <i class="fa-solid fa-arrow-down-up-lock text-[9px] ml-1 opacity-50"></i></th>
+                                <th class="py-3.5 px-4 font-bold whitespace-nowrap">Status LHA <i class="fa-solid fa-arrow-down-up-lock text-[9px] ml-1 opacity-50"></i></th>
+                                <th class="py-3.5 px-4 font-bold whitespace-nowrap">Kelengkapan Dokumen <i class="fa-solid fa-arrow-down-up-lock text-[9px] ml-1 opacity-50"></i></th>
+                                <th class="py-3.5 px-4 font-bold whitespace-nowrap">Tahun</th>
+                                <th class="py-3.5 px-4 text-right font-bold whitespace-nowrap">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody id="lhaTableBody" class="divide-y divide-md-outline/5">
+                        <tbody id="lhaTableBody" class="divide-y divide-md-outline/10 bg-white">
                             <!-- Dynamic Table Rows -->
                         </tbody>
                     </table>
 
                     <!-- Empty state -->
-                    <div id="lhaEmptyState" class="hidden text-center p-12 text-md-on-surface-variant/60">
-                        <i class="fa-solid fa-folder-open text-4xl mb-2 text-md-outline/40"></i>
-                        <p class="text-xs font-medium">Tidak ada dokumen LHA yang cocok dengan filter saat ini.</p>
+                    <div id="lhaEmptyState" class="hidden text-center p-16 text-md-on-surface-variant/60">
+                        <i class="fa-solid fa-folder-open text-5xl mb-3 text-md-outline/30"></i>
+                        <p class="text-xs font-semibold">Tidak ada dokumen LHA yang cocok dengan filter saat ini.</p>
+                    </div>
+                </div>
+
+                <!-- Table Footer & Pagination (Match Reference Screenshot) -->
+                <div class="px-6 py-4 border-t border-md-outline/10 flex flex-col sm:flex-row items-center justify-between gap-4 bg-md-surface-container-low/30 text-xs text-md-on-surface-variant">
+                    <span class="font-medium">Total <span id="footerTotalLha" class="font-bold text-md-on-background">0</span> baris data LHA.</span>
+
+                    <div class="flex items-center gap-6">
+                        <div class="flex items-center gap-2">
+                            <span>Baris per halaman:</span>
+                            <select class="h-8 px-2 rounded-lg bg-white border border-md-outline/20 text-xs font-semibold focus:outline-none">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
+
+                        <span class="font-medium">Halaman <span class="font-bold">1</span> dari <span class="font-bold">1</span></span>
+
+                        <div class="flex items-center gap-1">
+                            <button class="w-7 h-7 rounded-lg border border-md-outline/20 flex items-center justify-center text-xs text-md-on-surface-variant/50 hover:bg-white cursor-not-allowed" disabled><i class="fa-solid fa-angles-left text-[10px]"></i></button>
+                            <button class="w-7 h-7 rounded-lg border border-md-outline/20 flex items-center justify-center text-xs text-md-on-surface-variant/50 hover:bg-white cursor-not-allowed" disabled><i class="fa-solid fa-chevron-left text-[10px]"></i></button>
+                            <button class="w-7 h-7 rounded-lg border border-md-outline/20 flex items-center justify-center text-xs text-md-on-surface-variant/50 hover:bg-white cursor-not-allowed" disabled><i class="fa-solid fa-chevron-right text-[10px]"></i></button>
+                            <button class="w-7 h-7 rounded-lg border border-md-outline/20 flex items-center justify-center text-xs text-md-on-surface-variant/50 hover:bg-white cursor-not-allowed" disabled><i class="fa-solid fa-angles-right text-[10px]"></i></button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Side: Detail Viewer (lg:col-span-6) -->
+            <!-- 2. Full-Width Detail Viewer Panel (Shown when an LHA is selected) -->
             <div id="detailPanel"
-                class="lg:col-span-6 bg-md-surface-container rounded-3xl shadow-sm border border-md-outline/5 flex flex-col h-[700px] overflow-hidden">
+                class="hidden w-full bg-md-surface-container rounded-3xl shadow-sm border border-md-outline/5 flex flex-col min-h-[700px] overflow-hidden transition-all duration-300">
                 <!-- Fallback Initial State -->
                 <div id="detailFallbackState" class="flex-1 flex flex-col items-center justify-center text-center p-8">
                     <div
                         class="w-16 h-16 rounded-full bg-md-surface-container-low flex items-center justify-center text-md-primary mb-4 animate-bounce">
                         <i class="fa-solid fa-hand-pointer text-2xl"></i>
                     </div>
-                    <h4 class="text-base font-bold text-md-on-background">Pilih Dokumen LHA dari Daftar</h4>
-                    <p class="text-xs text-md-on-surface-variant mt-2 max-w-sm">Klik tombol "Detail" pada salah satu LHA di panel sebelah kiri untuk menampilkan seluruh temuan, rekomendasi, sebab, dan log progres tindak lanjutnya.</p>
+                    <h4 class="text-base font-bold text-md-on-background">Pilih Dokumen LHA dari Tabel Utama</h4>
+                    <p class="text-xs text-md-on-surface-variant mt-2 max-w-sm">Klik tombol "Detail" pada salah satu LHA di tabel utama untuk menampilkan seluruh temuan, rekomendasi, sebab, dan log progres tindak lanjutnya.</p>
                 </div>
 
-                <!-- Real Detail Container (Hidden by default) -->
+                <!-- Real Detail Container -->
                 <div id="detailContentState" class="flex-1 flex flex-col h-full hidden">
                     <!-- Dynamic details will be loaded here -->
                 </div>

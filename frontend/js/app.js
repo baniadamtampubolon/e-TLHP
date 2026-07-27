@@ -418,12 +418,32 @@ function formatIDR(num) {
     }
 }
 
-// Render the LHA data table in the left panel
+// Keep table search input in sync with main search input
+function syncTableSearch(val) {
+    const mainSearch = document.getElementById('searchInput');
+    if (mainSearch) {
+        mainSearch.value = val;
+    }
+    applyFilters();
+}
+
+// Render the LHA data table in full-size layout
 function renderLhaList() {
     const tableBody = document.getElementById('lhaTableBody');
     const emptyState = document.getElementById('lhaEmptyState');
     const filteredCountEl = document.getElementById('filteredLhaCount');
+    const totalCountEl = document.getElementById('totalLhaCount');
+    const footerTotalEl = document.getElementById('footerTotalLha');
+    const tableSearchInput = document.getElementById('tableSearchInput');
+    const mainSearchInput = document.getElementById('searchInput');
     
+    if (mainSearchInput && tableSearchInput && tableSearchInput.value !== mainSearchInput.value) {
+        tableSearchInput.value = mainSearchInput.value;
+    }
+
+    if (totalCountEl) totalCountEl.textContent = masterLHP.length;
+    if (footerTotalEl) footerTotalEl.textContent = filteredLHA.length;
+
     if (!tableBody) return;
     
     tableBody.innerHTML = "";
@@ -437,41 +457,46 @@ function renderLhaList() {
     if (emptyState) emptyState.classList.add('hidden');
     if (filteredCountEl) filteredCountEl.textContent = filteredLHA.length;
 
-    filteredLHA.forEach(lha => {
-        const tr = createLhaTableRowEl(lha);
+    filteredLHA.forEach((lha, index) => {
+        const tr = createLhaTableRowEl(lha, index + 1);
         tableBody.appendChild(tr);
     });
 }
 
-function createLhaTableRowEl(lha) {
+function createLhaTableRowEl(lha, index) {
     const tr = document.createElement('tr');
     const kodeLha = lha["Kode LHP"];
     const isSelected = selectedLhaId === kodeLha;
     
     const selectedClass = isSelected 
         ? "bg-md-secondary-container/60 border-l-4 border-l-md-primary font-medium" 
-        : "hover:bg-md-surface-container-low/40 border-l-4 border-l-transparent";
+        : "hover:bg-md-surface-container-low/50 border-l-4 border-l-transparent";
 
-    tr.className = `transition-colors duration-200 cursor-pointer ${selectedClass}`;
+    tr.className = `transition-all duration-150 cursor-pointer ${selectedClass}`;
     tr.onclick = (e) => {
-        if (e.target.closest('button')) return;
+        if (e.target.closest('button') || e.target.closest('input')) return;
         selectLha(kodeLha);
     };
 
     const source = lha["Sumber Audit"] || "Audit";
     const sourceBadgeColor = source === "BPK-RI" 
-        ? "bg-md-primary/10 text-md-primary border border-md-primary/20" 
-        : "bg-md-tertiary/10 text-md-tertiary border border-md-tertiary/20";
+        ? "bg-md-primary/10 text-md-primary border border-md-primary/20 font-bold" 
+        : "bg-md-tertiary/10 text-md-tertiary border border-md-tertiary/20 font-bold";
 
-    const temuanCount = tabelTemuan.filter(t => t["Kode LHP"] === kodeLha).length;
+    const temuanList = tabelTemuan.filter(t => t["Kode LHP"] === kodeLha);
+    const temuanCount = temuanList.length;
+    const firstKriteria = temuanList.length > 0 && temuanList[0].Kriteria 
+        ? temuanList[0].Kriteria 
+        : "Pemeriksaan Dokumen LHA " + kodeLha;
+
     const recs = getRecommendationsForLha(kodeLha);
     const finishedRecs = recs.filter(r => r.Status === "TUNTAS");
     const lhaStatus = computeLhaStatus(kodeLha);
 
     const statusConfig = {
-        "TUNTAS": { bg: "bg-green-100 text-green-800 border-green-200", icon: "fa-circle-check" },
-        "PROSES": { bg: "bg-amber-100 text-amber-800 border-amber-200", icon: "fa-spinner animate-spin" },
-        "PENDING": { bg: "bg-red-100 text-red-800 border-red-200", icon: "fa-clock" },
+        "TUNTAS": { bg: "bg-green-100 text-green-800 border-green-300", icon: "fa-circle-check" },
+        "PROSES": { bg: "bg-blue-100 text-blue-800 border-blue-300", icon: "fa-spinner animate-spin" },
+        "PENDING": { bg: "bg-red-100 text-red-800 border-red-300", icon: "fa-clock" },
         "KOSONG": { bg: "bg-gray-100 text-gray-500 border-gray-200", icon: "fa-minus" },
     };
     const sc = statusConfig[lhaStatus] || statusConfig["PENDING"];
@@ -480,51 +505,54 @@ function createLhaTableRowEl(lha) {
 
     const pics = getUniquePicsForLha(kodeLha);
     const picBadges = pics.length > 0
-        ? pics.slice(0, 2).map(p => `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-md-surface-container-low text-[10px] font-semibold text-md-on-surface-variant border border-md-outline/10"><i class="fa-regular fa-building text-[8px]"></i> ${p}</span>`).join(" ") + (pics.length > 2 ? `<span class="text-[9px] text-md-on-surface-variant/70 font-semibold ml-0.5">+${pics.length - 2}</span>` : "")
-        : `<span class="text-[10px] text-md-on-surface-variant/50 italic">Belum ada PIC</span>`;
+        ? pics.slice(0, 3).map(p => `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-md-surface-container-low text-xs font-semibold text-md-on-surface-variant border border-md-outline/15 shadow-2xs"><i class="fa-regular fa-user text-[10px] text-md-primary"></i> ${p}</span>`).join(" ") + (pics.length > 3 ? `<span class="text-xs text-md-on-surface-variant/70 font-bold ml-1">+${pics.length - 3}</span>` : "")
+        : `<span class="text-xs text-md-on-surface-variant/50 italic">Belum ada PIC</span>`;
 
     tr.innerHTML = `
-        <td class="py-3 px-3.5 align-middle whitespace-nowrap">
-            <div class="flex items-center gap-2">
-                <div class="w-7 h-7 rounded-full bg-md-primary/10 flex items-center justify-center text-md-primary shrink-0">
-                    <i class="fa-solid fa-file-lines text-xs"></i>
-                </div>
-                <div class="flex flex-col">
-                    <span class="text-xs font-bold text-md-on-background">${kodeLha}</span>
-                    <span class="text-[10px] text-md-on-surface-variant">${temuanCount} Temuan • ${recs.length} Rekomendasi</span>
-                </div>
+        <td class="py-4 px-4 text-center align-middle">
+            <input type="checkbox" class="rounded border-md-outline/30 text-md-primary focus:ring-0 cursor-pointer">
+        </td>
+        <td class="py-4 px-4 align-middle whitespace-nowrap">
+            <div class="flex items-center gap-2.5">
+                <span class="text-xs font-bold text-md-on-background hover:text-md-primary transition-colors">${kodeLha}</span>
             </div>
         </td>
-        <td class="py-3 px-2 align-middle whitespace-nowrap">
-            <div class="flex flex-col gap-1 items-start">
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${sourceBadgeColor}">${source}</span>
-                <span class="text-[10px] text-md-on-surface-variant font-medium ml-0.5">Thn ${lha.Tahun || '2025'}</span>
+        <td class="py-4 px-4 align-middle">
+            <div class="flex flex-col gap-1 max-w-md">
+                <span class="text-xs font-bold text-md-on-background line-clamp-1 leading-snug">${firstKriteria}</span>
+                <span class="text-[11px] text-md-on-surface-variant/80">${temuanCount} Temuan • ${recs.length} Rekomendasi Terkait</span>
             </div>
         </td>
-        <td class="py-3 px-2 align-middle">
-            <div class="flex flex-wrap gap-1 items-center max-w-[170px]">
+        <td class="py-4 px-4 align-middle whitespace-nowrap">
+            <span class="text-xs font-bold px-3 py-1 rounded-full ${sourceBadgeColor}">${source}</span>
+        </td>
+        <td class="py-4 px-4 align-middle">
+            <div class="flex flex-wrap gap-1.5 items-center">
                 ${picBadges}
             </div>
         </td>
-        <td class="py-3 px-2 align-middle whitespace-nowrap">
-            <span class="text-[10px] font-bold border px-2.5 py-0.5 rounded-full ${sc.bg} inline-flex items-center gap-1">
-                <i class="fa-solid ${sc.icon} text-[8px]"></i> ${lhaStatus}
+        <td class="py-4 px-4 align-middle whitespace-nowrap">
+            <span class="text-xs font-bold border px-3 py-1 rounded-full ${sc.bg} inline-flex items-center gap-1.5 shadow-2xs">
+                <i class="fa-solid ${sc.icon} text-[10px]"></i> ${lhaStatus === 'PROSES' ? 'On Progress' : lhaStatus === 'TUNTAS' ? 'Selesai' : 'Belum TL'}
             </span>
         </td>
-        <td class="py-3 px-2 align-middle whitespace-nowrap min-w-[110px]">
-            <div class="flex flex-col gap-1">
-                <div class="flex items-center justify-between text-[10px] font-bold text-md-on-surface-variant">
+        <td class="py-4 px-4 align-middle whitespace-nowrap min-w-[140px]">
+            <div class="flex flex-col gap-1.5">
+                <div class="flex items-center justify-between text-xs font-bold text-md-on-surface-variant">
                     <span>${finishedRecs.length}/${recs.length} Dokumen</span>
-                    <span class="${progressPercent === 100 ? 'text-green-600' : progressPercent > 0 ? 'text-amber-600' : 'text-red-500'}">${progressPercent}%</span>
+                    <span class="${progressPercent === 100 ? 'text-green-600' : progressPercent > 0 ? 'text-amber-600' : 'text-red-500'} font-extrabold">${progressPercent}%</span>
                 </div>
-                <div class="w-full bg-md-surface-container-low rounded-full h-1.5 overflow-hidden">
-                    <div class="h-1.5 rounded-full transition-all duration-500 ${progressPercent === 100 ? 'bg-green-500' : progressPercent > 0 ? 'bg-amber-500' : 'bg-red-400'}" style="width: ${progressPercent}%"></div>
+                <div class="w-full bg-md-surface-container-low rounded-full h-2 overflow-hidden shadow-inner">
+                    <div class="h-2 rounded-full transition-all duration-500 ${progressPercent === 100 ? 'bg-green-500' : progressPercent > 0 ? 'bg-amber-500' : 'bg-red-400'}" style="width: ${progressPercent}%"></div>
                 </div>
             </div>
         </td>
-        <td class="py-3 px-3 align-middle text-right whitespace-nowrap">
-            <button onclick="selectLha('${kodeLha}')" class="px-3 py-1 rounded-full bg-md-primary text-white text-[10px] font-bold hover:shadow-md active:scale-95 transition-all inline-flex items-center gap-1 cursor-pointer">
-                <i class="fa-solid fa-eye text-[9px]"></i> Detail
+        <td class="py-4 px-4 align-middle whitespace-nowrap text-xs text-md-on-surface-variant font-medium">
+            2026-07-${15 + (index % 10)}
+        </td>
+        <td class="py-4 px-4 align-middle text-right whitespace-nowrap">
+            <button onclick="selectLha('${kodeLha}')" class="px-4 py-1.5 rounded-full bg-md-primary text-white text-xs font-bold hover:shadow-md active:scale-95 transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs">
+                <i class="fa-solid fa-eye text-xs"></i> Detail
             </button>
         </td>
     `;
@@ -535,17 +563,32 @@ function createLhaTableRowEl(lha) {
 function selectLha(kodeLha) {
     selectedLhaId = kodeLha;
     selectedTemuanId = null; // Reset to list of findings
-    renderLhaList();
+    
+    // Switch to full width detail view section
+    const tableSection = document.getElementById('lhaTableViewSection');
+    const detailPanel = document.getElementById('detailPanel');
+    if (tableSection) tableSection.classList.add('hidden');
+    if (detailPanel) detailPanel.classList.remove('hidden');
+    
     showLhaDetail(kodeLha);
 }
 
 function closeDetail() {
     selectedLhaId = null;
     selectedTemuanId = null;
+    
+    // Switch back to full size table view section
+    const tableSection = document.getElementById('lhaTableViewSection');
+    const detailPanel = document.getElementById('detailPanel');
+    if (tableSection) tableSection.classList.remove('hidden');
+    if (detailPanel) detailPanel.classList.add('hidden');
+
     const fallbackState = document.getElementById('detailFallbackState');
     const contentState = document.getElementById('detailContentState');
     if (fallbackState) fallbackState.classList.remove('hidden');
     if (contentState) contentState.classList.add('hidden');
+
+    renderLhaList();
 }
 
 function selectTemuanDetail(temuanId) {
@@ -1028,8 +1071,12 @@ function showLhaDetail(kodeLha) {
 
     content.innerHTML = `
         <!-- LHA Detail Header -->
-        <div class="p-5 border-b border-md-outline/10 flex items-center justify-between bg-md-surface-container-low/20">
+        <div class="p-5 border-b border-md-outline/10 flex items-center justify-between bg-md-surface-container-low/20 flex-wrap gap-3">
             <div class="flex items-center gap-3 flex-wrap">
+                <button onclick="closeDetail()" class="px-3.5 py-1.5 rounded-full bg-md-primary/10 text-md-primary text-xs font-bold hover:bg-md-primary/20 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs">
+                    <i class="fa-solid fa-arrow-left text-[10px]"></i>
+                    Kembali ke Tabel Utama
+                </button>
                 <span class="text-xs font-bold text-md-on-background bg-md-surface-container-low/75 px-3 py-1 rounded-full">${kodeLha}</span>
                 <span class="text-xs font-bold px-3 py-1 rounded-full ${sourceBadgeColor}">${source}</span>
                 <span class="text-[10px] font-medium text-md-on-surface-variant bg-md-surface-container-low px-2 py-0.5 rounded-full">${lha.Tahun || '2025'}</span>
