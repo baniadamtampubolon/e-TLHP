@@ -468,92 +468,98 @@ function createLhaTableRowEl(lha, index) {
     const kodeLha = lha["Kode LHP"];
     const isSelected = selectedLhaId === kodeLha;
     
-    const selectedClass = isSelected 
-        ? "bg-md-secondary-container/60 border-l-4 border-l-md-primary font-medium" 
-        : "hover:bg-md-surface-container-low/50 border-l-4 border-l-transparent";
-
-    tr.className = `transition-all duration-150 cursor-pointer ${selectedClass}`;
+    tr.className = `transition-colors duration-150 cursor-pointer ${isSelected ? 'bg-indigo-50' : 'hover:bg-gray-50'}`;
     tr.onclick = (e) => {
-        if (e.target.closest('button') || e.target.closest('input')) return;
+        if (e.target.closest('button')) return;
         selectLha(kodeLha);
     };
 
     const source = lha["Sumber Audit"] || "Audit";
-    const sourceBadgeColor = source === "BPK-RI" 
-        ? "bg-md-primary/10 text-md-primary border border-md-primary/20 font-bold" 
-        : "bg-md-tertiary/10 text-md-tertiary border border-md-tertiary/20 font-bold";
 
     const temuanList = tabelTemuan.filter(t => t["Kode LHP"] === kodeLha);
     const temuanCount = temuanList.length;
-    const firstKriteria = temuanList.length > 0 && temuanList[0].Kriteria 
-        ? temuanList[0].Kriteria 
-        : "Pemeriksaan Dokumen LHA " + kodeLha;
+    
+    // Build a fuller description from kriteria
+    const kriteriaList = temuanList
+        .filter(t => t.Kriteria)
+        .map(t => t.Kriteria);
+    const mainKriteria = kriteriaList.length > 0 
+        ? kriteriaList[0] 
+        : "Pemeriksaan atas Laporan Hasil Audit";
 
     const recs = getRecommendationsForLha(kodeLha);
     const finishedRecs = recs.filter(r => r.Status === "TUNTAS");
     const lhaStatus = computeLhaStatus(kodeLha);
 
-    const statusConfig = {
-        "TUNTAS": { bg: "bg-green-100 text-green-800 border-green-300", icon: "fa-circle-check" },
-        "PROSES": { bg: "bg-blue-100 text-blue-800 border-blue-300", icon: "fa-spinner animate-spin" },
-        "PENDING": { bg: "bg-red-100 text-red-800 border-red-300", icon: "fa-clock" },
-        "KOSONG": { bg: "bg-gray-100 text-gray-500 border-gray-200", icon: "fa-minus" },
-    };
-    const sc = statusConfig[lhaStatus] || statusConfig["PENDING"];
-
     const progressPercent = recs.length > 0 ? Math.round((finishedRecs.length / recs.length) * 100) : 0;
 
+    // Status styling
+    const statusMap = {
+        "TUNTAS":  { label: "Selesai",       dotColor: "bg-green-500",  textColor: "text-green-700",  bgColor: "bg-green-50" },
+        "PROSES":  { label: "On Progress",   dotColor: "bg-blue-500",   textColor: "text-blue-700",   bgColor: "bg-blue-50" },
+        "PENDING": { label: "Belum TL",      dotColor: "bg-orange-500", textColor: "text-orange-700",  bgColor: "bg-orange-50" },
+        "KOSONG":  { label: "Kosong",        dotColor: "bg-gray-400",   textColor: "text-gray-500",   bgColor: "bg-gray-50" },
+    };
+    const st = statusMap[lhaStatus] || statusMap["PENDING"];
+
+    // Progress bar color
+    const barColor = progressPercent === 100 ? 'bg-green-500' 
+        : progressPercent >= 50 ? 'bg-blue-500' 
+        : progressPercent > 0 ? 'bg-orange-400' 
+        : 'bg-gray-300';
+
+    // PIC list — render as compact comma-separated text, not thick pills
     const pics = getUniquePicsForLha(kodeLha);
-    const picBadges = pics.length > 0
-        ? pics.slice(0, 3).map(p => `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-md-surface-container-low text-xs font-semibold text-md-on-surface-variant border border-md-outline/15 shadow-2xs"><i class="fa-regular fa-user text-[10px] text-md-primary"></i> ${p}</span>`).join(" ") + (pics.length > 3 ? `<span class="text-xs text-md-on-surface-variant/70 font-bold ml-1">+${pics.length - 3}</span>` : "")
-        : `<span class="text-xs text-md-on-surface-variant/50 italic">Belum ada PIC</span>`;
+    let picHTML = '';
+    if (pics.length === 0) {
+        picHTML = '<span class="text-gray-400 italic text-[12px]">—</span>';
+    } else if (pics.length <= 2) {
+        picHTML = pics.map(p => `<span class="text-gray-700 text-[12px] leading-snug">${p}</span>`).join('<span class="text-gray-300 mx-1">•</span>');
+    } else {
+        picHTML = pics.slice(0, 2).map(p => `<span class="text-gray-700 text-[12px] leading-snug">${p}</span>`).join('<span class="text-gray-300 mx-1">•</span>');
+        picHTML += `<span class="text-gray-400 text-[11px] ml-1">+${pics.length - 2} lainnya</span>`;
+    }
 
     tr.innerHTML = `
-        <td class="py-4 px-4 text-center align-middle">
-            <input type="checkbox" class="rounded border-md-outline/30 text-md-primary focus:ring-0 cursor-pointer">
-        </td>
-        <td class="py-4 px-4 align-middle whitespace-nowrap">
-            <div class="flex items-center gap-2.5">
-                <span class="text-xs font-bold text-md-on-background hover:text-md-primary transition-colors">${kodeLha}</span>
+        <td class="py-4 px-5 align-top">
+            <div class="flex flex-col gap-0.5">
+                <span class="text-[13px] font-bold text-gray-900">${kodeLha}</span>
+                <span class="text-[11px] text-gray-400">${lha.Tahun || '2025'}</span>
             </div>
         </td>
-        <td class="py-4 px-4 align-middle">
-            <div class="flex flex-col gap-1 max-w-md">
-                <span class="text-xs font-bold text-md-on-background line-clamp-1 leading-snug">${firstKriteria}</span>
-                <span class="text-[11px] text-md-on-surface-variant/80">${temuanCount} Temuan • ${recs.length} Rekomendasi Terkait</span>
+        <td class="py-4 px-4 align-top">
+            <div class="flex flex-col gap-1 pr-4">
+                <p class="text-[13px] font-semibold text-gray-800 leading-relaxed line-clamp-2">${mainKriteria}</p>
+                <span class="text-[11px] text-gray-400">${temuanCount} Temuan · ${recs.length} Rekomendasi</span>
             </div>
         </td>
-        <td class="py-4 px-4 align-middle whitespace-nowrap">
-            <span class="text-xs font-bold px-3 py-1 rounded-full ${sourceBadgeColor}">${source}</span>
+        <td class="py-4 px-4 align-top">
+            <span class="inline-block text-[11px] font-bold px-2.5 py-1 rounded-md ${source === 'BPK-RI' ? 'bg-indigo-100 text-indigo-700' : 'bg-pink-100 text-pink-700'}">${source}</span>
         </td>
-        <td class="py-4 px-4 align-middle">
-            <div class="flex flex-wrap gap-1.5 items-center">
-                ${picBadges}
+        <td class="py-4 px-4 align-top">
+            <div class="flex flex-wrap items-center gap-0.5 leading-relaxed">
+                ${picHTML}
             </div>
         </td>
-        <td class="py-4 px-4 align-middle whitespace-nowrap">
-            <span class="text-xs font-bold border px-3 py-1 rounded-full ${sc.bg} inline-flex items-center gap-1.5 shadow-2xs">
-                <i class="fa-solid ${sc.icon} text-[10px]"></i> ${lhaStatus === 'PROSES' ? 'On Progress' : lhaStatus === 'TUNTAS' ? 'Selesai' : 'Belum TL'}
+        <td class="py-4 px-4 align-top text-center">
+            <span class="inline-flex items-center gap-1.5 text-[12px] font-semibold ${st.textColor} ${st.bgColor} px-2.5 py-1 rounded-md">
+                <span class="w-2 h-2 rounded-full ${st.dotColor} ${lhaStatus === 'PROSES' ? 'animate-pulse' : ''}"></span>
+                ${st.label}
             </span>
         </td>
-        <td class="py-4 px-4 align-middle whitespace-nowrap min-w-[140px]">
-            <div class="flex flex-col gap-1.5">
-                <div class="flex items-center justify-between text-xs font-bold text-md-on-surface-variant">
-                    <span>${finishedRecs.length}/${recs.length} Dokumen</span>
-                    <span class="${progressPercent === 100 ? 'text-green-600' : progressPercent > 0 ? 'text-amber-600' : 'text-red-500'} font-extrabold">${progressPercent}%</span>
+        <td class="py-4 px-4 align-top">
+            <div class="flex flex-col gap-1.5 min-w-[150px]">
+                <div class="flex items-center justify-between">
+                    <span class="text-[12px] text-gray-600 font-medium">${finishedRecs.length}/${recs.length} Dokumen</span>
+                    <span class="text-[12px] font-bold ${progressPercent === 100 ? 'text-green-600' : progressPercent > 0 ? 'text-blue-600' : 'text-gray-400'}">${progressPercent}%</span>
                 </div>
-                <div class="w-full bg-md-surface-container-low rounded-full h-2 overflow-hidden shadow-inner">
-                    <div class="h-2 rounded-full transition-all duration-500 ${progressPercent === 100 ? 'bg-green-500' : progressPercent > 0 ? 'bg-amber-500' : 'bg-red-400'}" style="width: ${progressPercent}%"></div>
+                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                    <div class="h-1.5 rounded-full transition-all duration-500 ${barColor}" style="width: ${progressPercent}%"></div>
                 </div>
+                <button onclick="selectLha('${kodeLha}')" class="self-end mt-1 px-3 py-1 rounded-md bg-indigo-600 text-white text-[11px] font-semibold hover:bg-indigo-700 active:scale-95 transition-all inline-flex items-center gap-1 cursor-pointer">
+                    <i class="fa-solid fa-eye text-[10px]"></i> Detail
+                </button>
             </div>
-        </td>
-        <td class="py-4 px-4 align-middle whitespace-nowrap text-xs text-md-on-surface-variant font-medium">
-            2026-07-${15 + (index % 10)}
-        </td>
-        <td class="py-4 px-4 align-middle text-right whitespace-nowrap">
-            <button onclick="selectLha('${kodeLha}')" class="px-4 py-1.5 rounded-full bg-md-primary text-white text-xs font-bold hover:shadow-md active:scale-95 transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs">
-                <i class="fa-solid fa-eye text-xs"></i> Detail
-            </button>
         </td>
     `;
 

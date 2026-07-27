@@ -409,24 +409,19 @@
                 </div>
 
                 <!-- Full Size Data Table Container -->
-                <div id="lhaListContainer" class="w-full overflow-x-auto min-h-[400px]">
-                    <table class="w-full text-left text-xs border-collapse">
-                        <thead class="bg-md-surface-container-low/80 border-b border-md-outline/10 text-md-on-surface-variant text-[11px] font-bold tracking-wide uppercase">
+                <div id="lhaListContainer" class="w-full overflow-x-auto">
+                    <table class="w-full text-left border-collapse table-fixed">
+                        <thead class="bg-gray-50 border-b border-gray-200 text-gray-500 text-[11px] font-semibold uppercase tracking-wider">
                             <tr>
-                                <th class="py-3.5 px-4 w-10 text-center">
-                                    <input type="checkbox" class="rounded border-md-outline/30 text-md-primary focus:ring-0 cursor-pointer">
-                                </th>
-                                <th class="py-3.5 px-4 font-bold whitespace-nowrap">No. LHA <i class="fa-solid fa-arrow-down-up-lock text-[9px] ml-1 opacity-50"></i></th>
-                                <th class="py-3.5 px-4 font-bold">Uraian & Jenis Audit</th>
-                                <th class="py-3.5 px-4 font-bold whitespace-nowrap">Sumber Audit</th>
-                                <th class="py-3.5 px-4 font-bold whitespace-nowrap">PIC SPJ / Unit Kerja <i class="fa-solid fa-arrow-down-up-lock text-[9px] ml-1 opacity-50"></i></th>
-                                <th class="py-3.5 px-4 font-bold whitespace-nowrap">Status LHA <i class="fa-solid fa-arrow-down-up-lock text-[9px] ml-1 opacity-50"></i></th>
-                                <th class="py-3.5 px-4 font-bold whitespace-nowrap">Kelengkapan Dokumen <i class="fa-solid fa-arrow-down-up-lock text-[9px] ml-1 opacity-50"></i></th>
-                                <th class="py-3.5 px-4 font-bold whitespace-nowrap">Tahun</th>
-                                <th class="py-3.5 px-4 text-right font-bold whitespace-nowrap">Aksi</th>
+                                <th class="py-3 px-5 w-[180px]">No. Dokumen LHA</th>
+                                <th class="py-3 px-4">Uraian Kegiatan & Pelaksana</th>
+                                <th class="py-3 px-4 w-[110px]">Sumber</th>
+                                <th class="py-3 px-4 w-[200px]">PIC / Unit Kerja</th>
+                                <th class="py-3 px-4 w-[110px] text-center">Status</th>
+                                <th class="py-3 px-4 w-[200px]">Kelengkapan TL</th>
                             </tr>
                         </thead>
-                        <tbody id="lhaTableBody" class="divide-y divide-md-outline/10 bg-white">
+                        <tbody id="lhaTableBody" class="divide-y divide-gray-100 bg-white">
                             <!-- Dynamic Table Rows -->
                         </tbody>
                     </table>
