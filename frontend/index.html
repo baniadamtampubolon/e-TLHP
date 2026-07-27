@@ -370,16 +370,17 @@
             </div>
         </section>
 
-        <!-- Data Panel (List and Detail View) - duplicate cleanup -->
+        <!-- Data Panel (List and Detail View) - Data Table Layout -->
         <section class="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-12">
-            <!-- Left Side: List of LHA (lg:col-span-5) -->
+            <!-- Left Side: List of LHA Data Table (lg:col-span-6) -->
             <div
-                class="lg:col-span-5 bg-md-surface-container rounded-3xl shadow-sm border border-md-outline/5 flex flex-col h-[700px]">
+                class="lg:col-span-6 bg-md-surface-container rounded-3xl shadow-sm border border-md-outline/5 flex flex-col h-[700px] overflow-hidden">
+                <!-- Panel Header -->
                 <div
-                    class="p-5 border-b border-md-outline/10 flex items-center justify-between bg-md-surface-container-low/30 rounded-t-3xl">
+                    class="p-4 px-5 border-b border-md-outline/10 flex items-center justify-between bg-md-surface-container-low/30">
                     <h3 class="text-sm font-bold text-md-on-background flex items-center gap-2">
-                        <i class="fa-solid fa-folder-open text-md-primary"></i>
-                        Daftar Dokumen LHA (<span id="filteredLhaCount">0</span>)
+                        <i class="fa-solid fa-table-list text-md-primary"></i>
+                        Tabel Dokumen LHA (<span id="filteredLhaCount">0</span>)
                     </h3>
                     <div class="flex gap-1">
                         <button id="addLhaBtn" onclick="openLhaModal()"
@@ -388,14 +389,45 @@
                         </button>
                     </div>
                 </div>
-                <div id="lhaListContainer" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
-                    <!-- Dynamic List of LHA -->
+
+                <!-- Status Filter Chips Toolbar -->
+                <div class="px-4 py-2.5 flex items-center gap-1.5 overflow-x-auto border-b border-md-outline/10 bg-md-surface-container-low/20 text-xs">
+                    <span class="text-[10px] font-bold text-md-on-surface-variant uppercase tracking-wider mr-1 shrink-0"><i class="fa-solid fa-filter text-[9px] mr-1"></i>Status:</span>
+                    <button onclick="filterLhaStatusChip('ALL')" id="chipStatusALL" class="lha-status-chip active px-3 py-1 rounded-full text-xs font-semibold bg-md-primary text-white transition-all shadow-xs shrink-0">Semua</button>
+                    <button onclick="filterLhaStatusChip('PROSES')" id="chipStatusPROSES" class="lha-status-chip px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 hover:bg-amber-200 transition-all shrink-0">On Progress</button>
+                    <button onclick="filterLhaStatusChip('TUNTAS')" id="chipStatusTUNTAS" class="lha-status-chip px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 hover:bg-green-200 transition-all shrink-0">Selesai</button>
+                    <button onclick="filterLhaStatusChip('PENDING')" id="chipStatusPENDING" class="lha-status-chip px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 hover:bg-red-200 transition-all shrink-0">Belum TL</button>
+                </div>
+
+                <!-- Data Table Container -->
+                <div id="lhaListContainer" class="flex-1 overflow-x-auto overflow-y-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead class="sticky top-0 bg-md-surface-container-low/90 backdrop-blur-md border-b border-md-outline/10 text-md-on-surface-variant text-[11px] font-bold z-10">
+                            <tr>
+                                <th class="py-3 px-3.5">Dokumen LHA</th>
+                                <th class="py-3 px-2">Sumber & Thn</th>
+                                <th class="py-3 px-2">Unit PIC</th>
+                                <th class="py-3 px-2">Status LHA</th>
+                                <th class="py-3 px-2">Kelengkapan TL</th>
+                                <th class="py-3 px-3 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lhaTableBody" class="divide-y divide-md-outline/5">
+                            <!-- Dynamic Table Rows -->
+                        </tbody>
+                    </table>
+
+                    <!-- Empty state -->
+                    <div id="lhaEmptyState" class="hidden text-center p-12 text-md-on-surface-variant/60">
+                        <i class="fa-solid fa-folder-open text-4xl mb-2 text-md-outline/40"></i>
+                        <p class="text-xs font-medium">Tidak ada dokumen LHA yang cocok dengan filter saat ini.</p>
+                    </div>
                 </div>
             </div>
 
-            <!-- Right Side: Detail Viewer (lg:col-span-7) -->
+            <!-- Right Side: Detail Viewer (lg:col-span-6) -->
             <div id="detailPanel"
-                class="lg:col-span-7 bg-md-surface-container rounded-3xl shadow-sm border border-md-outline/5 flex flex-col h-[700px] overflow-hidden">
+                class="lg:col-span-6 bg-md-surface-container rounded-3xl shadow-sm border border-md-outline/5 flex flex-col h-[700px] overflow-hidden">
                 <!-- Fallback Initial State -->
                 <div id="detailFallbackState" class="flex-1 flex flex-col items-center justify-center text-center p-8">
                     <div

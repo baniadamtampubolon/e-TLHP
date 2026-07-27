@@ -284,6 +284,47 @@ function applyFilters() {
     }
 }
 
+// Get unique PIC list for an LHA
+function getUniquePicsForLha(kodeLha) {
+    const recs = getRecommendationsForLha(kodeLha);
+    const pics = new Set();
+    recs.forEach(r => {
+        if (r.PIC) {
+            r.PIC.split(',').forEach(p => pics.add(p.trim()));
+        }
+    });
+    return Array.from(pics);
+}
+
+// Quick status filter chip handler for LHA Data Table
+function filterLhaStatusChip(status) {
+    const statusSelect = document.getElementById('statusFilter');
+    if (statusSelect) {
+        statusSelect.value = status;
+    }
+    
+    // Update chip active styling
+    const chips = ['ALL', 'PROSES', 'TUNTAS', 'PENDING'];
+    chips.forEach(c => {
+        const btn = document.getElementById(`chipStatus${c}`);
+        if (btn) {
+            if (c === status) {
+                btn.className = "lha-status-chip active px-3 py-1 rounded-full text-xs font-semibold bg-md-primary text-white transition-all shadow-xs shrink-0";
+            } else {
+                const colors = {
+                    'PROSES': 'bg-amber-100 text-amber-800 hover:bg-amber-200',
+                    'TUNTAS': 'bg-green-100 text-green-800 hover:bg-green-200',
+                    'PENDING': 'bg-red-100 text-red-800 hover:bg-red-200',
+                    'ALL': 'bg-md-surface-container-low text-md-on-surface-variant hover:bg-md-outline/10'
+                };
+                btn.className = `lha-status-chip px-3 py-1 rounded-full text-xs font-semibold ${colors[c] || 'bg-gray-100 text-gray-700'} transition-all shrink-0`;
+            }
+        }
+    });
+
+    applyFilters();
+}
+
 function resetFilters() {
     document.getElementById('searchInput').value = "";
     document.getElementById('sourceFilter').value = "ALL";
@@ -291,7 +332,9 @@ function resetFilters() {
         document.getElementById('picFilter').value = "ALL";
     }
     document.getElementById('statusFilter').value = "ALL";
-    applyFilters();
+    
+    // Reset status chips UI
+    filterLhaStatusChip('ALL');
 }
 
 function getRecommendationsForFinding(temuanId) {
@@ -375,42 +418,50 @@ function formatIDR(num) {
     }
 }
 
-// Render the LHA list in the left panel
+// Render the LHA data table in the left panel
 function renderLhaList() {
-    const listContainer = document.getElementById('lhaListContainer');
-    listContainer.innerHTML = "";
+    const tableBody = document.getElementById('lhaTableBody');
+    const emptyState = document.getElementById('lhaEmptyState');
+    const filteredCountEl = document.getElementById('filteredLhaCount');
+    
+    if (!tableBody) return;
+    
+    tableBody.innerHTML = "";
 
     if (filteredLHA.length === 0) {
-        listContainer.innerHTML = `
-            <div class="text-center p-8 text-md-on-surface-variant/60">
-                <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
-                <p class="text-xs">Tidak ada dokumen LHA yang cocok dengan filter.</p>
-            </div>`;
-        document.getElementById('filteredLhaCount').textContent = "0";
+        if (emptyState) emptyState.classList.remove('hidden');
+        if (filteredCountEl) filteredCountEl.textContent = "0";
         return;
     }
 
-    document.getElementById('filteredLhaCount').textContent = filteredLHA.length;
+    if (emptyState) emptyState.classList.add('hidden');
+    if (filteredCountEl) filteredCountEl.textContent = filteredLHA.length;
 
     filteredLHA.forEach(lha => {
-        const el = createLhaListEl(lha);
-        listContainer.appendChild(el);
+        const tr = createLhaTableRowEl(lha);
+        tableBody.appendChild(tr);
     });
 }
 
-function createLhaListEl(lha) {
-    const el = document.createElement('div');
+function createLhaTableRowEl(lha) {
+    const tr = document.createElement('tr');
     const kodeLha = lha["Kode LHP"];
     const isSelected = selectedLhaId === kodeLha;
     
     const selectedClass = isSelected 
-        ? "bg-md-secondary-container ring-1 ring-md-primary/30" 
-        : "bg-md-background hover:bg-md-surface-container-low/50 shadow-sm";
+        ? "bg-md-secondary-container/60 border-l-4 border-l-md-primary font-medium" 
+        : "hover:bg-md-surface-container-low/40 border-l-4 border-l-transparent";
 
-    el.className = 'rounded-2xl transition-all duration-300 flex flex-col gap-2.5 border border-md-outline/5 p-4 ' + selectedClass + ' hover:scale-[1.01] active:scale-[0.99]';
+    tr.className = `transition-colors duration-200 cursor-pointer ${selectedClass}`;
+    tr.onclick = (e) => {
+        if (e.target.closest('button')) return;
+        selectLha(kodeLha);
+    };
 
     const source = lha["Sumber Audit"] || "Audit";
-    const sourceBadgeColor = source === "BPK-RI" ? "bg-md-primary text-white" : "bg-md-tertiary text-white";
+    const sourceBadgeColor = source === "BPK-RI" 
+        ? "bg-md-primary/10 text-md-primary border border-md-primary/20" 
+        : "bg-md-tertiary/10 text-md-tertiary border border-md-tertiary/20";
 
     const temuanCount = tabelTemuan.filter(t => t["Kode LHP"] === kodeLha).length;
     const recs = getRecommendationsForLha(kodeLha);
@@ -419,41 +470,66 @@ function createLhaListEl(lha) {
 
     const statusConfig = {
         "TUNTAS": { bg: "bg-green-100 text-green-800 border-green-200", icon: "fa-circle-check" },
-        "PROSES": { bg: "bg-amber-100 text-amber-800 border-amber-200", icon: "fa-spinner" },
+        "PROSES": { bg: "bg-amber-100 text-amber-800 border-amber-200", icon: "fa-spinner animate-spin" },
         "PENDING": { bg: "bg-red-100 text-red-800 border-red-200", icon: "fa-clock" },
         "KOSONG": { bg: "bg-gray-100 text-gray-500 border-gray-200", icon: "fa-minus" },
     };
     const sc = statusConfig[lhaStatus] || statusConfig["PENDING"];
 
-    const progressPercent = recs.length > 0 ? (finishedRecs.length / recs.length) * 100 : 0;
+    const progressPercent = recs.length > 0 ? Math.round((finishedRecs.length / recs.length) * 100) : 0;
 
-    el.innerHTML = `
-        <div class="flex items-center justify-between gap-2">
-            <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-xs font-bold text-md-on-background bg-md-surface-container-low/75 px-2.5 py-0.5 rounded-full">${kodeLha}</span>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${sourceBadgeColor}">${source}</span>
-                <span class="text-[10px] font-medium text-md-on-surface-variant bg-md-surface-container-low px-2 py-0.5 rounded-full">${lha.Tahun || '2025'}</span>
+    const pics = getUniquePicsForLha(kodeLha);
+    const picBadges = pics.length > 0
+        ? pics.slice(0, 2).map(p => `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-md-surface-container-low text-[10px] font-semibold text-md-on-surface-variant border border-md-outline/10"><i class="fa-regular fa-building text-[8px]"></i> ${p}</span>`).join(" ") + (pics.length > 2 ? `<span class="text-[9px] text-md-on-surface-variant/70 font-semibold ml-0.5">+${pics.length - 2}</span>` : "")
+        : `<span class="text-[10px] text-md-on-surface-variant/50 italic">Belum ada PIC</span>`;
+
+    tr.innerHTML = `
+        <td class="py-3 px-3.5 align-middle whitespace-nowrap">
+            <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-full bg-md-primary/10 flex items-center justify-center text-md-primary shrink-0">
+                    <i class="fa-solid fa-file-lines text-xs"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-xs font-bold text-md-on-background">${kodeLha}</span>
+                    <span class="text-[10px] text-md-on-surface-variant">${temuanCount} Temuan • ${recs.length} Rekomendasi</span>
+                </div>
             </div>
-            <span class="text-[10px] font-bold border px-2 py-0.5 rounded-full ${sc.bg} flex items-center gap-1">
+        </td>
+        <td class="py-3 px-2 align-middle whitespace-nowrap">
+            <div class="flex flex-col gap-1 items-start">
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${sourceBadgeColor}">${source}</span>
+                <span class="text-[10px] text-md-on-surface-variant font-medium ml-0.5">Thn ${lha.Tahun || '2025'}</span>
+            </div>
+        </td>
+        <td class="py-3 px-2 align-middle">
+            <div class="flex flex-wrap gap-1 items-center max-w-[170px]">
+                ${picBadges}
+            </div>
+        </td>
+        <td class="py-3 px-2 align-middle whitespace-nowrap">
+            <span class="text-[10px] font-bold border px-2.5 py-0.5 rounded-full ${sc.bg} inline-flex items-center gap-1">
                 <i class="fa-solid ${sc.icon} text-[8px]"></i> ${lhaStatus}
             </span>
-        </div>
-        <div class="flex items-center justify-between gap-2">
-            <div class="flex items-center gap-3 text-[10px] text-md-on-surface-variant">
-                <span class="font-medium"><i class="fa-solid fa-magnifying-glass text-[9px] mr-0.5"></i> ${temuanCount} Temuan</span>
-                <span class="font-medium"><i class="fa-solid fa-clipboard-list text-[9px] mr-0.5"></i> ${recs.length} Rekomendasi</span>
+        </td>
+        <td class="py-3 px-2 align-middle whitespace-nowrap min-w-[110px]">
+            <div class="flex flex-col gap-1">
+                <div class="flex items-center justify-between text-[10px] font-bold text-md-on-surface-variant">
+                    <span>${finishedRecs.length}/${recs.length} Dokumen</span>
+                    <span class="${progressPercent === 100 ? 'text-green-600' : progressPercent > 0 ? 'text-amber-600' : 'text-red-500'}">${progressPercent}%</span>
+                </div>
+                <div class="w-full bg-md-surface-container-low rounded-full h-1.5 overflow-hidden">
+                    <div class="h-1.5 rounded-full transition-all duration-500 ${progressPercent === 100 ? 'bg-green-500' : progressPercent > 0 ? 'bg-amber-500' : 'bg-red-400'}" style="width: ${progressPercent}%"></div>
+                </div>
             </div>
-            <span class="text-[10px] font-semibold text-md-on-surface-variant">${finishedRecs.length}/${recs.length} Tuntas</span>
-        </div>
-        <!-- Mini Progress Bar -->
-        <div class="w-full bg-md-surface-container-low rounded-full h-1.5 mt-2">
-            <div class="h-1.5 rounded-full transition-all duration-500 ${lhaStatus === 'TUNTAS' ? 'bg-green-500' : lhaStatus === 'PROSES' ? 'bg-amber-500' : 'bg-red-400'}" style="width: ${progressPercent}%"></div>
-        </div>
-        <button onclick="selectLha('${kodeLha}')" class="self-end px-3.5 py-1.5 rounded-full bg-md-primary text-white text-[10px] font-bold hover:shadow-md active:scale-95 transition-all flex items-center gap-1.5 mt-2 cursor-pointer">
-            <i class="fa-solid fa-eye text-[9px]"></i> Detail
-        </button>
+        </td>
+        <td class="py-3 px-3 align-middle text-right whitespace-nowrap">
+            <button onclick="selectLha('${kodeLha}')" class="px-3 py-1 rounded-full bg-md-primary text-white text-[10px] font-bold hover:shadow-md active:scale-95 transition-all inline-flex items-center gap-1 cursor-pointer">
+                <i class="fa-solid fa-eye text-[9px]"></i> Detail
+            </button>
+        </td>
     `;
-    return el;
+
+    return tr;
 }
 
 function selectLha(kodeLha) {
