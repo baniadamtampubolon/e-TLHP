@@ -454,26 +454,28 @@
     <!-- Full-Width Header-Matched Footer (Height h-16) -->
     <footer class="w-full bg-md-surface-container/80 backdrop-blur-md border-t border-md-outline/10 z-20 mt-auto">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between text-xs text-md-on-surface-variant">
-            <!-- Left: Branding & Copyright -->
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-xl bg-md-primary/10 flex items-center justify-center text-md-primary font-bold border border-md-primary/20 shadow-2xs shrink-0">
-                    <i class="fa-solid fa-shield-halved text-xs"></i>
+            <!-- Left: Logo & Kemenko Pangan Brand -->
+            <div class="flex items-center gap-3 shrink-0">
+                <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center overflow-hidden shadow-2xs border border-md-outline/10 p-0.5 shrink-0">
+                    <img src="Kemenkopangan-logo.png" alt="Logo Kemenko Pangan" class="w-full h-full object-contain">
                 </div>
-                <div class="flex items-center gap-2 flex-wrap">
-                    <span class="font-bold text-md-on-background text-xs">e-TLHP Kemenko Pangan RI</span>
-                    <span class="text-md-outline/40">•</span>
-                    <span class="text-[11px]">© 2026 Inspektorat Jenderal. All Rights Reserved.</span>
+                <div class="flex flex-col">
+                    <span class="font-bold text-md-on-background text-xs leading-none">e-TLHP</span>
+                    <span class="text-[10px] text-md-on-surface-variant/80 font-medium">Kemenko Pangan RI</span>
                 </div>
             </div>
 
-            <!-- Right: System Status & Governance Badges -->
-            <div class="flex items-center gap-3 text-xs font-semibold">
+            <!-- Center: Copyright Text (Centered) -->
+            <div class="text-center font-medium text-[11px] text-md-on-surface-variant px-2">
+                © 2026 Inspektorat Jenderal. All Rights Reserved.
+            </div>
+
+            <!-- Right: System Status Badge -->
+            <div class="flex items-center gap-3 text-xs font-semibold shrink-0">
                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 text-green-700 border border-green-200 text-xs font-bold shadow-2xs">
                     <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                     System Active & Synchronized
                 </span>
-                <span class="hidden sm:inline text-md-outline/40">•</span>
-                <span class="hidden sm:inline text-md-on-surface-variant/80 font-medium">RBAC Enforced</span>
             </div>
         </div>
     </footer>
