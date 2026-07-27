@@ -434,12 +434,6 @@ function renderLhaList() {
     const filteredCountEl = document.getElementById('filteredLhaCount');
     const totalCountEl = document.getElementById('totalLhaCount');
     const footerTotalEl = document.getElementById('footerTotalLha');
-    const tableSearchInput = document.getElementById('tableSearchInput');
-    const mainSearchInput = document.getElementById('searchInput');
-    
-    if (mainSearchInput && tableSearchInput && tableSearchInput.value !== mainSearchInput.value) {
-        tableSearchInput.value = mainSearchInput.value;
-    }
 
     if (totalCountEl) totalCountEl.textContent = masterLHP.length;
     if (footerTotalEl) footerTotalEl.textContent = filteredLHA.length;
@@ -570,11 +564,14 @@ function selectLha(kodeLha) {
     selectedLhaId = kodeLha;
     selectedTemuanId = null; // Reset to list of findings
     
-    // Switch to full width detail view section
+    // Switch to full width detail view section with smooth animation
     const tableSection = document.getElementById('lhaTableViewSection');
     const detailPanel = document.getElementById('detailPanel');
     if (tableSection) tableSection.classList.add('hidden');
-    if (detailPanel) detailPanel.classList.remove('hidden');
+    if (detailPanel) {
+        detailPanel.classList.remove('hidden');
+        detailPanel.classList.add('animate-in', 'fade-in', 'slide-in-from-right-4', 'duration-300');
+    }
     
     showLhaDetail(kodeLha);
 }
@@ -583,10 +580,13 @@ function closeDetail() {
     selectedLhaId = null;
     selectedTemuanId = null;
     
-    // Switch back to full size table view section
+    // Switch back to full size table view section with smooth animation
     const tableSection = document.getElementById('lhaTableViewSection');
     const detailPanel = document.getElementById('detailPanel');
-    if (tableSection) tableSection.classList.remove('hidden');
+    if (tableSection) {
+        tableSection.classList.remove('hidden');
+        tableSection.classList.add('animate-in', 'fade-in', 'slide-in-from-left-4', 'duration-300');
+    }
     if (detailPanel) detailPanel.classList.add('hidden');
 
     const fallbackState = document.getElementById('detailFallbackState');
@@ -1076,24 +1076,45 @@ function showLhaDetail(kodeLha) {
     }
 
     content.innerHTML = `
-        <!-- LHA Detail Header -->
-        <div class="p-5 border-b border-md-outline/10 flex items-center justify-between bg-md-surface-container-low/20 flex-wrap gap-3">
-            <div class="flex items-center gap-3 flex-wrap">
-                <button onclick="closeDetail()" class="px-3.5 py-1.5 rounded-full bg-md-primary/10 text-md-primary text-xs font-bold hover:bg-md-primary/20 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs">
-                    <i class="fa-solid fa-arrow-left text-[10px]"></i>
-                    Kembali ke Tabel Utama
+        <!-- LHA Detail Breadcrumb & Header -->
+        <div class="px-6 py-3 border-b border-md-outline/10 bg-md-surface-container-low/40 flex items-center justify-between flex-wrap gap-3 text-xs">
+            <!-- Breadcrumbs Trail -->
+            <nav class="flex items-center gap-2 text-md-on-surface-variant font-medium flex-wrap">
+                <button onclick="closeDetail()" class="hover:text-md-primary font-semibold flex items-center gap-1.5 transition-colors cursor-pointer">
+                    <i class="fa-solid fa-table-list text-md-primary"></i> Tabel Utama LHA
                 </button>
-                <span class="text-xs font-bold text-md-on-background bg-md-surface-container-low/75 px-3 py-1 rounded-full">${kodeLha}</span>
+                <i class="fa-solid fa-chevron-right text-[9px] text-md-outline/40"></i>
+                <button onclick="goBackToFindings()" class="${selectedTemuanId ? 'hover:text-md-primary text-md-on-surface-variant font-medium' : 'text-md-primary font-bold'} transition-colors cursor-pointer">
+                    ${kodeLha}
+                </button>
+                ${selectedTemuanId ? `
+                <i class="fa-solid fa-chevron-right text-[9px] text-md-outline/40"></i>
+                <span class="text-md-primary font-bold flex items-center gap-1">
+                    <i class="fa-solid fa-magnifying-glass text-[9px]"></i> ${selectedTemuanId}
+                </span>
+                ` : ''}
+            </nav>
+
+            <!-- Close Detail Button -->
+            <button onclick="closeDetail()" class="px-3.5 py-1.5 rounded-full bg-md-surface-container-low text-md-on-surface-variant text-xs font-bold hover:bg-md-outline/10 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs">
+                <i class="fa-solid fa-xmark text-xs"></i> Tutup Detail
+            </button>
+        </div>
+
+        <!-- LHA Summary Metadata Header -->
+        <div class="p-5 border-b border-md-outline/10 flex items-center justify-between bg-white flex-wrap gap-3">
+            <div class="flex items-center gap-3 flex-wrap">
+                <span class="text-xs font-bold text-md-on-background bg-md-surface-container-low px-3 py-1 rounded-full border border-md-outline/10">${kodeLha}</span>
                 <span class="text-xs font-bold px-3 py-1 rounded-full ${sourceBadgeColor}">${source}</span>
-                <span class="text-[10px] font-medium text-md-on-surface-variant bg-md-surface-container-low px-2 py-0.5 rounded-full">${lha.Tahun || '2025'}</span>
-                <span class="text-[10px] font-bold border px-2.5 py-0.5 rounded-full ${sc.bg} flex items-center gap-1">
-                    <i class="fa-solid ${sc.icon} text-[8px]"></i> ${lhaStatus}
+                <span class="text-xs font-medium text-md-on-surface-variant bg-md-surface-container-low px-2.5 py-0.5 rounded-full">Thn ${lha.Tahun || '2025'}</span>
+                <span class="text-xs font-bold border px-3 py-0.5 rounded-full ${sc.bg} flex items-center gap-1">
+                    <i class="fa-solid ${sc.icon} text-[9px]"></i> ${lhaStatus}
                 </span>
             </div>
             <div class="flex items-center gap-2">
                 ${currentRole === "AUDITOR" ? `
-                <button onclick="openTemuanModal('${kodeLha}', false)" class="px-2.5 py-1 rounded-full bg-md-primary text-white text-[10px] font-semibold hover:shadow-sm active:scale-90 transition-all flex items-center gap-1" title="Tambah Temuan ke LHA ini">
-                    <i class="fa-solid fa-plus text-[9px]"></i> Temuan
+                <button onclick="openTemuanModal('${kodeLha}', false)" class="px-3 py-1.5 rounded-full bg-md-primary text-white text-xs font-bold hover:shadow-sm active:scale-90 transition-all flex items-center gap-1.5" title="Tambah Temuan ke LHA ini">
+                    <i class="fa-solid fa-plus text-xs"></i> Temuan
                 </button>
                 <button onclick="openLhaModal(true, '${kodeLha}')" class="p-1.5 rounded-full text-md-primary hover:bg-md-primary/10 active:scale-90 transition-all text-xs" title="Edit LHA">
                     <i class="fa-solid fa-pen"></i>
@@ -1102,9 +1123,6 @@ function showLhaDetail(kodeLha) {
                     <i class="fa-solid fa-trash"></i>
                 </button>
                 ` : ''}
-                <button onclick="closeDetail()" class="w-8 h-8 rounded-full bg-md-surface-container-low flex items-center justify-center hover:bg-md-primary/10 active:scale-95 transition-all text-md-on-background">
-                    <i class="fa-solid fa-xmark text-sm"></i>
-                </button>
             </div>
         </div>
 
