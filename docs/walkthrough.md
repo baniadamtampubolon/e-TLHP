@@ -102,9 +102,14 @@ Kami telah membangun fondasi API Backend menggunakan **FastAPI** yang berjalan s
 
 ---
 
-## Navigasi Temuan Dua Tingkat
+## Navigasi Temuan Dua Tingkat & Redesain Tabel Data LHA
 
-Untuk mengakomodasi LHA yang memiliki puluhan temuan, panel kanan dibagi menjadi alur navigasi dua tingkat:
-
-1. **Daftar Temuan Ringkas (Summary List)**: Kartu ringkas per temuan (Kode, Tanggal, Status, Cuplikan Kriteria, Jumlah Rekomendasi). Sub-temuan ditampilkan bersarang di bawah induknya.
-2. **Detail Temuan Terfokus**: Detail lengkap (Kriteria, Sebab, Rekomendasi, Form Bukti) + tombol "Kembali ke Daftar Temuan".
+1. **Format Tabel Data LHA Informatif**: Panel daftar LHA telah diperbarui menjadi format Tabel Data terstruktur yang sangat disukai oleh auditor senior, memuat kolom:
+   - **Dokumen LHA**: Kode LHP & jumlah temuan/rekomendasi.
+   - **Sumber & Tahun**: Badge BPK-RI / Inspektorat & Tahun LHP.
+   - **Unit PIC**: Tag unit penanggung jawab yang terlibat.
+   - **Status LHA**: Badge TUNTAS / PROSES / PENDING.
+   - **Kelengkapan TL**: Mini progress bar & persentase penyelesaian %.
+   - **Aksi**: Tombol Detail cepat.
+2. **Filter Status Chips Cepat**: Tombol filter instant (`Semua`, `On Progress`, `Selesai`, `Belum TL`) tepat di atas tabel.
+3. **Daftar Temuan Ringkas & Detail Terfokus**: Klik tombol Detail atau baris tabel LHA untuk menampilkan temuan & rekomendasi terfokus.
