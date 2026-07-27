@@ -617,6 +617,7 @@ function showLhaDetail(kodeLha) {
     if (content) content.classList.remove('hidden');
 
     const source = lha["Sumber Audit"] || "BPK-RI";
+    const isBpkAudit = (source === "BPK-RI" || kodeLha.includes("BPK"));
     const sourceBadgeColor = source === "BPK-RI" ? "bg-md-primary text-white" : "bg-md-tertiary text-white";
     const lhaStatus = computeLhaStatus(kodeLha);
     const statusConfig = {
@@ -810,6 +811,33 @@ function showLhaDetail(kodeLha) {
                         `;
                     }
 
+                    let auditorVerifyHTML = "";
+                    if (currentRole === "AUDITOR") {
+                        auditorVerifyHTML = `
+                            <div class="mt-3 p-3 bg-indigo-50/70 rounded-2xl border border-indigo-200/80">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h6 class="text-[11px] font-bold text-indigo-950 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-user-check text-indigo-600"></i> Verifikasi Status Evaluasi (Auditor Itjen):
+                                    </h6>
+                                    <span class="text-[10px] font-bold ${isBpkAudit ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-indigo-100 text-indigo-800'} px-2.5 py-0.5 rounded-full">
+                                        ${isBpkAudit ? '🛡️ Verifikasi BPK-RI (Master Locked)' : '✏️ Audit Internal Itjen'}
+                                    </span>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <button onclick="updateRecStatusDirect('${rec["Kode Rekomendasi"]}', 'TUNTAS', event)" class="px-3 py-1 text-[11px] font-bold rounded-full bg-green-600 text-white hover:bg-green-700 active:scale-95 transition-all shadow-2xs cursor-pointer">
+                                        <i class="fa-solid fa-circle-check text-[10px]"></i> Setujui TUNTAS (Selesai)
+                                    </button>
+                                    <button onclick="updateRecStatusDirect('${rec["Kode Rekomendasi"]}', 'PROSES', event)" class="px-3 py-1 text-[11px] font-bold rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all shadow-2xs cursor-pointer">
+                                        <i class="fa-solid fa-spinner text-[10px]"></i> Verifikasi PROSES (Dalam Progres)
+                                    </button>
+                                    <button onclick="updateRecStatusDirect('${rec["Kode Rekomendasi"]}', 'PENDING', event)" class="px-3 py-1 text-[11px] font-bold rounded-full bg-orange-600 text-white hover:bg-orange-700 active:scale-95 transition-all shadow-2xs cursor-pointer">
+                                        <i class="fa-solid fa-clock text-[10px]"></i> Set PENDING (Belum TL)
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }
+
                     return `
                         <div class="p-3.5 rounded-2xl bg-md-background border border-md-outline/10 shadow-sm flex flex-col gap-3">
                             <div class="flex items-center justify-between gap-2">
@@ -819,10 +847,10 @@ function showLhaDetail(kodeLha) {
                                 </div>
                                 <div class="flex items-center gap-1.5">
                                     <span class="text-[10px] font-bold border px-2 py-0.5 rounded-full ${statusBadgeClass}">${status}</span>
-                                    ${currentRole === "AUDITOR" ? `
+                                    ${currentRole === "AUDITOR" && !isBpkAudit ? `
                                     <button onclick="openRekomendasiModal('${t["Kode Temuan"]}', true, '${rec["Kode Rekomendasi"]}')" class="p-1 rounded-full text-md-primary hover:bg-md-primary/10 active:scale-90 transition-all text-[10px]" title="Edit Rekomendasi"><i class="fa-solid fa-pen"></i></button>
                                     <button onclick="triggerDeleteRekomendasi('${rec["Kode Rekomendasi"]}')" class="p-1 rounded-full text-red-600 hover:bg-red-50 active:scale-90 transition-all text-[10px]" title="Hapus Rekomendasi"><i class="fa-solid fa-trash"></i></button>
-                                    ` : ''}
+                                    ` : isBpkAudit ? `<span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">BPK-RI</span>` : ''}
                                 </div>
                             </div>
                             <div>
@@ -840,6 +868,7 @@ function showLhaDetail(kodeLha) {
                             </div>` : ''}
                             ${financialHTML}
                             ${progressHTML}
+                            ${auditorVerifyHTML}
                             ${satkerInputFormHTML}
                         </div>
                     `;
@@ -1045,10 +1074,10 @@ function showLhaDetail(kodeLha) {
                             <i class="fa-solid fa-list-check text-md-primary"></i>
                             Daftar Temuan (${parentTemuan.length})
                         </h3>
-                        ${currentRole === "AUDITOR" ? `
+                        ${currentRole === "AUDITOR" && !isBpkAudit ? `
                         <button onclick="openTemuanModal('${kodeLha}', false)" class="px-3 py-1 rounded-full bg-md-primary text-white text-[10px] font-bold hover:shadow active:scale-90 transition-all flex items-center gap-1 cursor-pointer">
                             <i class="fa-solid fa-plus text-[9px]"></i> Temuan
-                        </button>` : ''}
+                        </button>` : isBpkAudit ? `<span class="text-[10px] font-semibold text-amber-900 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-300"><i class="fa-solid fa-shield-halved text-[9px] mr-1"></i> Temuan Resmi BPK-RI (ReadOnly)</span>` : ''}
                     </div>
                     <div class="flex flex-col gap-4">
                         ${listItems}
@@ -1112,7 +1141,7 @@ function showLhaDetail(kodeLha) {
                 </span>
             </div>
             <div class="flex items-center gap-2">
-                ${currentRole === "AUDITOR" ? `
+                ${currentRole === "AUDITOR" && !isBpkAudit ? `
                 <button onclick="openTemuanModal('${kodeLha}', false)" class="px-3 py-1.5 rounded-full bg-md-primary text-white text-xs font-bold hover:shadow-sm active:scale-90 transition-all flex items-center gap-1.5" title="Tambah Temuan ke LHA ini">
                     <i class="fa-solid fa-plus text-xs"></i> Temuan
                 </button>
@@ -1122,7 +1151,7 @@ function showLhaDetail(kodeLha) {
                 <button onclick="triggerDeleteLha('${kodeLha}')" class="p-1.5 rounded-full text-red-600 hover:bg-red-50 active:scale-90 transition-all text-xs" title="Hapus LHA">
                     <i class="fa-solid fa-trash"></i>
                 </button>
-                ` : ''}
+                ` : isBpkAudit ? `<span class="text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300"><i class="fa-solid fa-shield-halved text-[10px] mr-1"></i> Mode Verifikasi Auditor (BPK-RI)</span>` : ''}
             </div>
         </div>
 
@@ -1411,6 +1440,27 @@ async function triggerDeleteRekomendasi(kode_rekomendasi) {
         alert("Rekomendasi berhasil dihapus!");
         loadDataFromAPI();
     } catch (err) {
+        alert(err.message);
+    }
+}
+
+// Direct Auditor Status Verification for Recommendation
+async function updateRecStatusDirect(kode_rekomendasi, new_status, event) {
+    if (event) event.preventDefault();
+    try {
+        const response = await fetch(`${API_BASE}/rekomendasi/${kode_rekomendasi}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: new_status })
+        });
+        
+        if (!response.ok) {
+            throw new Error("Gagal memperbarui status verifikasi rekomendasi");
+        }
+        
+        alert(`Status verifikasi rekomendasi ${kode_rekomendasi} berhasil diubah menjadi: ${new_status}`);
+        await loadDataFromAPI();
+    } catch(err) {
         alert(err.message);
     }
 }
