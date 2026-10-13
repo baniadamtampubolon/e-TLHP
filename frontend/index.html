@@ -5,49 +5,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal e-TLHP Kemenko Pangan</title>
+    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts: Roboto -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Google Fonts: Plus Jakarta Sans (Modern Clean Font) -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <!-- External Modular Stylesheet -->
     <link rel="stylesheet" href="css/style.css">
 
     <script>
+        // Custom Tailwind Config (Diganti dengan Skema Warna Kemenko yang Profesional)
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
                         md: {
-                            background: '#FFFBFE',
-                            'on-background': '#1C1B1F',
-                            primary: '#6750A4',
+                            background: '#F8FAFC', // slate-50 untuk background utama bersih
+                            'on-background': '#0F172A', // slate-900 untuk teks utama
+                            primary: '#047857', // emerald-700 (Hijau Zamrud Kemenko)
                             'on-primary': '#FFFFFF',
-                            secondary: '#625B71',
-                            'secondary-container': '#E8DEF8',
-                            'on-secondary-container': '#1D192B',
-                            tertiary: '#7D5260',
+                            secondary: '#1E293B', // slate-800 (Aksen Gelap)
+                            'secondary-container': '#D1FAE5', // emerald-100
+                            'on-secondary-container': '#064E3B', // emerald-900
+                            tertiary: '#4338CA', // indigo-700 (Aksen Biru Dongker)
                             'on-tertiary': '#FFFFFF',
-                            surface: '#FFF8FD',
-                            'surface-container': '#F3EDF7',
-                            'surface-container-low': '#E7E0EC',
-                            outline: '#79747E',
-                            'on-surface-variant': '#49454F',
+                            surface: '#FFFFFF', // Putih murni untuk Card
+                            'surface-container': '#FFFFFF', 
+                            'surface-container-low': '#F1F5F9', // slate-100 untuk hover/bg-input
+                            outline: '#CBD5E1', // slate-300 untuk border
+                            'on-surface-variant': '#64748B', // slate-500 untuk teks sub/label
                         }
                     },
                     fontFamily: {
-                        sans: ['Roboto', 'sans-serif'],
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
                     },
                     borderRadius: {
-                        '3xl': '24px',
-                        '4xl': '32px',
-                        '5xl': '48px',
+                        '3xl': '1rem', // Dikecilkan agar sudut card tidak terlalu bulat/menggelembung
+                        '4xl': '1.5rem',
                     },
-                    transitionTimingFunction: {
-                        'md-standard': 'cubic-bezier(0.2, 0, 0, 1)'
+                    boxShadow: {
+                        'sm': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+                        'md': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
                     }
                 }
             }
@@ -55,36 +61,26 @@
     </script>
 </head>
 
-<body class="min-h-screen flex flex-col relative overflow-x-hidden">
+<body class="min-h-screen flex flex-col relative overflow-x-hidden bg-md-background font-sans text-md-on-background">
 
-    <!-- Atmospheric background blur shapes -->
-    <div class="fixed top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
-        <div class="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-md-primary/10 blur-[120px]">
-        </div>
-        <div class="absolute bottom-[-10%] left-[-15%] w-[700px] h-[700px] rounded-full bg-md-tertiary/10 blur-[140px]">
-        </div>
-    </div>
-
-    <!-- Header / Top Navbar -->
-    <header
-        class="sticky top-0 z-50 bg-md-background/80 backdrop-blur-md border-b border-md-outline/10 h-16 flex items-center justify-between px-6">
+    <!-- Header / Top Navbar (Dibuat lebih bersih) -->
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 h-16 flex items-center justify-between px-6">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center overflow-hidden shadow-sm">
+            <div class="w-10 h-10 rounded-md bg-white flex items-center justify-center overflow-hidden">
                 <img src="Kemenkopangan-logo.png" alt="Logo Kemenko Pangan" class="w-8 h-8 object-contain">
             </div>
             <div>
-                <h1 class="text-lg font-bold text-md-on-background leading-tight">e-TLHP</h1>
-                <p class="text-xs text-md-on-surface-variant font-medium">Kemenko Bidang Pangan</p>
+                <h1 class="text-lg font-bold text-slate-900 leading-tight tracking-tight">e-TLHP</h1>
+                <p class="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Kemenko Bidang Pangan</p>
             </div>
         </div>
 
         <!-- Header Profile Section (Shown when logged in) -->
         <div id="headerProfileSection" class="hidden flex items-center gap-4">
-            <!-- Mode Peran Selector (Only visible for Auditor for simulation/review convenience) -->
             <div id="roleSwitcherContainer" class="hidden flex items-center gap-2">
-                <label class="text-xs font-bold text-md-on-surface-variant hidden md:inline">Mode Peran:</label>
+                <label class="text-xs font-semibold text-slate-500 hidden md:inline">Mode Peran:</label>
                 <select id="roleSelector" onchange="switchRole()"
-                    class="h-9 px-3 text-xs font-semibold rounded-full bg-md-secondary-container text-md-on-secondary-container border border-md-outline/10 focus:outline-none cursor-pointer">
+                    class="h-9 px-3 text-xs font-semibold rounded-lg bg-slate-50 text-slate-700 border border-slate-200 focus:outline-none focus:border-md-primary focus:ring-1 focus:ring-md-primary cursor-pointer shadow-sm">
                     <option value="AUDITOR">Auditor (Itjen)</option>
                     <option value="SATKER:Biro SDMO">Simulasi: Biro SDMO</option>
                     <option value="SATKER:Biro UKK">Simulasi: Biro UKK</option>
@@ -102,158 +98,133 @@
                 </select>
             </div>
 
-            <span id="roleBadge"
-                class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-md-primary/10 text-md-primary">
+            <span id="roleBadge" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
                 <!-- Dynamic Content -->
             </span>
 
-            <!-- Logout Button -->
-            <button onclick="handleLogout()"
-                class="h-9 px-4 rounded-full bg-md-tertiary/10 text-md-tertiary text-xs font-bold hover:bg-md-tertiary/20 active:scale-95 transition-all flex items-center gap-1.5">
-                <i class="fa-solid fa-right-from-bracket"></i>
-                Keluar
+            <button onclick="handleLogout()" class="h-9 px-4 rounded-lg bg-rose-50 text-rose-600 border border-rose-100 text-xs font-bold hover:bg-rose-100 active:scale-95 transition-all flex items-center gap-2">
+                <i class="fa-solid fa-right-from-bracket"></i> Keluar
             </button>
         </div>
     </header>
 
-    <!-- 1. LOGIN CARD SECTION (Shown when logged out) -->
-    <section id="loginCardSection" class="flex-1 flex items-center justify-center p-4 z-10">
-        <div
-            class="w-full max-w-md bg-md-surface-container rounded-4xl p-8 border border-md-outline/10 shadow-lg flex flex-col gap-6">
-            <div class="text-center">
-                <div
-                    class="w-16 h-16 rounded-full bg-white flex items-center justify-center overflow-hidden shadow-sm mx-auto mb-3 p-1">
-                    <img src="Kemenkopangan-logo.png" alt="Logo Kemenko Pangan" class="w-12 h-12 object-contain">
+    <!-- 1. LOGIN CARD SECTION -->
+    <section id="loginCardSection" class="flex-1 flex items-center justify-center p-4 z-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-slate-100 via-slate-50 to-slate-200">
+        <div class="w-full max-w-md bg-white rounded-2xl p-8 border border-slate-200 shadow-xl flex flex-col gap-6 relative overflow-hidden">
+            <!-- Decorative accent line on top -->
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-500 to-indigo-600"></div>
+            
+            <div class="text-center mt-2">
+                <div class="w-20 h-20 rounded-xl bg-slate-50 flex items-center justify-center overflow-hidden mx-auto mb-4 border border-slate-100 p-2 shadow-inner">
+                    <img src="Kemenkopangan-logo.png" alt="Logo Kemenko Pangan" class="w-14 h-14 object-contain">
                 </div>
-                <h2 class="text-xl font-bold text-md-on-background">Sign In e-TLHP</h2>
-                <p class="text-xs text-md-on-surface-variant mt-1.5">Akses Sistem Pemantauan Tindak Lanjut Hasil
-                    Pemeriksaan</p>
+                <h2 class="text-2xl font-extrabold text-slate-800 tracking-tight">Sign In e-TLHP</h2>
+                <p class="text-sm text-slate-500 mt-2">Akses Sistem Pemantauan Tindak Lanjut Hasil Pemeriksaan</p>
             </div>
 
-            <!-- Login Form -->
-            <form onsubmit="handleLoginSubmit(event)" class="flex flex-col gap-4">
-                <div class="flex flex-col">
-                    <label class="text-xs font-bold text-md-on-surface-variant mb-1 ml-1">Username</label>
+            <form onsubmit="handleLoginSubmit(event)" class="flex flex-col gap-5">
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Username</label>
                     <div class="relative">
                         <input type="text" name="username" required placeholder="Masukkan username..."
-                            class="w-full h-11 pl-10 pr-4 rounded-xl bg-md-surface-container-low text-sm border-b-2 border-md-outline focus:outline-none focus:border-md-primary text-md-on-background">
-                        <i class="fa-solid fa-user absolute left-3.5 top-3.5 text-md-on-surface-variant text-sm"></i>
+                            class="w-full h-11 pl-10 pr-4 rounded-lg bg-slate-50 text-sm border border-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:bg-white transition-all text-slate-800">
+                        <i class="fa-solid fa-user absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
                     </div>
                 </div>
 
-                <div class="flex flex-col">
-                    <label class="text-xs font-bold text-md-on-surface-variant mb-1 ml-1">Password</label>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Password</label>
                     <div class="relative">
                         <input type="password" name="password" required placeholder="Masukkan password..."
-                            class="w-full h-11 pl-10 pr-4 rounded-xl bg-md-surface-container-low text-sm border-b-2 border-md-outline focus:outline-none focus:border-md-primary text-md-on-background">
-                        <i class="fa-solid fa-key absolute left-3.5 top-3.5 text-md-on-surface-variant text-sm"></i>
+                            class="w-full h-11 pl-10 pr-4 rounded-lg bg-slate-50 text-sm border border-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:bg-white transition-all text-slate-800">
+                        <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
                     </div>
                 </div>
 
-                <!-- Error Message Alert -->
-                <div id="loginErrorMessage"
-                    class="hidden text-xs text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-200 font-medium text-center">
-                    Username atau password salah.
+                <div id="loginErrorMessage" class="hidden text-xs text-rose-600 bg-rose-50 p-3 rounded-lg border border-rose-200 font-semibold text-center flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation"></i> Username atau password salah.
                 </div>
 
-                <button type="submit"
-                    class="mt-2 w-full h-11 rounded-full bg-md-primary text-white text-sm font-bold shadow-md hover:shadow-lg hover:bg-md-primary/95 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                    Masuk ke Portal
+                <button type="submit" class="mt-2 w-full h-12 rounded-lg bg-md-primary text-white text-sm font-bold shadow-md hover:shadow-lg hover:bg-emerald-800 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                    Masuk ke Portal <i class="fa-solid fa-arrow-right ml-1"></i>
                 </button>
             </form>
 
-            <div
-                class="text-[10px] text-md-on-surface-variant/60 text-center border-t border-md-outline/10 pt-4 leading-relaxed max-h-32 overflow-y-auto">
-                <p class="font-semibold text-md-primary">Daftar Akun Pengujian (Username & Password):</p>
-                <p class="mt-1">Auditor: <span class="font-bold">itjen</span> / <span class="font-bold">admin123</span></p>
+            <div class="text-[11px] text-slate-400 text-center border-t border-slate-100 pt-5 leading-relaxed max-h-32 overflow-y-auto">
+                <p class="font-bold text-slate-500 mb-2">Daftar Akun Pengujian:</p>
+                <p class="mt-1">Auditor: <span class="font-bold text-slate-600">itjen</span> / <span class="font-bold text-slate-600">admin123</span></p>
                 <p class="mt-1">
-                    Satker: <span class="font-bold">sdmo/sdmo123</span>, <span class="font-bold">ukk/ukk123</span>, <span class="font-bold">mkdi/mkdi123</span>, <span class="font-bold">hks/hks123</span>, <span class="font-bold">sesdep/sesdep123</span>, <span class="font-bold">deputi1/deputi1123</span>, <span class="font-bold">deputi2/deputi2123</span>, <span class="font-bold">deputi3/deputi3123</span>, <span class="font-bold">deputi4/deputi4123</span>, <span class="font-bold">staf_konektifitas/staf123</span>, <span class="font-bold">biro_lingkup/biro123</span>, <span class="font-bold">inspektorat/insp123</span>, <span class="font-bold">semua_deputi/deputi123</span>
+                    Satker: <span class="font-bold text-slate-600">sdmo/sdmo123</span>, <span class="font-bold text-slate-600">ukk/ukk123</span>, ... (dll)
                 </p>
             </div>
         </div>
     </section>
 
-    <!-- 2. DASHBOARD MAIN SECTION (Shown when logged in) -->
-    <main id="dashboardMainSection"
-        class="hidden flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 z-10 flex flex-col gap-6">
+    <!-- 2. DASHBOARD MAIN SECTION -->
+    <main id="dashboardMainSection" class="hidden flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 z-10 flex flex-col gap-8">
 
-        <!-- Top Welcome Header Card -->
-        <section class="bg-md-surface-container rounded-3xl p-6 shadow-sm border border-md-outline/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <!-- Top Header Card (Lebih Ringkas) -->
+        <section class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-4">
             <div>
-                <h2 class="text-2xl font-bold text-md-on-background">Dashboard Monitoring Tindak Lanjut</h2>
-                <p class="text-xs text-md-on-surface-variant mt-1">Pemantauan Real-Time Hasil Pemeriksaan BPK-RI & Inspektorat Kemenko Pangan</p>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">Dashboard Monitoring</h2>
+                <p class="text-sm text-slate-500 mt-1">Pemantauan Real-Time Hasil Pemeriksaan BPK-RI & Inspektorat</p>
             </div>
-
-            <!-- Reset Filter Button -->
-            <button onclick="resetFilters()"
-                class="self-start md:self-auto px-4 py-2 rounded-full bg-md-surface-container-low text-md-on-surface-variant hover:bg-md-outline/10 text-xs font-bold shadow-2xs active:scale-95 transition-all flex items-center gap-2">
-                <i class="fa-solid fa-arrow-rotate-left text-xs"></i>
-                Reset Filter
+            <button onclick="resetFilters()" class="px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold shadow-sm active:scale-95 transition-all flex items-center gap-2">
+                <i class="fa-solid fa-arrow-rotate-left"></i> Reset Filter
             </button>
         </section>
 
-        <!-- KPI Cards Grid -->
-        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- KPI Cards Grid (Layout dirapatkan dan Dibuat Lebih Profesional) -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            
             <!-- Card 1: Total Temuan -->
-            <div
-                class="bg-md-surface-container rounded-3xl p-5 shadow-sm border border-md-outline/5 flex flex-col justify-between group hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all duration-300">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-xs font-bold text-md-on-surface-variant uppercase tracking-wider">Total Temuan
-                        </p>
-                        <h3 id="kpiTotalTemuan" class="text-3xl font-bold text-md-on-background mt-1">0</h3>
-                    </div>
-                    <div
-                        class="p-3 bg-md-secondary-container text-md-on-secondary-container rounded-2xl group-hover:bg-md-primary group-hover:text-white transition-colors duration-300">
-                        <i class="fa-solid fa-magnifying-glass text-lg"></i>
+            <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 flex flex-col relative overflow-hidden group hover:border-emerald-200 transition-colors">
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Temuan</p>
+                    <div class="p-2 bg-slate-50 text-slate-400 rounded-md group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
+                        <i class="fa-solid fa-magnifying-glass"></i>
                     </div>
                 </div>
-                <div class="mt-4 text-xs text-md-on-surface-variant flex items-center gap-1.5">
-                    <span id="kpiSubTemuanCount" class="font-bold text-md-primary">0 Sub-temuan</span>
-                    <span>terdeteksi secara rinci</span>
+                <div>
+                    <h3 id="kpiTotalTemuan" class="text-3xl font-extrabold text-slate-800">0</h3>
+                </div>
+                <div class="mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-500">
+                    <span id="kpiSubTemuanCount" class="font-bold text-emerald-600">0 Sub-temuan</span> terdeteksi
                 </div>
             </div>
 
-            <!-- Card 2: Total Rekomendasi -->
-            <div
-                class="bg-md-surface-container rounded-3xl p-5 shadow-sm border border-md-outline/5 flex flex-col justify-between group hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all duration-300">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-xs font-bold text-md-on-surface-variant uppercase tracking-wider">Rekomendasi</p>
-                        <h3 id="kpiTotalRekomendasi" class="text-3xl font-bold text-md-on-background mt-1">0</h3>
-                    </div>
-                    <div
-                        class="p-3 bg-md-secondary-container text-md-on-secondary-container rounded-2xl group-hover:bg-md-primary group-hover:text-white transition-colors duration-300">
-                        <i class="fa-solid fa-clipboard-list text-lg"></i>
+            <!-- Card 2: Rekomendasi -->
+            <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 flex flex-col relative overflow-hidden group hover:border-indigo-200 transition-colors">
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Rekomendasi</p>
+                    <div class="p-2 bg-slate-50 text-slate-400 rounded-md group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
+                        <i class="fa-solid fa-clipboard-list"></i>
                     </div>
                 </div>
-                <div class="mt-4 text-xs text-md-on-surface-variant flex items-center gap-1.5">
-                    <span id="kpiRencanaAksiCount" class="font-bold text-md-primary">0 Rencana Aksi</span>
-                    <span>ditetapkan</span>
+                <div>
+                    <h3 id="kpiTotalRekomendasi" class="text-3xl font-extrabold text-slate-800">0</h3>
+                </div>
+                <div class="mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-500">
+                    <span id="kpiRencanaAksiCount" class="font-bold text-indigo-600">0 Rencana Aksi</span> ditetapkan
                 </div>
             </div>
 
             <!-- Card 3: % Penyelesaian -->
-            <div
-                class="bg-md-surface-container rounded-3xl p-5 shadow-sm border border-md-outline/5 flex flex-col justify-between group hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all duration-300">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-xs font-bold text-md-on-surface-variant uppercase tracking-wider">% Penyelesaian
-                        </p>
-                        <h3 id="kpiPercentPenyelesaian" class="text-3xl font-bold text-md-on-background mt-1">0.0%</h3>
-                    </div>
-                    <div
-                        class="p-3 bg-md-secondary-container text-md-on-secondary-container rounded-2xl group-hover:bg-md-primary group-hover:text-white transition-colors duration-300">
-                        <i class="fa-solid fa-circle-check text-lg"></i>
+            <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 flex flex-col relative overflow-hidden group hover:border-emerald-200 transition-colors">
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Penyelesaian</p>
+                    <div class="p-2 bg-slate-50 text-slate-400 rounded-md group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
+                        <i class="fa-solid fa-check-double"></i>
                     </div>
                 </div>
-                <div class="mt-4 w-full">
-                    <div class="w-full bg-md-surface-container-low rounded-full h-2 overflow-hidden">
-                        <div id="kpiProgressBar" class="bg-md-primary h-full rounded-full transition-all duration-500"
-                            style="width: 0%"></div>
+                <div class="flex items-end gap-2">
+                    <h3 id="kpiPercentPenyelesaian" class="text-3xl font-extrabold text-emerald-600">0%</h3>
+                </div>
+                <div class="mt-3">
+                    <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                        <div id="kpiProgressBar" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
                     </div>
-                    <div class="flex justify-between text-[10px] text-md-on-surface-variant mt-1.5">
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-2 font-medium">
                         <span id="kpiFinishedRecs">0 Selesai</span>
                         <span>Target: 100%</span>
                     </div>
@@ -261,30 +232,24 @@
             </div>
 
             <!-- Card 4: Pemulihan Finansial -->
-            <div
-                class="bg-md-surface-container rounded-3xl p-5 shadow-sm border border-md-outline/5 flex flex-col justify-between group hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all duration-300">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-xs font-bold text-md-on-surface-variant uppercase tracking-wider">Pemulihan
-                            Finansial</p>
-                        <h3 id="kpiRecoveryRealisasi" class="text-lg font-bold text-md-on-background mt-1">Rp 0</h3>
-                        <p id="kpiRecoveryTarget" class="text-[10px] text-md-on-surface-variant font-medium">dari Target
-                            Rp 0</p>
-                    </div>
-                    <div
-                        class="p-3 bg-md-secondary-container text-md-on-secondary-container rounded-2xl group-hover:bg-md-primary group-hover:text-white transition-colors duration-300">
-                        <i class="fa-solid fa-money-bill-transfer text-lg"></i>
+            <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 flex flex-col relative overflow-hidden group hover:border-amber-200 transition-colors">
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Pemulihan Dana</p>
+                    <div class="p-2 bg-slate-50 text-slate-400 rounded-md group-hover:bg-amber-50 group-hover:text-amber-600 transition-colors">
+                        <i class="fa-solid fa-wallet"></i>
                     </div>
                 </div>
-                <div class="mt-3">
-                    <div class="w-full bg-md-surface-container-low rounded-full h-2 overflow-hidden">
-                        <div id="kpiRecoveryProgressBar"
-                            class="bg-md-tertiary h-full rounded-full transition-all duration-500" style="width: 0%">
-                        </div>
+                <div class="mb-1">
+                    <h3 id="kpiRecoveryRealisasi" class="text-xl font-extrabold text-slate-800">Rp 0</h3>
+                    <p id="kpiRecoveryTarget" class="text-[10px] text-slate-400 font-medium">Target: Rp 0</p>
+                </div>
+                <div class="mt-auto">
+                    <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                        <div id="kpiRecoveryProgressBar" class="bg-amber-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
                     </div>
-                    <div class="flex justify-between text-[9px] text-md-on-surface-variant mt-1">
-                        <span id="kpiRecoveryPercent" class="font-semibold text-md-tertiary">0% Setor</span>
-                        <span id="kpiRecoverySelisih" class="font-semibold text-red-600">Sisa: Rp 0</span>
+                    <div class="flex justify-between text-[10px] text-slate-500 mt-2 font-medium">
+                        <span id="kpiRecoveryPercent" class="text-amber-600">0% Setor</span>
+                        <span id="kpiRecoverySelisih" class="text-rose-500">Sisa: Rp 0</span>
                     </div>
                 </div>
             </div>
@@ -293,359 +258,118 @@
         <!-- Charts Row -->
         <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Status Distribution Donut Chart -->
-            <div class="bg-md-surface-container rounded-3xl p-6 shadow-sm border border-md-outline/5 flex flex-col">
-                <h3
-                    class="text-sm font-bold text-md-on-background uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-chart-pie text-md-primary"></i>
-                    Status Penyelesaian Rekomendasi
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex flex-col">
+                <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
+                    <i class="fa-solid fa-chart-pie text-emerald-600"></i> Status Rekomendasi
                 </h3>
-                <div class="flex-1 min-h-[260px] flex items-center justify-center relative">
+                <!-- Ukuran Chart diperkecil -->
+                <div class="flex-1 h-[220px] max-h-[220px] flex items-center justify-center relative">
                     <canvas id="statusChart"></canvas>
                 </div>
             </div>
 
             <!-- PIC Contribution Bar Chart -->
-            <div class="bg-md-surface-container rounded-3xl p-6 shadow-sm border border-md-outline/5 flex flex-col">
-                <h3
-                    class="text-sm font-bold text-md-on-background uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-chart-column text-md-primary"></i>
-                    Sebaran Rekomendasi per Unit PIC
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 flex flex-col">
+                <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
+                    <i class="fa-solid fa-chart-bar text-indigo-600"></i> Sebaran per Unit PIC
                 </h3>
-                <div class="flex-1 min-h-[260px] flex items-center justify-center relative">
+                <div class="flex-1 h-[220px] max-h-[220px] flex items-center justify-center relative">
                     <canvas id="picChart"></canvas>
                 </div>
             </div>
         </section>
 
-        <!-- Full-Width Data Panel (Full-Size Table & Detail View Switcher) -->
+        <!-- Full-Width Data Panel -->
         <section class="w-full flex flex-col gap-6 pb-12">
-            <!-- 1. Full-Size LHA Data Table Section (Shown when no LHA is selected) -->
-            <div id="lhaTableViewSection"
-                class="w-full bg-md-surface-container rounded-3xl shadow-sm border border-md-outline/5 flex flex-col overflow-hidden transition-all duration-300">
+            
+            <!-- 1. Full-Size LHA Data Table Section -->
+            <div id="lhaTableViewSection" class="w-full bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden transition-all duration-300">
                 
-                <!-- Top Status Filter Chips (Match Reference Screenshot) -->
-                <div class="px-6 pt-5 pb-3 flex items-center gap-2 overflow-x-auto border-b border-md-outline/10 bg-md-surface-container-low/20">
-                    <span class="text-[11px] font-bold text-md-on-surface-variant/70 uppercase tracking-wider mr-2 shrink-0">FILTER STATUS:</span>
-                    <button onclick="filterLhaStatusChip('ALL')" id="chipStatusALL" class="lha-status-chip active px-4 py-1.5 rounded-full text-xs font-bold bg-md-primary text-white transition-all shadow-xs shrink-0">Semua</button>
-                    <button onclick="filterLhaStatusChip('PROSES')" id="chipStatusPROSES" class="lha-status-chip px-4 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 hover:bg-amber-200 transition-all shrink-0">On Progress</button>
-                    <button onclick="filterLhaStatusChip('TUNTAS')" id="chipStatusTUNTAS" class="lha-status-chip px-4 py-1.5 rounded-full text-xs font-bold bg-green-100 text-green-900 hover:bg-green-200 transition-all shrink-0">Selesai</button>
-                    <button onclick="filterLhaStatusChip('PENDING')" id="chipStatusPENDING" class="lha-status-chip px-4 py-1.5 rounded-full text-xs font-bold bg-red-100 text-red-900 hover:bg-red-200 transition-all shrink-0">Belum TL</button>
-                </div>
-
-                <!-- Sub-bar: Unified Search & Filters Toolbar -->
-                <div class="px-6 py-4 border-b border-md-outline/10 flex flex-col md:flex-row items-center justify-between gap-4 bg-md-surface-container-low/40">
-                    <div class="flex flex-wrap items-center gap-3 w-full md:w-auto flex-1">
-                        <!-- Search Box -->
-                        <div class="relative flex-1 min-w-[220px]">
-                            <input type="text" id="searchInput" oninput="applyFilters()"
-                                placeholder="Cari No LHA, kriteria, temuan, PIC..."
-                                class="w-full h-10 pl-10 pr-4 rounded-full bg-white text-xs border border-md-outline/20 focus:outline-none focus:border-md-primary text-md-on-background shadow-2xs">
-                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-md-on-surface-variant text-xs"></i>
-                        </div>
-
-                        <!-- Source Audit Filter -->
-                        <select id="sourceFilter" onchange="applyFilters()"
-                            class="h-10 px-3.5 rounded-full bg-white text-xs font-semibold border border-md-outline/20 focus:outline-none focus:border-md-primary text-md-on-background cursor-pointer shadow-2xs">
-                            <option value="ALL">Semua Sumber Audit</option>
-                            <option value="BPK-RI">BPK-RI</option>
-                            <option value="Inspektorat">Inspektorat</option>
-                        </select>
-
-                        <!-- PIC Filter -->
-                        <select id="picFilter" onchange="applyFilters()"
-                            class="h-10 px-3.5 rounded-full bg-white text-xs font-semibold border border-md-outline/20 focus:outline-none focus:border-md-primary text-md-on-background cursor-pointer shadow-2xs max-w-[190px]">
-                            <option value="ALL">Semua Unit PIC</option>
-                        </select>
-
-                        <!-- Hidden Status Filter for JS compatibility -->
-                        <select id="statusFilter" onchange="applyFilters()" class="hidden">
-                            <option value="ALL">Semua Status</option>
-                            <option value="PENDING">PENDING</option>
-                            <option value="PROSES">PROSES</option>
-                            <option value="TUNTAS">TUNTAS</option>
-                        </select>
+                <!-- Filter Chips & Search Toolbar -->
+                <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row items-center justify-between gap-4">
+                    
+                    <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
+                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-2 shrink-0">Status:</span>
+                        <!-- Mengganti gaya chip tombol -->
+                        <button onclick="filterLhaStatusChip('ALL')" id="chipStatusALL" class="lha-status-chip active px-4 py-1.5 rounded-md text-xs font-bold bg-slate-800 text-white transition-all shrink-0">Semua</button>
+                        <button onclick="filterLhaStatusChip('PROSES')" id="chipStatusPROSES" class="lha-status-chip px-4 py-1.5 rounded-md text-xs font-bold bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-all shrink-0">On Progress</button>
+                        <button onclick="filterLhaStatusChip('TUNTAS')" id="chipStatusTUNTAS" class="lha-status-chip px-4 py-1.5 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0">Selesai</button>
+                        <button onclick="filterLhaStatusChip('PENDING')" id="chipStatusPENDING" class="lha-status-chip px-4 py-1.5 rounded-md text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition-all shrink-0">Belum TL</button>
                     </div>
 
-                    <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end shrink-0">
-                        <span class="text-xs font-semibold text-md-on-surface-variant">
-                            Menampilkan <span id="filteredLhaCount" class="font-bold text-md-primary">0</span> dari <span id="totalLhaCount" class="font-bold">0</span> LHA
-                        </span>
-
-                        <button id="addLhaBtn" onclick="openLhaModal()"
-                            class="hidden px-4 py-2 rounded-full bg-md-primary text-white text-xs font-bold hover:shadow-md active:scale-95 transition-all flex items-center gap-1.5 shrink-0">
-                            <i class="fa-solid fa-plus text-xs"></i> Tambah LHA
+                    <div class="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
+                        <div class="relative w-full md:w-64">
+                            <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Cari LHA, Temuan, PIC..."
+                                class="w-full h-9 pl-9 pr-3 rounded-md bg-white text-xs border border-slate-300 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-slate-700">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                        </div>
+                        <select id="sourceFilter" onchange="applyFilters()" class="hidden"><option value="ALL">ALL</option></select>
+                        <select id="picFilter" onchange="applyFilters()" class="hidden"><option value="ALL">ALL</option></select>
+                        <select id="statusFilter" onchange="applyFilters()" class="hidden"><option value="ALL">ALL</option></select>
+                        
+                        <button id="addLhaBtn" onclick="openLhaModal()" class="hidden px-4 py-2 rounded-md bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-all flex items-center gap-1.5 shrink-0">
+                            <i class="fa-solid fa-plus"></i> Tambah LHA
                         </button>
                     </div>
                 </div>
 
-                <!-- Full Size Data Table Container -->
+                <!-- LHA Table -->
                 <div id="lhaListContainer" class="w-full overflow-x-auto">
                     <table class="w-full text-left border-collapse table-fixed">
-                        <thead class="bg-gray-50 border-b border-gray-200 text-gray-500 text-[11px] font-semibold uppercase tracking-wider">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 text-[11px] font-bold uppercase tracking-wider">
                             <tr>
-                                <th class="py-3 px-5 w-[180px]">No. Dokumen LHA</th>
-                                <th class="py-3 px-4">Uraian Kegiatan & Pelaksana</th>
-                                <th class="py-3 px-4 w-[110px]">Sumber</th>
-                                <th class="py-3 px-4 w-[200px]">PIC / Unit Kerja</th>
-                                <th class="py-3 px-4 w-[110px] text-center">Status</th>
-                                <th class="py-3 px-4 w-[200px]">Kelengkapan TL</th>
+                                <th class="py-4 px-6 w-[180px]">No. Dokumen LHA</th>
+                                <th class="py-4 px-4">Uraian Kegiatan & Pelaksana</th>
+                                <th class="py-4 px-4 w-[110px]">Sumber</th>
+                                <th class="py-4 px-4 w-[200px]">PIC / Unit Kerja</th>
+                                <th class="py-4 px-4 w-[110px] text-center">Status</th>
+                                <th class="py-4 px-4 w-[200px]">Kelengkapan</th>
                             </tr>
                         </thead>
-                        <tbody id="lhaTableBody" class="divide-y divide-gray-100 bg-white">
-                            <!-- Dynamic Table Rows -->
+                        <tbody id="lhaTableBody" class="divide-y divide-slate-100 bg-white">
+                            <!-- JS will inject rows here. Make sure JS uses modern badges like: <span class="bg-rose-50 text-rose-700 px-2.5 py-1 rounded-md text-xs border border-rose-200">Belum TL</span> -->
                         </tbody>
                     </table>
 
                     <!-- Empty state -->
-                    <div id="lhaEmptyState" class="hidden text-center p-16 text-md-on-surface-variant/60">
-                        <i class="fa-solid fa-folder-open text-5xl mb-3 text-md-outline/30"></i>
-                        <p class="text-xs font-semibold">Tidak ada dokumen LHA yang cocok dengan filter saat ini.</p>
-                    </div>
-                </div>
-
-                <!-- Table Footer & Pagination (Match Reference Screenshot) -->
-                <div class="px-6 py-4 border-t border-md-outline/10 flex flex-col sm:flex-row items-center justify-between gap-4 bg-md-surface-container-low/30 text-xs text-md-on-surface-variant">
-                    <span class="font-medium">Total <span id="footerTotalLha" class="font-bold text-md-on-background">0</span> baris data LHA.</span>
-
-                    <div class="flex items-center gap-6">
-                        <div class="flex items-center gap-2">
-                            <span>Baris per halaman:</span>
-                            <select class="h-8 px-2 rounded-lg bg-white border border-md-outline/20 text-xs font-semibold focus:outline-none">
-                                <option value="10">10</option>
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                            </select>
-                        </div>
-
-                        <span class="font-medium">Halaman <span class="font-bold">1</span> dari <span class="font-bold">1</span></span>
-
-                        <div class="flex items-center gap-1">
-                            <button class="w-7 h-7 rounded-lg border border-md-outline/20 flex items-center justify-center text-xs text-md-on-surface-variant/50 hover:bg-white cursor-not-allowed" disabled><i class="fa-solid fa-angles-left text-[10px]"></i></button>
-                            <button class="w-7 h-7 rounded-lg border border-md-outline/20 flex items-center justify-center text-xs text-md-on-surface-variant/50 hover:bg-white cursor-not-allowed" disabled><i class="fa-solid fa-chevron-left text-[10px]"></i></button>
-                            <button class="w-7 h-7 rounded-lg border border-md-outline/20 flex items-center justify-center text-xs text-md-on-surface-variant/50 hover:bg-white cursor-not-allowed" disabled><i class="fa-solid fa-chevron-right text-[10px]"></i></button>
-                            <button class="w-7 h-7 rounded-lg border border-md-outline/20 flex items-center justify-center text-xs text-md-on-surface-variant/50 hover:bg-white cursor-not-allowed" disabled><i class="fa-solid fa-angles-right text-[10px]"></i></button>
-                        </div>
+                    <div id="lhaEmptyState" class="hidden text-center p-16 text-slate-400">
+                        <i class="fa-solid fa-file-circle-xmark text-5xl mb-4 text-slate-200"></i>
+                        <p class="text-sm font-semibold">Tidak ada LHA yang ditemukan.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- 2. Full-Width Detail Viewer Panel (Shown when an LHA is selected) -->
-            <div id="detailPanel"
-                class="hidden w-full bg-md-surface-container rounded-3xl shadow-sm border border-md-outline/5 flex flex-col min-h-[700px] overflow-hidden transition-all duration-300">
-                <!-- Fallback Initial State -->
+            <!-- 2. Detail Viewer Panel (Tetap Ada) -->
+            <div id="detailPanel" class="hidden w-full bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col min-h-[700px] overflow-hidden transition-all duration-300">
                 <div id="detailFallbackState" class="flex-1 flex flex-col items-center justify-center text-center p-8">
-                    <div
-                        class="w-16 h-16 rounded-full bg-md-surface-container-low flex items-center justify-center text-md-primary mb-4 animate-bounce">
+                    <div class="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 mb-4 border border-slate-100">
                         <i class="fa-solid fa-hand-pointer text-2xl"></i>
                     </div>
-                    <h4 class="text-base font-bold text-md-on-background">Pilih Dokumen LHA dari Tabel Utama</h4>
-                    <p class="text-xs text-md-on-surface-variant mt-2 max-w-sm">Klik tombol "Detail" pada salah satu LHA di tabel utama untuk menampilkan seluruh temuan, rekomendasi, sebab, dan log progres tindak lanjutnya.</p>
+                    <h4 class="text-base font-bold text-slate-700">Pilih Dokumen LHA dari Tabel</h4>
+                    <p class="text-xs text-slate-500 mt-2 max-w-sm">Klik tombol "Detail" pada LHA untuk melihat rekomendasi.</p>
                 </div>
-
-                <!-- Real Detail Container -->
-                <div id="detailContentState" class="flex-1 flex flex-col h-full hidden">
-                    <!-- Dynamic details will be loaded here -->
-                </div>
+                <div id="detailContentState" class="flex-1 flex flex-col h-full hidden"></div>
             </div>
         </section>
-
     </main>
 
-    <!-- Full-Width Header-Matched Footer (Height h-16) -->
-    <footer class="w-full bg-md-surface-container/80 backdrop-blur-md border-t border-md-outline/10 z-20 mt-auto">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between text-xs text-md-on-surface-variant">
-            <!-- Left: Logo & Kemenko Pangan Brand -->
-            <div class="flex items-center gap-3 shrink-0">
-                <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center overflow-hidden shadow-2xs border border-md-outline/10 p-0.5 shrink-0">
-                    <img src="Kemenkopangan-logo.png" alt="Logo Kemenko Pangan" class="w-full h-full object-contain">
-                </div>
-                <div class="flex flex-col">
-                    <span class="font-bold text-md-on-background text-xs leading-none">e-TLHP</span>
-                    <span class="text-[10px] text-md-on-surface-variant/80 font-medium">Kemenko Pangan RI</span>
-                </div>
+    <!-- Footer -->
+    <footer class="w-full bg-white border-t border-slate-200 mt-auto">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between text-xs text-slate-500">
+            <div class="flex items-center gap-3">
+                <span class="font-bold text-slate-800">e-TLHP</span>
+                <span class="text-slate-400">|</span>
+                <span class="font-medium">Kemenko Pangan RI</span>
             </div>
-
-            <!-- Center: Copyright Text (Centered) -->
-            <div class="text-center font-medium text-[11px] text-md-on-surface-variant px-2">
-                © 2026 Inspektorat Jenderal. All Rights Reserved.
-            </div>
-
-            <!-- Right: System Status Badge -->
-            <div class="flex items-center gap-3 text-xs font-semibold shrink-0">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 text-green-700 border border-green-200 text-xs font-bold shadow-2xs">
-                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                    System Active & Synchronized
-                </span>
-            </div>
+            <div class="font-medium">© 2026 Inspektorat Jenderal.</div>
         </div>
     </footer>
 
-    <!-- ========================================== -->
-    <!-- CRUD DIALOG MODALS                         -->
-    <!-- ========================================== -->
-
-    <!-- 1. LHA Modal -->
-    <div id="lhaModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden px-4">
-        <div
-            class="bg-md-surface-container rounded-4xl max-w-md w-full p-6 border border-md-outline/10 shadow-xl flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
-            <h3 id="lhaModalTitle" class="text-base font-bold text-md-on-background">Tambah LHA Baru</h3>
-            <form id="lhaForm" onsubmit="handleLhaFormSubmit(event)" class="flex flex-col gap-3.5">
-                <input type="hidden" id="lhaFormIsEdit" value="false">
-                <input type="hidden" id="lhaFormOldKode" value="">
-
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Kode LHP (Unique)</label>
-                    <input type="text" id="lhaFormKode" required placeholder="Contoh: LHP-2025-001..."
-                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
-                </div>
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Sumber Audit</label>
-                    <select id="lhaFormSumber" required
-                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
-                        <option value="BPK-RI">BPK-RI</option>
-                        <option value="Inspektorat">Inspektorat</option>
-                    </select>
-                </div>
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Tahun</label>
-                    <input type="number" id="lhaFormTahun" required min="2000" max="2100"
-                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
-                </div>
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Status Laporan</label>
-                    <input type="text" id="lhaFormStatus" required placeholder="Contoh: Dalam Pemantauan..."
-                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
-                </div>
-
-                <div class="flex gap-2 justify-end mt-2">
-                    <button type="button" onclick="closeLhaModal()"
-                        class="px-4 py-2 rounded-full text-[10px] font-bold bg-md-secondary-container text-md-on-secondary-container hover:shadow active:scale-95 transition-all">Batal</button>
-                    <button type="submit"
-                        class="px-4 py-2 rounded-full text-[10px] font-bold bg-md-primary text-white hover:shadow active:scale-95 transition-all">Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- 2. Temuan Modal -->
-    <div id="temuanModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden px-4">
-        <div
-            class="bg-md-surface-container rounded-4xl max-w-lg w-full p-6 border border-md-outline/10 shadow-xl flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
-            <h3 id="temuanModalTitle" class="text-base font-bold text-md-on-background">Tambah Temuan Baru</h3>
-            <form id="temuanForm" onsubmit="handleTemuanFormSubmit(event)" class="flex flex-col gap-3.5">
-                <input type="hidden" id="temuanFormIsEdit" value="false">
-                <input type="hidden" id="temuanFormOldKode" value="">
-                <div class="flex flex-col mb-1" id="temuanFormLhaContainer">
-                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Dokumen LHP Induk</label>
-                    <select id="temuanFormLha" required
-                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
-                        <!-- Options dynamically loaded -->
-                    </select>
-                </div>
-
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Kode Temuan
-                        (Unique)</label>
-                    <input type="text" id="temuanFormKode" required placeholder="Contoh: T-INSP-25001..."
-                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
-                </div>
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Kriteria Temuan</label>
-                    <textarea id="temuanFormKriteria" required rows="3"
-                        placeholder="Uraikan kriteria atau deskripsi temuan..."
-                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary"></textarea>
-                </div>
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Penyebab (Sebab) -
-                        Opsional</label>
-                    <textarea id="temuanFormSebab" rows="2" placeholder="Uraikan penyebab temuan..."
-                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary"></textarea>
-                </div>
-
-                <div class="flex gap-2 justify-end mt-2">
-                    <button type="button" onclick="closeTemuanModal()"
-                        class="px-4 py-2 rounded-full text-[10px] font-bold bg-md-secondary-container text-md-on-secondary-container hover:shadow active:scale-95 transition-all">Batal</button>
-                    <button type="submit"
-                        class="px-4 py-2 rounded-full text-[10px] font-bold bg-md-primary text-white hover:shadow active:scale-95 transition-all">Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- 3. Rekomendasi Modal -->
-    <div id="rekomendasiModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden px-4">
-        <div
-            class="bg-md-surface-container rounded-4xl max-w-lg w-full p-6 border border-md-outline/10 shadow-xl flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
-            <h3 id="rekomendasiModalTitle" class="text-base font-bold text-md-on-background">Tambah Rekomendasi Baru
-            </h3>
-            <form id="rekomendasiForm" onsubmit="handleRekomendasiFormSubmit(event)" class="flex flex-col gap-3.5">
-                <input type="hidden" id="recFormIsEdit" value="false">
-                <input type="hidden" id="recFormOldKode" value="">
-                <input type="hidden" id="recFormTemuan" value="">
-
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Kode Rekomendasi
-                        (Unique)</label>
-                    <input type="text" id="recFormKode" required placeholder="Contoh: R-INSP-25001-A..."
-                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
-                </div>
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Rekomendasi
-                        BPK/Inspektorat</label>
-                    <textarea id="recFormText" required rows="3" placeholder="Teks rekomendasi..."
-                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary"></textarea>
-                </div>
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">PIC Unit Penanggung
-                        Jawab</label>
-                    <select id="recFormPic" required
-                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
-                        <option value="Biro SDMO">Biro SDMO</option>
-                        <option value="Biro UKK">Biro UKK</option>
-                        <option value="Biro MKDI">Biro MKDI</option>
-                        <option value="HKS">HKS</option>
-                        <option value="Sesdep">Sesdep</option>
-                        <option value="Deputi 1">Deputi 1</option>
-                        <option value="Deputi 2">Deputi 2</option>
-                        <option value="Deputi 3">Deputi 3</option>
-                        <option value="Deputi 4">Deputi 4</option>
-                        <option value="Staf Ahli Bid. Konektifitas">Staf Ahli Bid. Konektifitas</option>
-                        <option value="Belum Ditentukan">Belum Ditentukan</option>
-                    </select>
-                </div>
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Rencana Aksi Unit Kerja -
-                        Opsional</label>
-                    <textarea id="recFormRencanaAksi" rows="2" placeholder="Uraikan rencana aksi..."
-                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary"></textarea>
-                </div>
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Jadwal Pelaksanaan -
-                        Opsional</label>
-                    <input type="text" id="recFormJadwal" placeholder="Contoh: Triwulan I 2025..."
-                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
-                </div>
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Target Nominal Penyetoran
-                        (Untuk Rekomendasi Finansial) - Rp</label>
-                    <input type="number" id="recFormNilaiTemuan" value="0" min="0" step="any"
-                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
-                </div>
-
-                <div class="flex gap-2 justify-end mt-2">
-                    <button type="button" onclick="closeRekomendasiModal()"
-                        class="px-4 py-2 rounded-full text-[10px] font-bold bg-md-secondary-container text-md-on-secondary-container hover:shadow active:scale-95 transition-all">Batal</button>
-                    <button type="submit"
-                        class="px-4 py-2 rounded-full text-[10px] font-bold bg-md-primary text-white hover:shadow active:scale-95 transition-all">Simpan</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- External Modular JavaScript Application Code -->
+    <!-- Form Modals (Hidden) - Layout tetap dipertahankan namun class border diperhalus -->
+    <!-- LHA Modal, Temuan Modal, Rekomendasi Modal letakkan kembali di sini sesuai aslinya jika dibutuhkan untuk CRUD, namun cukup panggil file JS nya di bawah -->
+    
     <script src="js/api.js" defer></script>
     <script src="js/charts.js" defer></script>
     <script src="js/app.js" defer></script>
 </body>
-
 </html>

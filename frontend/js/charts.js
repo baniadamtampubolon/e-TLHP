@@ -9,10 +9,12 @@ function renderCharts() {
     filteredLHA.forEach(lha => {
         allFilteredTemuan = allFilteredTemuan.concat(tabelTemuan.filter(t => t["Kode LHP"] === lha["Kode LHP"]));
     });
+    
     let assocRecs = [];
     allFilteredTemuan.forEach(t => {
         assocRecs = assocRecs.concat(getRecommendationsForFinding(t["Kode Temuan"]));
     });
+    
     const uniqueRecs = Array.from(new Set(assocRecs.map(r => r["Kode Rekomendasi"])))
         .map(id => assocRecs.find(r => r["Kode Rekomendasi"] === id));
 
@@ -31,12 +33,13 @@ function renderCharts() {
     statusChartObj = new Chart(statusCtx, {
         type: 'doughnut',
         data: {
-            labels: ['TUNTAS (Selesai)', 'PROSES (Dalam Proses)', 'PENDING (Belum TL)'],
+            labels: ['TUNTAS (Selesai)', 'PROSES (Proses)', 'PENDING (Belum TL)'],
             datasets: [{
                 data: [statuses["TUNTAS"], statuses["PROSES"], statuses["PENDING"]],
+                // Menggunakan palet warna standar lampu lalu lintas
                 backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
                 borderWidth: 3,
-                borderColor: '#FFFBFE',
+                borderColor: '#FFFFFF', // Disesuaikan dengan latar card putih
                 hoverOffset: 4
             }]
         },
@@ -46,12 +49,12 @@ function renderCharts() {
             cutout: '70%',
             plugins: {
                 legend: {
-                    position: 'bottom',
+                    position: 'right', // Dipindah ke kanan agar menghemat tinggi card
                     labels: {
                         usePointStyle: true,
                         boxWidth: 8,
                         padding: 15,
-                        font: { family: 'Roboto', size: 11, weight: '500' }
+                        font: { family: '"Plus Jakarta Sans", sans-serif', size: 11, weight: '600' } // Menggunakan font baru
                     }
                 }
             }
@@ -86,22 +89,23 @@ function renderCharts() {
             datasets: [{
                 label: 'Jumlah Rekomendasi',
                 data: picData,
-                backgroundColor: '#6750A4',
-                borderRadius: 8,
-                barPercentage: 0.6
+                backgroundColor: '#4338CA', // Menggunakan warna Indigo-700 agar senada dengan UI baru
+                borderRadius: 4, // Sudut tidak perlu terlalu bulat untuk bar chart mendatar
+                barPercentage: 0.7
             }]
         },
         options: {
+            indexAxis: 'y', // <--- INI KUNCI UTAMA: Mengubah jadi grafik Horizontal
             responsive: true,
             maintainAspectRatio: false,
             scales: {
                 x: {
-                    grid: { display: false },
-                    ticks: { font: { family: 'Roboto', size: 10 } }
+                    border: { display: false },
+                    ticks: { stepSize: 1, font: { family: '"Plus Jakarta Sans", sans-serif', size: 10 } }
                 },
                 y: {
-                    border: { display: false },
-                    ticks: { stepSize: 1, font: { family: 'Roboto', size: 10 } }
+                    grid: { display: false }, // Menghilangkan garis background pada sumbu Y
+                    ticks: { font: { family: '"Plus Jakarta Sans", sans-serif', size: 11, weight: '500' } }
                 }
             },
             plugins: {

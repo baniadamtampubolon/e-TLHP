@@ -1,44 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
 body {
-    font-family: 'Roboto', sans-serif;
-    background-color: #FFFBFE;
-    color: #1C1B1F;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: #F8FAFC; /* slate-50 */
+    color: #0F172A; /* slate-900 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-/* Scrollbar customization matching Material You */
+/* Scrollbar Customization - Modern & Clean */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px; /* Dibuat lebih tipis agar elegan */
+    height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #F3EDF7;
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #79747E;
+    background: #CBD5E1; /* slate-300 */
     border-radius: 9999px;
-    border: 2px solid #F3EDF7;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #49454F;
+    background: #94A3B8; /* slate-400 */
 }
 
-/* Modal Animation Utilities */
+/* Modal Animation Utilities (Diperhalus) */
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
 }
 
 @keyframes zoomIn {
-    from { transform: scale(0.95); opacity: 0; }
+    from { transform: scale(0.98); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
 }
 
 .animate-in {
-    animation: fadeIn 0.2s cubic-bezier(0.2, 0, 0, 1) forwards;
+    animation: fadeIn 0.2s ease-out forwards;
 }
 
 .zoom-in-95 {
-    animation: zoomIn 0.2s cubic-bezier(0.2, 0, 0, 1) forwards;
+    animation: zoomIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; /* Efek pantulan (spring) yang sangat halus */
+}
+
+/* Global Focus Outline untuk Aksesibilitas */
+*:focus-visible {
+    outline: 2px solid #047857; /* Hijau Kemenko (emerald-700) */
+    outline-offset: 2px;
+}
+
+/* Transisi Halus untuk Baris Tabel */
+tbody tr {
+    transition: background-color 0.15s ease-in-out;
 }
