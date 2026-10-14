@@ -436,6 +436,172 @@
 
     <!-- Form Modals (Hidden) - Layout tetap dipertahankan namun class border diperhalus -->
     <!-- LHA Modal, Temuan Modal, Rekomendasi Modal letakkan kembali di sini sesuai aslinya jika dibutuhkan untuk CRUD, namun cukup panggil file JS nya di bawah -->
+
+    <!-- ========================================== -->
+    <!-- CRUD DIALOG MODALS                         -->
+    <!-- ========================================== -->
+
+   <!-- ========================================== -->
+    <!-- CRUD DIALOG MODALS                         -->
+    <!-- ========================================== -->
+
+    <!-- 1. LHA Modal -->
+    <div id="lhaModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden px-4">
+        <div
+            class="bg-md-surface-container rounded-4xl max-w-md w-full p-6 border border-md-outline/10 shadow-xl flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+            <h3 id="lhaModalTitle" class="text-base font-bold text-md-on-background">Tambah LHA Baru</h3>
+            <form id="lhaForm" onsubmit="handleLhaFormSubmit(event)" class="flex flex-col gap-3.5">
+                <input type="hidden" id="lhaFormIsEdit" value="false">
+                <input type="hidden" id="lhaFormOldKode" value="">
+
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Kode LHP (Unique)</label>
+                    <input type="text" id="lhaFormKode" required placeholder="Contoh: LHP-2025-001..."
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Sumber Audit</label>
+                    <select id="lhaFormSumber" required
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                        <option value="BPK-RI">BPK-RI</option>
+                        <option value="Inspektorat">Inspektorat</option>
+                    </select>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Tahun</label>
+                    <input type="number" id="lhaFormTahun" required min="2000" max="2100"
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Status Laporan</label>
+                    <input type="text" id="lhaFormStatus" required placeholder="Contoh: Dalam Pemantauan..."
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                </div>
+
+                <div class="flex gap-2 justify-end mt-2">
+                    <button type="button" onclick="closeLhaModal()"
+                        class="px-4 py-2 rounded-full text-[10px] font-bold bg-md-secondary-container text-md-on-secondary-container hover:shadow active:scale-95 transition-all">Batal</button>
+                    <button type="submit"
+                        class="px-4 py-2 rounded-full text-[10px] font-bold bg-md-primary text-white hover:shadow active:scale-95 transition-all">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. Temuan Modal -->
+    <div id="temuanModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden px-4">
+        <div
+            class="bg-md-surface-container rounded-4xl max-w-lg w-full p-6 border border-md-outline/10 shadow-xl flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+            <h3 id="temuanModalTitle" class="text-base font-bold text-md-on-background">Tambah Temuan Baru</h3>
+            <form id="temuanForm" onsubmit="handleTemuanFormSubmit(event)" class="flex flex-col gap-3.5">
+                <input type="hidden" id="temuanFormIsEdit" value="false">
+                <input type="hidden" id="temuanFormOldKode" value="">
+                <div class="flex flex-col mb-1" id="temuanFormLhaContainer">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Dokumen LHP Induk</label>
+                    <select id="temuanFormLha" required
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                        <!-- Options dynamically loaded -->
+                    </select>
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Kode Temuan
+                        (Unique)</label>
+                    <input type="text" id="temuanFormKode" required placeholder="Contoh: T-INSP-25001..."
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Kriteria Temuan</label>
+                    <textarea id="temuanFormKriteria" required rows="3"
+                        placeholder="Uraikan kriteria atau deskripsi temuan..."
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary"></textarea>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Penyebab (Sebab) -
+                        Opsional</label>
+                    <textarea id="temuanFormSebab" rows="2" placeholder="Uraikan penyebab temuan..."
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary"></textarea>
+                </div>
+
+                <div class="flex gap-2 justify-end mt-2">
+                    <button type="button" onclick="closeTemuanModal()"
+                        class="px-4 py-2 rounded-full text-[10px] font-bold bg-md-secondary-container text-md-on-secondary-container hover:shadow active:scale-95 transition-all">Batal</button>
+                    <button type="submit"
+                        class="px-4 py-2 rounded-full text-[10px] font-bold bg-md-primary text-white hover:shadow active:scale-95 transition-all">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. Rekomendasi Modal -->
+    <div id="rekomendasiModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden px-4">
+        <div
+            class="bg-md-surface-container rounded-4xl max-w-lg w-full p-6 border border-md-outline/10 shadow-xl flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+            <h3 id="rekomendasiModalTitle" class="text-base font-bold text-md-on-background">Tambah Rekomendasi Baru
+            </h3>
+            <form id="rekomendasiForm" onsubmit="handleRekomendasiFormSubmit(event)" class="flex flex-col gap-3.5">
+                <input type="hidden" id="recFormIsEdit" value="false">
+                <input type="hidden" id="recFormOldKode" value="">
+                <input type="hidden" id="recFormTemuan" value="">
+
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Kode Rekomendasi
+                        (Unique)</label>
+                    <input type="text" id="recFormKode" required placeholder="Contoh: R-INSP-25001-A..."
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Rekomendasi
+                        BPK/Inspektorat</label>
+                    <textarea id="recFormText" required rows="3" placeholder="Teks rekomendasi..."
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary"></textarea>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">PIC Unit Penanggung
+                        Jawab</label>
+                    <select id="recFormPic" required
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                        <option value="Biro SDMO">Biro SDMO</option>
+                        <option value="Biro UKK">Biro UKK</option>
+                        <option value="Biro MKDI">Biro MKDI</option>
+                        <option value="HKS">HKS</option>
+                        <option value="Sesdep">Sesdep</option>
+                        <option value="Deputi 1">Deputi 1</option>
+                        <option value="Deputi 2">Deputi 2</option>
+                        <option value="Deputi 3">Deputi 3</option>
+                        <option value="Deputi 4">Deputi 4</option>
+                        <option value="Staf Ahli Bid. Konektifitas">Staf Ahli Bid. Konektifitas</option>
+                        <option value="Belum Ditentukan">Belum Ditentukan</option>
+                    </select>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Rencana Aksi Unit Kerja -
+                        Opsional</label>
+                    <textarea id="recFormRencanaAksi" rows="2" placeholder="Uraikan rencana aksi..."
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary"></textarea>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Jadwal Pelaksanaan -
+                        Opsional</label>
+                    <input type="text" id="recFormJadwal" placeholder="Contoh: Triwulan I 2025..."
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold text-md-on-surface-variant mb-1 ml-1">Target Nominal Penyetoran
+                        (Untuk Rekomendasi Finansial) - Rp</label>
+                    <input type="number" id="recFormNilaiTemuan" value="0" min="0" step="any"
+                        class="w-full p-2 text-xs rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                </div>
+
+                <div class="flex gap-2 justify-end mt-2">
+                    <button type="button" onclick="closeRekomendasiModal()"
+                        class="px-4 py-2 rounded-full text-[10px] font-bold bg-md-secondary-container text-md-on-secondary-container hover:shadow active:scale-95 transition-all">Batal</button>
+                    <button type="submit"
+                        class="px-4 py-2 rounded-full text-[10px] font-bold bg-md-primary text-white hover:shadow active:scale-95 transition-all">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
     
     <script src="js/api.js" defer></script>
     <script src="js/charts.js" defer></script>
