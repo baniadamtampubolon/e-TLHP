@@ -1,0 +1,28 @@
+# ====================================================================
+# e-TLHP Kemenko Pangan RI - Root Web Server Configuration (Apache / LiteSpeed)
+# ====================================================================
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # 1. Routing Endpoint REST API PHP -> api/index.php
+    RewriteRule ^api/(.*)$ api/index.php [QSA,L]
+    RewriteRule ^api$ api/index.php [QSA,L]
+
+    # 2. Folder Berkas Unggahan Eviden Bukti Dukung
+    RewriteCond %{REQUEST_URI} ^/uploads/ [NC]
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    # 3. Static Assets Frontend (css, js, gambar logo)
+    RewriteCond %{DOCUMENT_ROOT}/frontend/$1 -f
+    RewriteRule ^(.*)$ frontend/$1 [L]
+
+    # 4. Akses Langsung ke Root Domain Melayani frontend/index.html
+    RewriteRule ^$ frontend/index.html [L]
+    RewriteRule ^index\.html$ frontend/index.html [L]
+</IfModule>
+
+# Keamanan direktori dasar
+Options -Indexes

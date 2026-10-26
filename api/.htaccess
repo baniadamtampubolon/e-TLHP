@@ -1,0 +1,12 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /api/
+    
+    # Lewatkan jika file atau direktori fisik memang ada
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Teruskan seluruh request endpoint ke index.php
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>

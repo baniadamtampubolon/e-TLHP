@@ -1,6 +1,20 @@
+// Deteksi URL API dan Uploads Otomatis (Kompatibel dengan Hostinger & Lokal Dev)
+const isFileProtocol = window.location.protocol === 'file:';
+const isLocalDevPort = window.location.port === '8000' || window.location.port === '5500' || window.location.port === '3000';
 const host = window.location.hostname || "127.0.0.1";
-const API_BASE = `http://${host}:8000/api`;
-const UPLOADS_BASE = `http://${host}:8000/uploads`;
+
+let API_BASE;
+let UPLOADS_BASE;
+
+if (isFileProtocol || (isLocalDevPort && host === '127.0.0.1') || (isLocalDevPort && host === 'localhost')) {
+    // Mode Lokal Dev (FastAPI / Uvicorn Port 8000)
+    API_BASE = `http://${host}:8000/api`;
+    UPLOADS_BASE = `http://${host}:8000/uploads`;
+} else {
+    // Mode Produksi Hostinger (Domain aktif dengan PHP API)
+    API_BASE = `${window.location.origin}/api`;
+    UPLOADS_BASE = `${window.location.origin}/uploads`;
+}
 
 const MAX_UPLOAD_SIZE_MB = 10;
 const MAX_UPLOAD_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024;
@@ -105,7 +119,7 @@ async function loadDataFromAPI() {
         }
     } catch (err) {
         console.error("Error loading data from API:", err);
-        alert("Gagal memuat data dari server. Pastikan API FastAPI telah berjalan di http://127.0.0.1:8000");
+        alert("Gagal memuat data dari server. Pastikan API backend telah aktif.");
     }
 }
 
