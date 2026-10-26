@@ -2,6 +2,10 @@ const host = window.location.hostname || "127.0.0.1";
 const API_BASE = `http://${host}:8000/api`;
 const UPLOADS_BASE = `http://${host}:8000/uploads`;
 
+const MAX_UPLOAD_SIZE_MB = 10;
+const MAX_UPLOAD_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024;
+const ALLOWED_FILE_EXTENSIONS = ['pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx', 'xls', 'xlsx'];
+
 // Load data from FastAPI Backend
 async function loadDataFromAPI() {
     try {
@@ -21,7 +25,8 @@ async function loadDataFromAPI() {
                 "Kode LHP": lha.kode_lha,
                 "Sumber Audit": lha.sumber_audit,
                 "Tahun": lha.tahun,
-                "Status Laporan": lha.status_laporan
+                "Status Laporan": lha.status_laporan,
+                "Tanggal Input": lha.tanggal_input
             });
             lha.temuan.forEach(tem => {
                 tabelTemuan.push({
@@ -44,7 +49,8 @@ async function loadDataFromAPI() {
                         "Status": rec.status,
                         "Nilai Temuan": parseFloat(rec.nilai_temuan) || 0.0,
                         "Nilai Realisasi": parseFloat(rec.nilai_realisasi) || 0.0,
-                        "Selisih": parseFloat(rec.selisih) || 0.0
+                        "Selisih": parseFloat(rec.selisih) || 0.0,
+                        "Tanggal Input": rec.tanggal_input
                     });
                     
                     rec.bukti.forEach(buk => {
@@ -55,7 +61,11 @@ async function loadDataFromAPI() {
                             "Status": buk.status_review,
                             "File Bukti Path": buk.file_bukti_path,
                             "NTPN": buk.ntpn,
-                            "Catatan Auditor": buk.catatan_auditor
+                            "Catatan Auditor": buk.catatan_auditor,
+                            "Tanggal Mulai": buk.tanggal_mulai || buk.tanggal_submit,
+                            "Tanggal Selesai": buk.tanggal_selesai || buk.tanggal_review || buk.tanggal_submit,
+                            "Tanggal Submit": buk.tanggal_submit,
+                            "Tanggal Review": buk.tanggal_review
                         });
                     });
                 });
@@ -99,10 +109,88 @@ async function loadDataFromAPI() {
     }
 }
 
+// Sync Tanggal Mulai & Tanggal Selesai in Form Bukti
+function syncBuktiDateRange(mulaiInput, selesaiId) {
+    const selesaiInput = document.getElementById(selesaiId);
+    if (!mulaiInput || !selesaiInput) return;
+    if (mulaiInput.value) {
+        selesaiInput.min = mulaiInput.value;
+        if (selesaiInput.value && selesaiInput.value < mulaiInput.value) {
+            selesaiInput.value = mulaiInput.value;
+        }
+    }
+}
+
+// Validate and preview selected file in Form Bukti Tindak Lanjut
+function handleBuktiFileChange(inputEl, previewId) {
+    const previewEl = document.getElementById(previewId);
+    if (!previewEl) return;
+
+    const file = inputEl.files && inputEl.files[0];
+    if (!file) {
+        previewEl.classList.add("hidden");
+        previewEl.innerHTML = "";
+        return;
+    }
+
+    const ext = file.name.split('.').pop().toLowerCase();
+    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+    const sizeKB = (file.size / 1024).toFixed(0);
+    const displaySize = file.size >= 1024 * 1024 ? `${sizeMB} MB` : `${sizeKB} KB`;
+
+    previewEl.classList.remove("hidden");
+
+    if (!ALLOWED_FILE_EXTENSIONS.includes(ext)) {
+        previewEl.className = "mt-2 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium flex items-center gap-2";
+        previewEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-600"></i> <span>Format <strong>.${ext}</strong> tidak didukung! Pilih file PDF, PNG, JPG, JPEG, DOC/DOCX, atau XLS/XLSX.</span>`;
+        inputEl.value = "";
+        return;
+    }
+
+    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+        previewEl.className = "mt-2 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium flex items-center gap-2";
+        previewEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-600"></i> <span>Ukuran file (<strong>${displaySize}</strong>) melebihi batas maksimal <strong>${MAX_UPLOAD_SIZE_MB} MB</strong>!</span>`;
+        inputEl.value = "";
+        return;
+    }
+
+    previewEl.className = "mt-2 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium flex items-center justify-between gap-2";
+    previewEl.innerHTML = `
+        <div class="flex items-center gap-2 truncate">
+            <i class="fa-solid fa-circle-check text-emerald-600"></i>
+            <span class="truncate font-semibold">${file.name}</span>
+        </div>
+        <span class="px-2.5 py-0.5 rounded-md bg-white border border-emerald-200 text-xs font-bold text-emerald-700 shrink-0">${ext.toUpperCase()} • ${displaySize}</span>
+    `;
+}
+
 // Handle Bukti Submission by Satker
 async function handleBuktiSubmit(event, kode_rekomendasi) {
     event.preventDefault();
     const form = event.target;
+    const mulaiVal = form.tanggal_mulai ? form.tanggal_mulai.value : "";
+    const selesaiVal = form.tanggal_selesai ? form.tanggal_selesai.value : "";
+
+    if (mulaiVal && selesaiVal && selesaiVal < mulaiVal) {
+        alert("Tanggal Selesai tidak boleh lebih awal dari Tanggal Mulai Tindak Lanjut.");
+        return;
+    }
+
+    const fileInput = form.querySelector('input[type="file"]');
+
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (!ALLOWED_FILE_EXTENSIONS.includes(ext)) {
+            alert(`Format file .${ext} tidak didukung. Harap unggah file berformat PDF, PNG, JPG, JPEG, DOC/DOCX, atau XLS/XLSX.`);
+            return;
+        }
+        if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+            alert(`Ukuran file melebihi batas maksimal ${MAX_UPLOAD_SIZE_MB} MB.`);
+            return;
+        }
+    }
+
     const formData = new FormData(form);
     formData.append("kode_rekomendasi", kode_rekomendasi);
     
@@ -112,7 +200,14 @@ async function handleBuktiSubmit(event, kode_rekomendasi) {
             body: formData
         });
         
-        if (!response.ok) throw new Error("Gagal mengirimkan bukti tindak lanjut.");
+        if (!response.ok) {
+            let errMsg = "Gagal mengirimkan bukti tindak lanjut.";
+            try {
+                const errData = await response.json();
+                if (errData.detail) errMsg = errData.detail;
+            } catch (_) {}
+            throw new Error(errMsg);
+        }
         
         alert("Bukti tindak lanjut berhasil dikirim! Status berubah menjadi PROSES menunggu review auditor.");
         form.reset();
