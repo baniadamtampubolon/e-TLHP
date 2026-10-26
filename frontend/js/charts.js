@@ -36,10 +36,9 @@ function renderCharts() {
             labels: ['TUNTAS (Selesai)', 'PROSES (Proses)', 'PENDING (Belum TL)'],
             datasets: [{
                 data: [statuses["TUNTAS"], statuses["PROSES"], statuses["PENDING"]],
-                // Menggunakan palet warna standar lampu lalu lintas
                 backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
                 borderWidth: 3,
-                borderColor: '#FFFFFF', // Disesuaikan dengan latar card putih
+                borderColor: '#FFFFFF',
                 hoverOffset: 4
             }]
         },
@@ -49,12 +48,12 @@ function renderCharts() {
             cutout: '70%',
             plugins: {
                 legend: {
-                    position: 'right', // Dipindah ke kanan agar menghemat tinggi card
+                    position: 'right',
                     labels: {
                         usePointStyle: true,
-                        boxWidth: 8,
-                        padding: 15,
-                        font: { family: '"Plus Jakarta Sans", sans-serif', size: 11, weight: '600' } // Menggunakan font baru
+                        boxWidth: 10,
+                        padding: 16,
+                        font: { family: '"Plus Jakarta Sans", sans-serif', size: 12, weight: '600' }
                     }
                 }
             }
@@ -89,23 +88,23 @@ function renderCharts() {
             datasets: [{
                 label: 'Jumlah Rekomendasi',
                 data: picData,
-                backgroundColor: '#4338CA', // Menggunakan warna Indigo-700 agar senada dengan UI baru
-                borderRadius: 4, // Sudut tidak perlu terlalu bulat untuk bar chart mendatar
+                backgroundColor: '#4338CA',
+                borderRadius: 4,
                 barPercentage: 0.7
             }]
         },
         options: {
-            indexAxis: 'y', // <--- INI KUNCI UTAMA: Mengubah jadi grafik Horizontal
+            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
             scales: {
                 x: {
                     border: { display: false },
-                    ticks: { stepSize: 1, font: { family: '"Plus Jakarta Sans", sans-serif', size: 10 } }
+                    ticks: { stepSize: 1, font: { family: '"Plus Jakarta Sans", sans-serif', size: 12 } }
                 },
                 y: {
-                    grid: { display: false }, // Menghilangkan garis background pada sumbu Y
-                    ticks: { font: { family: '"Plus Jakarta Sans", sans-serif', size: 11, weight: '500' } }
+                    grid: { display: false },
+                    ticks: { font: { family: '"Plus Jakarta Sans", sans-serif', size: 12, weight: '600' } }
                 }
             },
             plugins: {
