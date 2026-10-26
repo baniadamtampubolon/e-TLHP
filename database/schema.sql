@@ -41,10 +41,12 @@ CREATE TABLE tabel_bukti_tindak_lanjut (
     id SERIAL PRIMARY KEY,
     kode_rekomendasi VARCHAR(50) NOT NULL REFERENCES tabel_rekomendasi(kode_rekomendasi) ON DELETE CASCADE,
     output_aktual TEXT NOT NULL, -- Deskripsi tindakan yang telah dilakukan
-    file_bukti_path VARCHAR(255), -- Lokasi penyimpanan berkas PDF bukti dukung
+    file_bukti_path VARCHAR(255), -- Lokasi penyimpanan berkas bukti dukung
     ntpn VARCHAR(50), -- Nomor Transaksi Penerimaan Negara (khusus temuan keuangan)
     status_review VARCHAR(20) NOT NULL DEFAULT 'PENDING' CHECK (status_review IN ('PENDING', 'PROSES', 'TUNTAS')), -- Status penilaian auditor
     catatan_auditor TEXT, -- Komentar/evaluasi dari auditor
+    tanggal_mulai TIMESTAMP, -- Tanggal mulai tindak lanjut
+    tanggal_selesai TIMESTAMP, -- Tanggal selesai tindak lanjut
     tanggal_submit TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     tanggal_review TIMESTAMP
 );
