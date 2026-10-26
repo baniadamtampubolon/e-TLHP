@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
+from decimal import Decimal
 
 from ..database import get_db
 from .. import models, schemas
@@ -21,7 +22,12 @@ def create_rekomendasi(rekomendasi: schemas.RekomendasiCreate, db: Session = Dep
     if db_rec:
         raise HTTPException(status_code=400, detail="Kode rekomendasi sudah terdaftar")
         
-    new_rec = models.TabelRekomendasi(**rekomendasi.model_dump())
+    rec_dict = rekomendasi.model_dump()
+    nilai_temuan = Decimal(str(rec_dict.get("nilai_temuan") or 0))
+    nilai_realisasi = Decimal(str(rec_dict.get("nilai_realisasi") or 0))
+    rec_dict["selisih"] = max(Decimal("0.00"), nilai_temuan - nilai_realisasi)
+
+    new_rec = models.TabelRekomendasi(**rec_dict)
     db.add(new_rec)
     db.commit()
     db.refresh(new_rec)
@@ -33,6 +39,9 @@ def update_rekomendasi_status(kode_rekomendasi: str, status_update: schemas.Reko
     if not db_rec:
         raise HTTPException(status_code=404, detail="Rekomendasi tidak ditemukan")
     db_rec.status = status_update.status
+    if status_update.status == "TUNTAS" and (db_rec.nilai_temuan or Decimal("0.00")) > Decimal("0.00"):
+        db_rec.nilai_realisasi = db_rec.nilai_temuan
+        db_rec.selisih = Decimal("0.00")
     db.commit()
     db.refresh(db_rec)
     return db_rec
@@ -55,7 +64,7 @@ def update_rekomendasi(kode_rekomendasi: str, rec_update: schemas.RekomendasiUpd
     
     # Recalculate selisih if financial
     db_rec.nilai_temuan = rec_update.nilai_temuan
-    db_rec.selisih = db_rec.nilai_temuan - db_rec.nilai_realisasi
+    db_rec.selisih = max(Decimal("0.00"), db_rec.nilai_temuan - (db_rec.nilai_realisasi or Decimal("0.00")))
     
     db.commit()
     db.refresh(db_rec)
