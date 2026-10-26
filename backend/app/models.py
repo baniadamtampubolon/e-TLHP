@@ -61,10 +61,12 @@ class TabelBuktiTindakLanjut(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     kode_rekomendasi = Column(String(50), ForeignKey("tabel_rekomendasi.kode_rekomendasi", ondelete="CASCADE"), nullable=False)
     output_aktual = Column(Text, nullable=False)
-    file_bukti_path = Column(String(255), nullable=True) # Path to uploaded PDF
+    file_bukti_path = Column(String(255), nullable=True) # Path to uploaded file
     ntpn = Column(String(50), nullable=True) # Transaction ID for finance
     status_review = Column(String(20), nullable=False, default="PENDING") # PENDING, PROSES, TUNTAS
     catatan_auditor = Column(Text, nullable=True)
+    tanggal_mulai = Column(DateTime, nullable=True)
+    tanggal_selesai = Column(DateTime, nullable=True)
     tanggal_submit = Column(DateTime, default=datetime.utcnow)
     tanggal_review = Column(DateTime, nullable=True)
 
