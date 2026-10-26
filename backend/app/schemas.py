@@ -28,6 +28,8 @@ class BuktiTindakLanjut(BuktiTindakLanjutBase):
     file_bukti_path: Optional[str] = None
     status_review: str
     catatan_auditor: Optional[str] = None
+    tanggal_mulai: Optional[datetime] = None
+    tanggal_selesai: Optional[datetime] = None
     tanggal_submit: datetime
     tanggal_review: Optional[datetime] = None
 
