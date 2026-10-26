@@ -3,11 +3,17 @@
 > **Sistem Pemantauan & Penatausahaan Elektronik Tindak Lanjut Hasil Pemeriksaan (e-TLHP)**  
 > **Inspektorat Jenderal Kementerian Koordinator Bidang Pangan Republik Indonesia**
 
-[![Python Version](https://img.shields.io/badge/Python-3.9%2B-blue.svg?logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![SQLite / PostgreSQL](https://img.shields.io/badge/Database-SQLite%20%7C%20PostgreSQL-4169E1.svg?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![PHP Version](https://img.shields.io/badge/PHP-7.4%20%7C%208.0%2B-777BB4.svg?logo=php&logoColor=white)](https://www.php.net/)
+[![MySQL](https://img.shields.io/badge/Database-MySQL%20%7C%20MariaDB-4479A1.svg?logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Web Server](https://img.shields.io/badge/Deploy-Hostinger%20Apache%20%2F%20LiteSpeed-FF0055.svg?logo=hostinger&logoColor=white)](https://www.hostinger.com/)
 [![Tailwind CSS](https://img.shields.io/badge/UI-Tailwind%20%26%20Material%20Design%203-38B2AC.svg?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-Proprietary%20%2F%20Internal-orange.svg)]()
+
+> 🚀 **Edisi Rilis Produksi Hostinger (`hostinger-deploy`)**:  
+> Branch ini telah dioptimasi khusus untuk siap pakai di web hosting **Hostinger** menggunakan runtime **PHP PDO** dan **MySQL/MariaDB**.  
+> Untuk panduan instalasi di Hostinger, silakan baca **[HOSTINGER_DEPLOYMENT.md](HOSTINGER_DEPLOYMENT.md)**.  
+> Untuk verifikasi checklist seluruh fitur & logika bisnis, lihat **[MIGRATION_CHECKLIST.md](MIGRATION_CHECKLIST.md)**.  
+> *(Catatan: Versi riset Python FastAPI tetap tersimpan aman di branch `main`).*
 
 ---
 
