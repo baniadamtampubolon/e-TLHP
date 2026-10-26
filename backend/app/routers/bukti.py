@@ -14,11 +14,29 @@ router = APIRouter(
     tags=["Bukti Tindak Lanjut"]
 )
 
+ALLOWED_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg", ".doc", ".docx", ".xls", ".xlsx"}
+MAX_FILE_SIZE_MB = 10
+MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+
+def _parse_iso_date(date_str: Optional[str], fallback: Optional[datetime] = None) -> Optional[datetime]:
+    if not date_str:
+        return fallback
+    try:
+        return datetime.fromisoformat(date_str)
+    except ValueError:
+        try:
+            return datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError:
+            return fallback
+
 @router.post("", response_model=schemas.BuktiTindakLanjut, status_code=status.HTTP_201_CREATED)
 def submit_bukti_tindak_lanjut(
     kode_rekomendasi: str = Form(...),
     output_aktual: str = Form(...),
     ntpn: Optional[str] = Form(None),
+    tanggal_mulai: Optional[str] = Form(None),
+    tanggal_selesai: Optional[str] = Form(None),
+    tanggal_tindak_lanjut: Optional[str] = Form(None),
     file: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
@@ -28,12 +46,33 @@ def submit_bukti_tindak_lanjut(
         raise HTTPException(status_code=404, detail="Rekomendasi tidak ditemukan")
 
     file_path = None
-    if file:
-        file_ext = os.path.splitext(file.filename)[1]
+    if file and file.filename:
+        file_ext = os.path.splitext(file.filename)[1].lower()
+        if file_ext not in ALLOWED_EXTENSIONS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Format file {file_ext} tidak didukung. Gunakan: PDF, PNG, JPG, JPEG, DOC/DOCX, atau XLS/XLSX."
+            )
+        file_bytes = file.file.read()
+        if len(file_bytes) > MAX_FILE_SIZE_BYTES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Ukuran file melebihi batas maksimal {MAX_FILE_SIZE_MB} MB."
+            )
         filename = f"{kode_rekomendasi}_{datetime.now().strftime('%Y%m%d%H%M%S')}{file_ext}"
         file_path = os.path.join(UPLOAD_DIR, filename)
         with open(file_path, "wb") as buffer:
-            buffer.write(file.file.read())
+            buffer.write(file_bytes)
+
+    now = datetime.now()
+    parsed_mulai = _parse_iso_date(tanggal_mulai or tanggal_tindak_lanjut, fallback=now)
+    parsed_selesai = _parse_iso_date(tanggal_selesai or tanggal_tindak_lanjut, fallback=parsed_mulai)
+
+    if parsed_mulai and parsed_selesai and parsed_selesai < parsed_mulai:
+        raise HTTPException(
+            status_code=400,
+            detail="Tanggal Selesai tidak boleh lebih awal dari Tanggal Mulai."
+        )
 
     # Create progress log
     new_bukti = models.TabelBuktiTindakLanjut(
@@ -41,7 +80,10 @@ def submit_bukti_tindak_lanjut(
         output_aktual=output_aktual,
         ntpn=ntpn,
         file_bukti_path=file_path,
-        status_review="PENDING" # default status waiting for auditor
+        status_review="PENDING", # default status waiting for auditor
+        tanggal_mulai=parsed_mulai,
+        tanggal_selesai=parsed_selesai,
+        tanggal_submit=parsed_selesai or now
     )
     db.add(new_bukti)
     
@@ -55,8 +97,6 @@ def submit_bukti_tindak_lanjut(
 
 @router.put("/{id}/review", response_model=schemas.BuktiTindakLanjut)
 def review_bukti_tindak_lanjut(id: int, review: schemas.BuktiTindakLaughtReview if hasattr(schemas, "BuktiTindakLaughtReview") else schemas.BuktiTindakLanjutReview, db: Session = Depends(get_db)):
-    # Note: schemas has BuktiTindakLanjutReview or similar
-    # Let's inspect schemas.py or just use schemas.BuktiTindakLanjutReview which we used earlier
     db_bukti = db.query(models.TabelBuktiTindakLanjut).filter(models.TabelBuktiTindakLanjut.id == id).first()
     if not db_bukti:
         raise HTTPException(status_code=404, detail="Bukti tindak lanjut tidak ditemukan")
