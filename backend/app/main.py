@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 # pyrefly: ignore [missing-import]
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text, inspect
 
 from .database import engine, Base
 from .config import UPLOAD_DIR
@@ -11,6 +12,23 @@ from .routers import lha, temuan, rekomendasi, bukti, batl, auth
 
 # Initialize database tables on startup
 Base.metadata.create_all(bind=engine)
+
+def _ensure_bukti_date_range_columns():
+    try:
+        inspector = inspect(engine)
+        if "tabel_bukti_tindak_lanjut" in inspector.get_table_names():
+            cols = {c["name"] for c in inspector.get_columns("tabel_bukti_tindak_lanjut")}
+            with engine.begin() as conn:
+                if "tanggal_mulai" not in cols:
+                    conn.execute(text("ALTER TABLE tabel_bukti_tindak_lanjut ADD COLUMN tanggal_mulai DATETIME"))
+                    conn.execute(text("UPDATE tabel_bukti_tindak_lanjut SET tanggal_mulai = tanggal_submit WHERE tanggal_mulai IS NULL"))
+                if "tanggal_selesai" not in cols:
+                    conn.execute(text("ALTER TABLE tabel_bukti_tindak_lanjut ADD COLUMN tanggal_selesai DATETIME"))
+                    conn.execute(text("UPDATE tabel_bukti_tindak_lanjut SET tanggal_selesai = COALESCE(tanggal_review, tanggal_submit) WHERE tanggal_selesai IS NULL"))
+    except Exception as e:
+        print(f"Column migration notice: {e}")
+
+_ensure_bukti_date_range_columns()
 
 app = FastAPI(
     title="e-TLHP Kemenko Pangan API Backend",
