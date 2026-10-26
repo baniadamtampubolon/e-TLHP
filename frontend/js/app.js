@@ -60,8 +60,8 @@ function renderHeaderProfile() {
     if (!badge || !currentUser) return;
     
     if (currentUser.role === "AUDITOR") {
-        badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-md-primary/10 text-md-primary";
-        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-md-primary animate-pulse"></span> Auditor: ${currentUser.username.toUpperCase()}`;
+        badge.className = "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold bg-md-primary/10 text-md-primary";
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-md-primary animate-pulse"></span> Auditor: ${currentUser.username.toUpperCase()}`;
         
         // Show role switcher only for Auditor (admin feature for simulation)
         const switcher = document.getElementById("roleSwitcherContainer");
@@ -69,8 +69,8 @@ function renderHeaderProfile() {
         const roleSel = document.getElementById("roleSelector");
         if (roleSel) roleSel.value = currentRole;
     } else {
-        badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-md-tertiary/10 text-md-tertiary";
-        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-md-tertiary animate-pulse"></span> Satker: ${currentUser.pic}`;
+        badge.className = "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold bg-md-tertiary/10 text-md-tertiary";
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-md-tertiary animate-pulse"></span> Satker: ${currentUser.pic}`;
         
         // Hide role switcher for Satker
         const switcher = document.getElementById("roleSwitcherContainer");
@@ -122,14 +122,14 @@ async function switchRole() {
     if (roleVal === "AUDITOR") {
         currentRole = "AUDITOR";
         simulatedPic = null;
-        badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-md-primary/10 text-md-primary";
-        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-md-primary animate-pulse"></span> Auditor: ${currentUser.username.toUpperCase()}`;
+        badge.className = "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold bg-md-primary/10 text-md-primary";
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-md-primary animate-pulse"></span> Auditor: ${currentUser.username.toUpperCase()}`;
         if (addLhaBtn) addLhaBtn.classList.remove("hidden");
     } else if (roleVal.startsWith("SATKER:")) {
         currentRole = "SATKER";
         simulatedPic = roleVal.substring(7);
-        badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-md-tertiary/10 text-md-tertiary";
-        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-md-tertiary animate-pulse"></span> Simulasi: ${simulatedPic}`;
+        badge.className = "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold bg-md-tertiary/10 text-md-tertiary";
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-md-tertiary animate-pulse"></span> Simulasi: ${simulatedPic}`;
         if (addLhaBtn) addLhaBtn.classList.add("hidden");
     }
     
@@ -190,6 +190,9 @@ function computeLhaStatus(kodeLha) {
     const allTuntas = uniqueRecs.every(r => r.Status === "TUNTAS");
     if (allTuntas) return "TUNTAS";
     
+    const anyProses = uniqueRecs.some(r => r.Status === "PROSES" || r.Status === "TUNTAS");
+    if (anyProses) return "PROSES";
+    
     return "PENDING";
 }
 
@@ -211,10 +214,111 @@ function formatTemuanDate(dateStr) {
     try {
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) return dateStr.split('T')[0];
-        return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
     } catch(e) {
         return dateStr;
     }
+}
+
+function formatDateRangeText(startStr, endStr) {
+    if (!startStr && !endStr) return "Belum ada TL";
+    const s = startStr ? formatTemuanDate(startStr) : "-";
+    const e = endStr ? formatTemuanDate(endStr) : s;
+    return `${s} – ${e}`;
+}
+
+// Get follow-up date range (startDate, endDate) for a specific recommendation
+function getFollowUpRangeForRec(kodeRec) {
+    const logs = tabelProgres.filter(p => p["Kode Rekomendasi"] === kodeRec);
+    if (logs.length === 0) return { startDate: null, endDate: null, count: 0 };
+    let earliest = null;
+    let latest = null;
+    logs.forEach(l => {
+        const startRaw = l["Tanggal Mulai"] || l["Tanggal Submit"] || l["Tanggal Review"];
+        const endRaw = l["Tanggal Selesai"] || l["Tanggal Review"] || l["Tanggal Submit"];
+        if (startRaw) {
+            const ds = new Date(startRaw);
+            if (!isNaN(ds.getTime()) && (!earliest || ds < earliest)) {
+                earliest = ds;
+            }
+        }
+        if (endRaw) {
+            const de = new Date(endRaw);
+            if (!isNaN(de.getTime()) && (!latest || de > latest)) {
+                latest = de;
+            }
+        }
+    });
+    return {
+        startDate: earliest ? earliest.toISOString() : null,
+        endDate: latest ? latest.toISOString() : (earliest ? earliest.toISOString() : null),
+        count: logs.length
+    };
+}
+
+// Get follow-up date range across all recommendations under a finding (and its sub-findings)
+function getFollowUpRangeForTemuan(temuanId) {
+    const recs = getRecommendationsForFinding(temuanId);
+    let earliest = null;
+    let latest = null;
+    let totalCount = 0;
+    recs.forEach(r => {
+        const range = getFollowUpRangeForRec(r["Kode Rekomendasi"]);
+        totalCount += range.count;
+        if (range.startDate) {
+            const ds = new Date(range.startDate);
+            if (!isNaN(ds.getTime()) && (!earliest || ds < earliest)) earliest = ds;
+        }
+        if (range.endDate) {
+            const de = new Date(range.endDate);
+            if (!isNaN(de.getTime()) && (!latest || de > latest)) latest = de;
+        }
+    });
+    return {
+        startDate: earliest ? earliest.toISOString() : null,
+        endDate: latest ? latest.toISOString() : (earliest ? earliest.toISOString() : null),
+        count: totalCount
+    };
+}
+
+// Get follow-up date range and total follow-up count across an LHA
+function getFollowUpInfoForLha(kodeLha) {
+    const recs = getRecommendationsForLha(kodeLha);
+    let earliest = null;
+    let latest = null;
+    let totalLogs = 0;
+    recs.forEach(r => {
+        const range = getFollowUpRangeForRec(r["Kode Rekomendasi"]);
+        totalLogs += range.count;
+        if (range.startDate) {
+            const ds = new Date(range.startDate);
+            if (!isNaN(ds.getTime()) && (!earliest || ds < earliest)) earliest = ds;
+        }
+        if (range.endDate) {
+            const de = new Date(range.endDate);
+            if (!isNaN(de.getTime()) && (!latest || de > latest)) latest = de;
+        }
+    });
+    return {
+        startDate: earliest ? earliest.toISOString() : null,
+        endDate: latest ? latest.toISOString() : (earliest ? earliest.toISOString() : null),
+        totalLogs
+    };
+}
+
+// Get unique PICs for a specific finding (including sub-findings)
+function getUniquePicsForTemuan(temuanId) {
+    const recs = getRecommendationsForFinding(temuanId);
+    const pics = new Set();
+    recs.forEach(r => {
+        if (r.PIC) {
+            r.PIC.split(',').forEach(p => {
+                const trimmed = p.trim();
+                if (trimmed) pics.add(trimmed);
+            });
+        }
+    });
+    return Array.from(pics);
 }
 
 // Get all unique recommendations under an LHA
@@ -230,13 +334,13 @@ function getRecommendationsForLha(kodeLha) {
 
 // Filter and Refresh everything
 function applyFilters() {
-    const searchVal = document.getElementById('searchInput').value.toLowerCase();
-    const sourceVal = document.getElementById('sourceFilter').value;
-    const picVal = document.getElementById('picFilter').value;
-    const statusVal = document.getElementById('statusFilter').value;
+    const searchVal = document.getElementById('searchInput')?.value.toLowerCase() || "";
+    const sourceVal = document.getElementById('sourceFilter')?.value || "ALL";
+    const picVal = document.getElementById('picFilter')?.value || "ALL";
+    const statusVal = document.getElementById('statusFilter')?.value || "ALL";
+    const tahunVal = document.getElementById('tahunFilter')?.value || "ALL";
 
     filteredLHA = masterLHP.filter(lha => {
-        // Search: match kode LHP, or any temuan kriteria/sebab under it, or any rekomendasi text
         let matchSearch = !searchVal;
         if (!matchSearch) {
             if (lha["Kode LHP"] && lha["Kode LHP"].toLowerCase().includes(searchVal)) matchSearch = true;
@@ -246,6 +350,14 @@ function applyFilters() {
                     (t.Kriteria && t.Kriteria.toLowerCase().includes(searchVal)) ||
                     (t["Kode Temuan"] && t["Kode Temuan"].toLowerCase().includes(searchVal)) ||
                     (t.Sebab && t.Sebab.toLowerCase().includes(searchVal))
+                );
+            }
+            if (!matchSearch) {
+                const recs = getRecommendationsForLha(lha["Kode LHP"]);
+                matchSearch = recs.some(r =>
+                    (r.Rekomendasi && r.Rekomendasi.toLowerCase().includes(searchVal)) ||
+                    (r.PIC && r.PIC.toLowerCase().includes(searchVal)) ||
+                    (r["Kode Rekomendasi"] && r["Kode Rekomendasi"].toLowerCase().includes(searchVal))
                 );
             }
         }
@@ -267,7 +379,10 @@ function applyFilters() {
             matchStatus = (lhaStatus === statusVal);
         }
 
-        return matchSearch && matchSource && matchPic && matchStatus;
+        // Tahun filter
+        const matchTahun = (tahunVal === "ALL") || (lha.Tahun && lha.Tahun.toString() === tahunVal);
+
+        return matchSearch && matchSource && matchPic && matchStatus && matchTahun;
     });
 
     renderLhaList();
@@ -309,15 +424,15 @@ function filterLhaStatusChip(status) {
         const btn = document.getElementById(`chipStatus${c}`);
         if (btn) {
             if (c === status) {
-                btn.className = "lha-status-chip active px-3 py-1 rounded-full text-xs font-semibold bg-md-primary text-white transition-all shadow-xs shrink-0";
+                btn.className = "lha-status-chip active px-4 py-1.5 rounded-md text-sm font-bold bg-emerald-700 text-white transition-all shadow-sm shrink-0 border border-emerald-700";
             } else {
                 const colors = {
-                    'PROSES': 'bg-amber-100 text-amber-800 hover:bg-amber-200',
-                    'TUNTAS': 'bg-green-100 text-green-800 hover:bg-green-200',
-                    'PENDING': 'bg-red-100 text-red-800 hover:bg-red-200',
-                    'ALL': 'bg-md-surface-container-low text-md-on-surface-variant hover:bg-md-outline/10'
+                    'PROSES': 'text-amber-600 bg-amber-50 border border-amber-200 hover:bg-amber-100',
+                    'TUNTAS': 'text-emerald-600 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100',
+                    'PENDING': 'text-rose-600 bg-rose-50 border border-rose-200 hover:bg-rose-100',
+                    'ALL': 'text-slate-600 bg-slate-100 border border-slate-200 hover:bg-slate-200'
                 };
-                btn.className = `lha-status-chip px-3 py-1 rounded-full text-xs font-semibold ${colors[c] || 'bg-gray-100 text-gray-700'} transition-all shrink-0`;
+                btn.className = `lha-status-chip px-4 py-1.5 rounded-md text-sm font-bold ${colors[c] || 'bg-gray-100 text-gray-700'} transition-all shrink-0`;
             }
         }
     });
@@ -328,6 +443,9 @@ function filterLhaStatusChip(status) {
 function resetFilters() {
     document.getElementById('searchInput').value = "";
     document.getElementById('sourceFilter').value = "ALL";
+    if (document.getElementById('tahunFilter')) {
+        document.getElementById('tahunFilter').value = "ALL";
+    }
     if (currentUser && currentUser.role !== "SATKER") {
         document.getElementById('picFilter').value = "ALL";
     }
@@ -341,7 +459,7 @@ function getRecommendationsForFinding(temuanId) {
     let recs = tabelRekomendasi.filter(r => r["Kode Temuan"] === temuanId);
     const children = tabelTemuan.filter(t => t["Parent Temuan"] === temuanId);
     children.forEach(c => {
-        recs = recs.concat(tabelRekomendasi.filter(r => r["Kode Temuan"] === c["Kode Temuan"]));
+        recs = recs.concat(getRecommendationsForFinding(c["Kode Temuan"]));
     });
     return recs;
 }
@@ -351,9 +469,8 @@ function getRecommendationStatus(recId) {
     return rec ? rec.Status : "PENDING";
 }
 
-// KPI Calculations — now based on filteredLHA
+// KPI Calculations — based on filteredLHA
 function calculateKPIs() {
-    // Gather all temuan under filtered LHAs
     let allFilteredTemuan = [];
     filteredLHA.forEach(lha => {
         allFilteredTemuan = allFilteredTemuan.concat(tabelTemuan.filter(t => t["Kode LHP"] === lha["Kode LHP"]));
@@ -462,7 +579,7 @@ function createLhaTableRowEl(lha, index) {
     const kodeLha = lha["Kode LHP"];
     const isSelected = selectedLhaId === kodeLha;
     
-    tr.className = `transition-colors duration-150 cursor-pointer ${isSelected ? 'bg-indigo-50' : 'hover:bg-gray-50'}`;
+    tr.className = `transition-colors duration-150 cursor-pointer ${isSelected ? 'bg-indigo-50/70' : 'hover:bg-slate-50'}`;
     tr.onclick = (e) => {
         if (e.target.closest('button')) return;
         selectLha(kodeLha);
@@ -473,7 +590,6 @@ function createLhaTableRowEl(lha, index) {
     const temuanList = tabelTemuan.filter(t => t["Kode LHP"] === kodeLha);
     const temuanCount = temuanList.length;
     
-    // Build a fuller description from kriteria
     const kriteriaList = temuanList
         .filter(t => t.Kriteria)
         .map(t => t.Kriteria);
@@ -491,7 +607,7 @@ function createLhaTableRowEl(lha, index) {
     const statusMap = {
         "TUNTAS":  { label: "Selesai",       dotColor: "bg-green-500",  textColor: "text-green-700",  bgColor: "bg-green-50" },
         "PROSES":  { label: "On Progress",   dotColor: "bg-blue-500",   textColor: "text-blue-700",   bgColor: "bg-blue-50" },
-        "PENDING": { label: "Belum TL",      dotColor: "bg-orange-500", textColor: "text-orange-700",  bgColor: "bg-orange-50" },
+        "PENDING": { label: "Belum TL",      dotColor: "bg-orange-500", textColor: "text-orange-700", bgColor: "bg-orange-50" },
         "KOSONG":  { label: "Kosong",        dotColor: "bg-gray-400",   textColor: "text-gray-500",   bgColor: "bg-gray-50" },
     };
     const st = statusMap[lhaStatus] || statusMap["PENDING"];
@@ -502,56 +618,87 @@ function createLhaTableRowEl(lha, index) {
         : progressPercent > 0 ? 'bg-orange-400' 
         : 'bg-gray-300';
 
-    // PIC list — render as compact comma-separated text, not thick pills
+    // PIC list
     const pics = getUniquePicsForLha(kodeLha);
     let picHTML = '';
     if (pics.length === 0) {
-        picHTML = '<span class="text-gray-400 italic text-[12px]">—</span>';
+        picHTML = '<span class="text-slate-400 italic text-sm">—</span>';
     } else if (pics.length <= 2) {
-        picHTML = pics.map(p => `<span class="text-gray-700 text-[12px] leading-snug">${p}</span>`).join('<span class="text-gray-300 mx-1">•</span>');
+        picHTML = pics.map(p => `<span class="inline-flex items-center px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200">${p}</span>`).join(' ');
     } else {
-        picHTML = pics.slice(0, 2).map(p => `<span class="text-gray-700 text-[12px] leading-snug">${p}</span>`).join('<span class="text-gray-300 mx-1">•</span>');
-        picHTML += `<span class="text-gray-400 text-[11px] ml-1">+${pics.length - 2} lainnya</span>`;
+        picHTML = pics.slice(0, 2).map(p => `<span class="inline-flex items-center px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200">${p}</span>`).join(' ');
+        picHTML += `<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-xs font-bold border border-indigo-100">+${pics.length - 2} lainnya</span>`;
+    }
+
+    // Rentang Tanggal Tindak Lanjut Info (Mulai - Selesai)
+    const followUpInfo = getFollowUpInfoForLha(kodeLha);
+    let tanggalTlHTML = '';
+    if (followUpInfo.startDate || followUpInfo.endDate) {
+        tanggalTlHTML = `
+            <div class="flex flex-col gap-1 text-xs">
+                <div class="flex items-center gap-1.5 text-slate-700">
+                    <span class="font-bold text-slate-500 w-12">Mulai:</span>
+                    <span class="font-bold text-slate-900">${formatTemuanDate(followUpInfo.startDate)}</span>
+                </div>
+                <div class="flex items-center gap-1.5 text-emerald-700">
+                    <span class="font-bold text-slate-500 w-12">Selesai:</span>
+                    <span class="font-bold text-emerald-700">${formatTemuanDate(followUpInfo.endDate)}</span>
+                </div>
+            </div>
+        `;
+    } else {
+        tanggalTlHTML = `
+            <div class="flex flex-col gap-0.5">
+                <span class="text-sm font-medium text-slate-400 italic flex items-center gap-1.5">
+                    <i class="fa-regular fa-clock text-slate-400"></i>
+                    Belum ada TL
+                </span>
+                <span class="text-xs text-slate-400">Menunggu tindak lanjut</span>
+            </div>
+        `;
     }
 
     tr.innerHTML = `
-        <td class="py-4 px-5 align-top">
-            <div class="flex flex-col gap-0.5">
-                <span class="text-[13px] font-bold text-gray-900">${kodeLha}</span>
-                <span class="text-[11px] text-gray-400">${lha.Tahun || '2025'}</span>
+        <td class="py-4 px-6 align-top">
+            <div class="flex flex-col gap-1">
+                <span class="text-sm font-bold text-slate-900">${kodeLha}</span>
+                <span class="text-xs font-semibold text-slate-500">Tahun ${lha.Tahun || '2025'}</span>
             </div>
         </td>
         <td class="py-4 px-4 align-top">
-            <div class="flex flex-col gap-1 pr-4">
-                <p class="text-[13px] font-semibold text-gray-800 leading-relaxed line-clamp-2">${mainKriteria}</p>
-                <span class="text-[11px] text-gray-400">${temuanCount} Temuan · ${recs.length} Rekomendasi</span>
+            <div class="flex flex-col gap-1.5 pr-4">
+                <p class="text-sm font-semibold text-slate-800 leading-relaxed line-clamp-2">${mainKriteria}</p>
+                <span class="text-xs font-medium text-slate-500">${temuanCount} Temuan · ${recs.length} Rekomendasi</span>
             </div>
         </td>
         <td class="py-4 px-4 align-top">
-            <span class="inline-block text-[11px] font-bold px-2.5 py-1 rounded-md ${source === 'BPK-RI' ? 'bg-indigo-100 text-indigo-700' : 'bg-pink-100 text-pink-700'}">${source}</span>
+            <span class="inline-block text-xs font-bold px-3 py-1 rounded-md ${source === 'BPK-RI' ? 'bg-indigo-100 text-indigo-700' : 'bg-pink-100 text-pink-700'}">${source}</span>
         </td>
         <td class="py-4 px-4 align-top">
-            <div class="flex flex-wrap items-center gap-0.5 leading-relaxed">
+            <div class="flex flex-wrap items-center gap-1.5 leading-relaxed">
                 ${picHTML}
             </div>
         </td>
+        <td class="py-4 px-4 align-top">
+            ${tanggalTlHTML}
+        </td>
         <td class="py-4 px-4 align-top text-center">
-            <span class="inline-flex items-center gap-1.5 text-[12px] font-semibold ${st.textColor} ${st.bgColor} px-2.5 py-1 rounded-md">
+            <span class="inline-flex items-center gap-1.5 text-xs font-bold ${st.textColor} ${st.bgColor} px-3 py-1.5 rounded-md">
                 <span class="w-2 h-2 rounded-full ${st.dotColor} ${lhaStatus === 'PROSES' ? 'animate-pulse' : ''}"></span>
                 ${st.label}
             </span>
         </td>
         <td class="py-4 px-4 align-top">
-            <div class="flex flex-col gap-1.5 min-w-[150px]">
+            <div class="flex flex-col gap-2 min-w-[155px]">
                 <div class="flex items-center justify-between">
-                    <span class="text-[12px] text-gray-600 font-medium">${finishedRecs.length}/${recs.length} Dokumen</span>
-                    <span class="text-[12px] font-bold ${progressPercent === 100 ? 'text-green-600' : progressPercent > 0 ? 'text-blue-600' : 'text-gray-400'}">${progressPercent}%</span>
+                    <span class="text-xs text-slate-600 font-semibold">${finishedRecs.length}/${recs.length} Tuntas</span>
+                    <span class="text-xs font-bold ${progressPercent === 100 ? 'text-green-600' : progressPercent > 0 ? 'text-blue-600' : 'text-slate-400'}">${progressPercent}%</span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-1.5">
-                    <div class="h-1.5 rounded-full transition-all duration-500 ${barColor}" style="width: ${progressPercent}%"></div>
+                <div class="w-full bg-slate-200 rounded-full h-2">
+                    <div class="h-2 rounded-full transition-all duration-500 ${barColor}" style="width: ${progressPercent}%"></div>
                 </div>
-                <button onclick="selectLha('${kodeLha}')" class="self-end mt-1 px-3 py-1 rounded-md bg-indigo-600 text-white text-[11px] font-semibold hover:bg-indigo-700 active:scale-95 transition-all inline-flex items-center gap-1 cursor-pointer">
-                    <i class="fa-solid fa-eye text-[10px]"></i> Detail
+                <button onclick="selectLha('${kodeLha}')" class="self-end mt-1 px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 active:scale-95 transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-xs">
+                    <i class="fa-solid fa-eye"></i> Detail
                 </button>
             </div>
         </td>
@@ -564,7 +711,6 @@ function selectLha(kodeLha) {
     selectedLhaId = kodeLha;
     selectedTemuanId = null; // Reset to list of findings
     
-    // Switch to full width detail view section with smooth animation
     const tableSection = document.getElementById('lhaTableViewSection');
     const detailPanel = document.getElementById('detailPanel');
     if (tableSection) tableSection.classList.add('hidden');
@@ -580,7 +726,6 @@ function closeDetail() {
     selectedLhaId = null;
     selectedTemuanId = null;
     
-    // Switch back to full size table view section with smooth animation
     const tableSection = document.getElementById('lhaTableViewSection');
     const detailPanel = document.getElementById('detailPanel');
     if (tableSection) {
@@ -607,6 +752,22 @@ function goBackToFindings() {
     showLhaDetail(selectedLhaId);
 }
 
+// Helper to get file icon & label based on extension
+function getFileBadgeMeta(filepath) {
+    if (!filepath) return { icon: "fa-file", label: "Lihat Dokumen Bukti", color: "text-emerald-700 bg-emerald-50 border-emerald-200" };
+    const ext = filepath.split('.').pop().toLowerCase();
+    if (ext === 'pdf') {
+        return { icon: "fa-file-pdf", label: "Lihat Dokumen PDF", color: "text-rose-700 bg-rose-50 border-rose-200" };
+    } else if (['png', 'jpg', 'jpeg'].includes(ext)) {
+        return { icon: "fa-file-image", label: `Lihat Bukti Gambar (${ext.toUpperCase()})`, color: "text-indigo-700 bg-indigo-50 border-indigo-200" };
+    } else if (['doc', 'docx'].includes(ext)) {
+        return { icon: "fa-file-word", label: `Unduh Dokumen Word (${ext.toUpperCase()})`, color: "text-blue-700 bg-blue-50 border-blue-200" };
+    } else if (['xls', 'xlsx'].includes(ext)) {
+        return { icon: "fa-file-excel", label: `Unduh Dokumen Excel (${ext.toUpperCase()})`, color: "text-emerald-700 bg-emerald-50 border-emerald-200" };
+    }
+    return { icon: "fa-file-lines", label: `Lihat Berkas (${ext.toUpperCase()})`, color: "text-slate-700 bg-slate-100 border-slate-200" };
+}
+
 function showLhaDetail(kodeLha) {
     const lha = masterLHP.find(l => l["Kode LHP"] === kodeLha);
     if (!lha) return;
@@ -618,13 +779,12 @@ function showLhaDetail(kodeLha) {
 
     const source = lha["Sumber Audit"] || "BPK-RI";
     const isBpkAudit = (source === "BPK-RI" || kodeLha.includes("BPK"));
-    const sourceBadgeColor = source === "BPK-RI" ? "bg-md-primary text-white" : "bg-md-tertiary text-white";
     const lhaStatus = computeLhaStatus(kodeLha);
     const statusConfig = {
-        "TUNTAS": { bg: "bg-green-100 text-green-800 border-green-200", icon: "fa-circle-check" },
-        "PROSES": { bg: "bg-amber-100 text-amber-800 border-amber-200", icon: "fa-spinner" },
-        "PENDING": { bg: "bg-red-100 text-red-800 border-red-200", icon: "fa-clock" },
-        "KOSONG": { bg: "bg-gray-100 text-gray-500 border-gray-200", icon: "fa-minus" },
+        "TUNTAS":  { bg: "bg-green-100 text-green-800 border-green-200", dotColor: "bg-green-500", textColor: "text-green-700", icon: "fa-circle-check" },
+        "PROSES":  { bg: "bg-amber-100 text-amber-800 border-amber-200", dotColor: "bg-blue-500",  textColor: "text-blue-700",  icon: "fa-spinner" },
+        "PENDING": { bg: "bg-red-100 text-red-800 border-red-200",       dotColor: "bg-orange-500",textColor: "text-orange-700",icon: "fa-clock" },
+        "KOSONG":  { bg: "bg-gray-100 text-gray-500 border-gray-200",    dotColor: "bg-gray-400",  textColor: "text-gray-500",  icon: "fa-minus" },
     };
     const sc = statusConfig[lhaStatus] || statusConfig["PENDING"];
 
@@ -641,12 +801,12 @@ function showLhaDetail(kodeLha) {
     let batlHTML = "";
     if (isBatlIssued) {
         batlHTML = `
-            <div class="p-4 rounded-2xl bg-green-50 border border-green-200 text-center">
+            <div class="p-6 rounded-2xl bg-green-50 border border-green-200 text-center">
                 <i class="fa-solid fa-file-signature text-green-600 text-3xl mb-2"></i>
-                <h5 class="text-xs font-bold text-green-800">Berita Acara Tindak Lanjut (BATL) Terbit</h5>
-                <p class="text-[10px] text-green-700 mt-1">Laporan Hasil Audit ini telah resmi ditutup dengan penandatanganan BATL.</p>
-                <div class="mt-3 flex justify-center gap-2">
-                    <a href="#" onclick="alert('Mengunduh dokumen BATL PDF...')" class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-green-600 text-white text-[10px] font-bold hover:bg-green-700 transition-all">
+                <h5 class="text-base font-bold text-green-800">Berita Acara Tindak Lanjut (BATL) Terbit</h5>
+                <p class="text-sm text-green-700 mt-1">Laporan Hasil Audit ini telah resmi ditutup dengan penandatanganan BATL.</p>
+                <div class="mt-4 flex justify-center gap-2">
+                    <a href="#" onclick="alert('Mengunduh dokumen BATL PDF...')" class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-green-600 text-white text-sm font-bold hover:bg-green-700 transition-all">
                         <i class="fa-solid fa-file-arrow-down"></i> Unduh Dokumen BATL
                     </a>
                 </div>
@@ -654,13 +814,13 @@ function showLhaDetail(kodeLha) {
         `;
     } else if (isAllTuntas && currentRole === "AUDITOR") {
         batlHTML = `
-            <div class="p-4 rounded-2xl bg-md-secondary-container/50 border border-md-primary/10 text-center flex flex-col gap-2">
+            <div class="p-6 rounded-2xl bg-md-secondary-container/50 border border-md-primary/20 text-center flex flex-col gap-3">
                 <i class="fa-solid fa-clipboard-check text-md-primary text-3xl mb-1 animate-pulse"></i>
-                <h5 class="text-xs font-bold text-md-on-secondary-container">Terbitkan Berita Acara Tindak Lanjut (BATL)</h5>
-                <p class="text-[10px] text-md-on-surface-variant">Seluruh rekomendasi pada LHA ini telah TUNTAS. Penerbitan BATL menandai penutupan resmi.</p>
-                <form onsubmit="handleBatlCreate(event, '${kodeLha}')" class="flex flex-col gap-2 mt-2">
-                    <input type="text" id="nomorBatlInput" required placeholder="Masukkan Nomor BATL (contoh: BA-2025-001)..." class="w-full p-2 text-xs rounded-xl border border-md-outline/20 focus:outline-none bg-white">
-                    <button type="submit" class="w-full py-2 rounded-full bg-md-primary text-white text-[10px] font-bold hover:shadow-md active:scale-95 transition-all">
+                <h5 class="text-base font-bold text-md-on-secondary-container">Terbitkan Berita Acara Tindak Lanjut (BATL)</h5>
+                <p class="text-sm text-md-on-surface-variant">Seluruh rekomendasi pada LHA ini telah TUNTAS. Penerbitan BATL menandai penutupan resmi.</p>
+                <form onsubmit="handleBatlCreate(event, '${kodeLha}')" class="flex flex-col sm:flex-row gap-3 mt-2 max-w-xl mx-auto w-full">
+                    <input type="text" id="nomorBatlInput" required placeholder="Masukkan Nomor BATL (contoh: BA-2025-001)..." class="flex-1 p-3 text-sm rounded-xl border border-md-outline/30 focus:outline-none bg-white">
+                    <button type="submit" class="px-6 py-3 rounded-xl bg-md-primary text-white text-sm font-bold hover:shadow-md active:scale-95 transition-all shrink-0">
                         Terbitkan & Tandatangani BATL (TTE)
                     </button>
                 </form>
@@ -668,144 +828,298 @@ function showLhaDetail(kodeLha) {
         `;
     }
 
+    const todayISO = new Date().toISOString().split('T')[0];
+
     // Build temuan sections HTML
     let temuanSectionsHTML = "";
     if (parentTemuan.length === 0 && temuanList.length === 0) {
         temuanSectionsHTML = `
-            <div class="text-center p-8 text-md-on-surface-variant/60">
-                <i class="fa-solid fa-clipboard-question text-3xl mb-2"></i>
-                <p class="text-xs">Belum ada temuan pada dokumen LHA ini.</p>
+            <div class="text-center p-10 text-slate-500">
+                <i class="fa-solid fa-clipboard-question text-4xl mb-3 text-slate-300"></i>
+                <p class="text-base font-medium">Belum ada temuan pada dokumen LHA ini.</p>
                 ${currentRole === "AUDITOR" ? `
-                <button onclick="openTemuanModal('${kodeLha}', false)" class="mt-3 px-4 py-1.5 rounded-full bg-md-primary text-white text-[10px] font-bold hover:shadow-md active:scale-95 transition-all">
-                    <i class="fa-solid fa-plus text-[9px]"></i> Tambah Temuan Pertama
+                <button onclick="openTemuanModal('${kodeLha}', false)" class="mt-4 px-5 py-2.5 rounded-full bg-md-primary text-white text-sm font-bold hover:shadow-md active:scale-95 transition-all">
+                    <i class="fa-solid fa-plus mr-1"></i> Tambah Temuan Pertama
                 </button>` : ''}
             </div>
         `;
     } else {
         // Build each temuan block with its children and recommendations
         const processTemuan = (t, isChild = false) => {
-            const recs = getRecommendationsForFinding(t["Kode Temuan"]);
-            
+            const directRecs = tabelRekomendasi.filter(r => r["Kode Temuan"] === t["Kode Temuan"]);
+            const nodePics = getUniquePicsForTemuan(t["Kode Temuan"]);
+            const nodeRange = getFollowUpRangeForTemuan(t["Kode Temuan"]);
+            const temuanDateFormatted = formatTemuanDate(t["Tanggal Input"]);
+
             let recsHTML = "";
-            if (recs.length > 0) {
-                recsHTML = recs.map(rec => {
+            if (directRecs.length > 0) {
+                recsHTML = directRecs.map(rec => {
                     const status = rec.Status;
-                    const statusBadgeClass = status === "TUNTAS" 
-                        ? "bg-green-100 text-green-800 border-green-200" 
-                        : status === "PROSES" 
-                        ? "bg-amber-100 text-amber-800 border-amber-200" 
-                        : "bg-red-100 text-red-800 border-red-200";
+                    const recRange = getFollowUpRangeForRec(rec["Kode Rekomendasi"]);
+                    const safeRecId = rec["Kode Rekomendasi"].replace(/[^a-zA-Z0-9_-]/g, '_');
 
                     // Financial metrics
                     let financialHTML = "";
                     if (rec["Kode Rekomendasi"].startsWith("R-INSP")) {
                         financialHTML = `
-                            <div class="mt-3 grid grid-cols-3 gap-2 bg-md-surface-container-low/50 p-2.5 rounded-xl border border-md-outline/5 text-center">
-                                <div>
-                                    <p class="text-[9px] text-md-on-surface-variant font-bold">TARGET PENYETORAN</p>
-                                    <p class="text-xs font-bold text-md-on-background">Rp ${(rec["Nilai Temuan"] || 0).toLocaleString('id-ID')}</p>
+                            <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                                <div class="p-2 rounded-lg bg-white border border-slate-100">
+                                    <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">Target Penyetoran</p>
+                                    <p class="text-base font-extrabold text-slate-900 mt-1">Rp ${(rec["Nilai Temuan"] || 0).toLocaleString('id-ID')}</p>
                                 </div>
-                                <div>
-                                    <p class="text-[9px] text-green-700 font-bold">REALISASI SETOR</p>
-                                    <p class="text-xs font-bold text-green-600">Rp ${(rec["Nilai Realisasi"] || 0).toLocaleString('id-ID')}</p>
+                                <div class="p-2 rounded-lg bg-white border border-emerald-100">
+                                    <p class="text-xs text-emerald-700 font-bold uppercase tracking-wider">Realisasi Setor</p>
+                                    <p class="text-base font-extrabold text-emerald-600 mt-1">Rp ${(rec["Nilai Realisasi"] || 0).toLocaleString('id-ID')}</p>
                                 </div>
-                                <div>
-                                    <p class="text-[9px] text-red-700 font-bold">DEFISIT/SELISIH</p>
-                                    <p class="text-xs font-bold text-red-600">Rp ${(rec["Selisih"] || 0).toLocaleString('id-ID')}</p>
+                                <div class="p-2 rounded-lg bg-white border border-rose-100">
+                                    <p class="text-xs text-rose-700 font-bold uppercase tracking-wider">Defisit / Selisih</p>
+                                    <p class="text-base font-extrabold text-rose-600 mt-1">Rp ${(rec["Selisih"] || 0).toLocaleString('id-ID')}</p>
                                 </div>
                             </div>
                         `;
                     }
 
-                    // Progress logs
+                    // Progress logs (Tabel Riwayat Tindak Lanjut)
                     const progressLogs = tabelProgres.filter(p => p["Kode Rekomendasi"] === rec["Kode Rekomendasi"]);
                     let progressHTML = "";
                     if (progressLogs.length > 0) {
                         progressHTML = `
-                            <div class="mt-3">
-                                <h5 class="text-[10px] font-bold text-md-on-surface-variant mb-1.5 tracking-wider uppercase">Log Capaian / Progres Tindak Lanjut:</h5>
-                                <ul class="space-y-2">
-                                    ${progressLogs.map(log => {
-                                        let fileLinkHTML = "";
-                                        if (log["File Bukti Path"]) {
-                                            const filename = log["File Bukti Path"].split(/[\/\\]/).pop();
-                                            fileLinkHTML = `
-                                                <div class="mt-1">
-                                                    <a href="${UPLOADS_BASE}/${filename}" target="_blank" class="inline-flex items-center gap-1 text-[10px] text-md-primary font-bold hover:underline bg-md-primary/5 px-2 py-0.5 rounded-full">
-                                                        <i class="fa-solid fa-file-pdf"></i> Lihat Bukti Dokumen
-                                                    </a>
-                                                </div>
-                                            `;
-                                        }
+                            <div class="mt-4">
+                                <div class="flex items-center justify-between mb-2.5">
+                                    <h5 class="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                                        <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i>
+                                        Log Capaian / Progres Tindak Lanjut (${progressLogs.length})
+                                    </h5>
+                                </div>
+                                <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead class="bg-slate-100 border-b border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider">
+                                            <tr>
+                                                <th class="py-3 px-4 w-[210px]">Rentang Tanggal Tindak Lanjut</th>
+                                                <th class="py-3 px-4">Uraian Progres / Output Aktual</th>
+                                                <th class="py-3 px-4 w-[210px]">Bukti Dukung & NTPN</th>
+                                                <th class="py-3 px-4 w-[140px] text-center">Status Review</th>
+                                                ${currentRole === "AUDITOR" ? `<th class="py-3 px-4 w-[240px]">Evaluasi Auditor</th>` : ''}
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100">
+                                            ${progressLogs.map(log => {
+                                                let fileLinkHTML = `<span class="text-xs text-slate-400 italic">Tanpa lampiran berkas</span>`;
+                                                if (log["File Bukti Path"]) {
+                                                    const filename = log["File Bukti Path"].split(/[\/\\]/).pop();
+                                                    const badgeMeta = getFileBadgeMeta(filename);
+                                                    fileLinkHTML = `
+                                                        <a href="${UPLOADS_BASE}/${filename}" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-bold hover:underline px-3 py-1.5 rounded-lg border ${badgeMeta.color}">
+                                                            <i class="fa-solid ${badgeMeta.icon}"></i> ${badgeMeta.label}
+                                                        </a>
+                                                    `;
+                                                }
 
-                                        let reviewFormHTML = "";
-                                        if (currentRole === "AUDITOR" && log["Status"] === "PENDING") {
-                                            reviewFormHTML = `
-                                                <div class="mt-2 p-2 bg-md-surface-container-low rounded-xl border border-md-outline/10">
-                                                    <p class="text-[9px] font-bold text-md-on-background uppercase mb-1"><i class="fa-solid fa-gavel text-md-primary"></i> Evaluasi Auditor:</p>
-                                                    <div class="flex flex-col gap-1.5">
-                                                        <div class="flex gap-2">
-                                                            <button onclick="submitReview(${log.id}, 'TUNTAS', event)" class="px-2.5 py-1 text-[10px] font-bold rounded-full bg-green-600 text-white hover:bg-green-700 active:scale-95 transition-all">Setujui (TUNTAS)</button>
-                                                            <button onclick="submitReview(${log.id}, 'PROSES', event)" class="px-2.5 py-1 text-[10px] font-bold rounded-full bg-amber-600 text-white hover:bg-amber-700 active:scale-95 transition-all">Tolak / Revisi (PROSES)</button>
+                                                let reviewFormHTML = "";
+                                                if (currentRole === "AUDITOR") {
+                                                    if (log["Status"] === "PENDING") {
+                                                        reviewFormHTML = `
+                                                            <div class="flex flex-col gap-2">
+                                                                <input type="text" id="reviewComment_${log.id}" placeholder="Catatan evaluasi auditor..." class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-indigo-500">
+                                                                <div class="flex gap-2">
+                                                                    <button onclick="submitReview(${log.id}, 'TUNTAS', event)" class="flex-1 px-3 py-1.5 text-xs font-bold rounded-lg bg-green-600 text-white hover:bg-green-700 active:scale-95 transition-all">Setujui</button>
+                                                                    <button onclick="submitReview(${log.id}, 'PROSES', event)" class="flex-1 px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-600 text-white hover:bg-amber-700 active:scale-95 transition-all">Revisi</button>
+                                                                </div>
+                                                            </div>
+                                                        `;
+                                                    } else {
+                                                        reviewFormHTML = `
+                                                            <div class="text-xs text-slate-600">
+                                                                <span class="font-semibold text-slate-700">Telah direview</span>
+                                                                ${log["Tanggal Review"] ? `<div class="text-slate-400 mt-0.5">${formatTemuanDate(log["Tanggal Review"])}</div>` : ''}
+                                                            </div>
+                                                        `;
+                                                    }
+                                                }
+
+                                                let auditorNotesHTML = "";
+                                                if (log["Catatan Auditor"]) {
+                                                    auditorNotesHTML = `
+                                                        <div class="mt-1.5 p-2 rounded-lg bg-amber-50/70 border border-amber-200/70 text-xs text-amber-900">
+                                                            <span class="font-bold"><i class="fa-solid fa-comment-dots mr-1"></i>Catatan Auditor:</span> "${log["Catatan Auditor"]}"
                                                         </div>
-                                                        <input type="text" id="reviewComment_${log.id}" placeholder="Catatan evaluasi (opsional)..." class="w-full px-2 py-1 text-[10px] rounded-lg border border-md-outline/20 bg-white">
-                                                    </div>
-                                                </div>
-                                            `;
-                                        }
+                                                    `;
+                                                }
 
-                                        let auditorNotesHTML = "";
-                                        if (log["Catatan Auditor"]) {
-                                            auditorNotesHTML = `<p class="text-[10px] text-md-on-surface-variant italic mt-0.5">Catatan Auditor: "${log["Catatan Auditor"]}"</p>`;
-                                        }
+                                                const logStatusClass = log["Status"] === "TUNTAS" 
+                                                    ? "bg-green-100 text-green-800 border-green-200" 
+                                                    : log["Status"] === "PROSES" 
+                                                    ? "bg-amber-100 text-amber-800 border-amber-200" 
+                                                    : "bg-rose-100 text-rose-800 border-rose-200";
 
-                                        const logStatusClass = log["Status"] === "TUNTAS" 
-                                            ? "bg-green-100 text-green-800" 
-                                            : log["Status"] === "PROSES" 
-                                            ? "bg-amber-100 text-amber-800" 
-                                            : "bg-red-100 text-red-800";
+                                                const tglMulaiFormatted = formatTemuanDate(log["Tanggal Mulai"] || log["Tanggal Submit"]);
+                                                const tglSelesaiFormatted = formatTemuanDate(log["Tanggal Selesai"] || log["Tanggal Review"] || log["Tanggal Submit"]);
 
-                                        return `
-                                            <li class="p-2.5 bg-md-surface-container-low/50 rounded-xl border border-md-outline/5">
-                                                <div class="flex items-start justify-between gap-1">
-                                                    <p class="text-xs font-medium text-md-on-background leading-relaxed">${log["Output Aktual (Progres)"]}</p>
-                                                    <span class="text-[9px] font-bold px-1.5 py-0.2 rounded ${logStatusClass}">${log["Status"]}</span>
-                                                </div>
-                                                ${log["NTPN"] ? `<p class="text-[9px] text-md-primary font-bold mt-0.5">NTPN: ${log["NTPN"]}</p>` : ""}
-                                                ${fileLinkHTML}
-                                                ${auditorNotesHTML}
-                                                ${reviewFormHTML}
-                                            </li>
-                                        `;
-                                    }).join('')}
-                                </ul>
+                                                return `
+                                                    <tr class="hover:bg-slate-50/80">
+                                                        <td class="py-3.5 px-4 align-top">
+                                                            <div class="flex flex-col gap-1 text-xs">
+                                                                <div class="flex items-center gap-1.5 text-slate-700">
+                                                                    <i class="fa-regular fa-calendar text-indigo-600"></i>
+                                                                    <span class="font-semibold text-slate-500">Mulai:</span>
+                                                                    <strong class="text-slate-900">${tglMulaiFormatted}</strong>
+                                                                </div>
+                                                                <div class="flex items-center gap-1.5 text-emerald-700">
+                                                                    <i class="fa-regular fa-calendar-check text-emerald-600"></i>
+                                                                    <span class="font-semibold text-slate-500">Selesai:</span>
+                                                                    <strong class="text-emerald-700">${tglSelesaiFormatted}</strong>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td class="py-3.5 px-4 align-top">
+                                                            <p class="text-sm font-medium text-slate-800 leading-relaxed">${log["Output Aktual (Progres)"]}</p>
+                                                            ${auditorNotesHTML}
+                                                        </td>
+                                                        <td class="py-3.5 px-4 align-top">
+                                                            <div class="flex flex-col gap-1.5 items-start">
+                                                                ${fileLinkHTML}
+                                                                ${log["NTPN"] ? `<span class="inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold px-2.5 py-1 rounded-md"><i class="fa-solid fa-receipt"></i> NTPN: ${log["NTPN"]}</span>` : ""}
+                                                            </div>
+                                                        </td>
+                                                        <td class="py-3.5 px-4 align-top text-center">
+                                                            <span class="inline-block text-xs font-bold px-3 py-1 rounded-md border ${logStatusClass}">${log["Status"]}</span>
+                                                        </td>
+                                                        ${currentRole === "AUDITOR" ? `<td class="py-3.5 px-4 align-top">${reviewFormHTML}</td>` : ''}
+                                                    </tr>
+                                                `;
+                                            }).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        progressHTML = `
+                            <div class="mt-3 p-4 rounded-xl bg-slate-100/70 border border-dashed border-slate-300 text-sm text-slate-500 flex items-center gap-2">
+                                <i class="fa-solid fa-circle-info text-slate-400"></i>
+                                Belum ada riwayat bukti tindak lanjut yang diunggah untuk rekomendasi ini.
                             </div>
                         `;
                     }
 
-                    // Satker upload form
+                    // Satker upload form — Dengan Rentang Tanggal Mulai & Tanggal Selesai + Spesifikasi File
                     let satkerInputFormHTML = "";
                     if (currentRole === "SATKER" && status !== "TUNTAS") {
                         const isFinancial = rec["Kode Rekomendasi"].startsWith("R-INSP");
+                        const previewId = `filePreview_${safeRecId}`;
+                        const selesaiInputId = `tglSelesai_${safeRecId}`;
                         satkerInputFormHTML = `
-                            <div class="mt-3 p-3 bg-md-surface-container-low/60 rounded-2xl border border-dashed border-md-outline/20">
-                                <h6 class="text-[10px] font-bold text-md-primary uppercase tracking-wider mb-2"><i class="fa-solid fa-upload"></i> Unggah Bukti Tindak Lanjut:</h6>
-                                <form id="form_${rec["Kode Rekomendasi"]}" onsubmit="handleBuktiSubmit(event, '${rec["Kode Rekomendasi"]}')" class="flex flex-col gap-2">
-                                    <textarea name="output_aktual" required rows="2" placeholder="Uraikan progres tindak lanjut..." class="w-full p-2 text-xs rounded-xl border border-md-outline/20 focus:outline-none focus:ring-1 focus:ring-md-primary bg-white"></textarea>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        <div>
-                                            <label class="text-[9px] font-bold text-md-on-surface-variant ml-1 block mb-0.5">Berkas Bukti (PDF)</label>
-                                            <input type="file" name="file" accept="application/pdf" class="w-full text-[10px] cursor-pointer">
+                            <div class="mt-4 p-5 bg-white rounded-2xl border-2 border-emerald-600/20 shadow-sm">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-100">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
+                                            <i class="fa-solid fa-cloud-arrow-up text-base"></i>
                                         </div>
-                                        ${isFinancial ? `
                                         <div>
-                                            <label class="text-[9px] font-bold text-md-on-surface-variant ml-1 block mb-0.5">Nomor NTPN (Penyetoran)</label>
-                                            <input type="text" name="ntpn" placeholder="Masukkan NTPN..." class="w-full p-1 text-xs rounded-lg border border-md-outline/20 bg-white">
-                                        </div>` : ''}
+                                            <h6 class="text-sm font-bold text-slate-900">Formulir Unggah Bukti Tindak Lanjut</h6>
+                                            <p class="text-xs text-slate-500">Lengkapi rentang waktu pelaksanaan, uraian capaian aktual, serta dokumen bukti dukung resmi</p>
+                                        </div>
                                     </div>
-                                    <button type="submit" class="mt-1 px-4 py-1.5 self-end rounded-full bg-md-primary text-white text-[10px] font-bold hover:shadow-md active:scale-95 transition-all duration-300">
-                                        Kirim Bukti
-                                    </button>
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                        <i class="fa-solid fa-shield-check text-amber-600"></i> Menunggu Verifikasi Itjen
+                                    </span>
+                                </div>
+
+                                <form id="form_${rec["Kode Rekomendasi"]}" onsubmit="handleBuktiSubmit(event, '${rec["Kode Rekomendasi"]}')" class="flex flex-col gap-4">
+                                    
+                                    <!-- Baris 1: Rentang Tanggal Tindak Lanjut (Tanggal Mulai & Tanggal Selesai) -->
+                                    <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-200">
+                                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2.5">
+                                            <i class="fa-regular fa-calendar-days text-emerald-600 mr-1"></i> Rentang Tanggal Tindak Lanjut <span class="text-rose-500">*</span>
+                                        </label>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="text-xs font-semibold text-slate-600 block mb-1">Tanggal Mulai Tindak Lanjut <span class="text-rose-500">*</span></label>
+                                                <input type="date" name="tanggal_mulai" value="${todayISO}" required
+                                                    onchange="syncBuktiDateRange(this, '${selesaiInputId}')"
+                                                    class="w-full h-10 px-3 text-sm rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 font-medium text-slate-800">
+                                            </div>
+                                            <div>
+                                                <label class="text-xs font-semibold text-slate-600 block mb-1">Tanggal Selesai Tindak Lanjut <span class="text-rose-500">*</span></label>
+                                                <input type="date" id="${selesaiInputId}" name="tanggal_selesai" value="${todayISO}" min="${todayISO}" required
+                                                    class="w-full h-10 px-3 text-sm rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 font-medium text-slate-800">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    ${isFinancial ? `
+                                    <!-- Baris Khusus Finansial: Nomor NTPN -->
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1.5">
+                                            <i class="fa-solid fa-receipt text-emerald-600 mr-1"></i> Nomor NTPN (Bukti Setoran Kas Negara) <span class="text-rose-500">*</span>
+                                        </label>
+                                        <input type="text" name="ntpn" required placeholder="Masukkan 16 digit kode NTPN..."
+                                            class="w-full h-10 px-3 text-sm rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 font-medium text-slate-800">
+                                    </div>` : ''}
+
+                                    <!-- Baris 2: Uraian Progres -->
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1.5">
+                                            <i class="fa-solid fa-pen-to-square text-emerald-600 mr-1"></i> Uraian Progres / Tindak Lanjut Aktual <span class="text-rose-500">*</span>
+                                        </label>
+                                        <textarea name="output_aktual" required rows="3"
+                                            placeholder="Jelaskan secara rinci tindakan nyata atau dokumen penyelesaian yang telah dilaksanakan oleh Unit Kerja..."
+                                            class="w-full p-3 text-sm rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-slate-800 leading-relaxed"></textarea>
+                                    </div>
+
+                                    <!-- Baris 3: Lampiran File Bukti Dukung dengan Informasi Spesifik -->
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1.5">
+                                            <i class="fa-solid fa-paperclip text-emerald-600 mr-1"></i> Unggah Berkas Bukti Dukung (Eviden)
+                                        </label>
+                                        
+                                        <div class="p-4 rounded-xl bg-slate-50 border-2 border-dashed border-slate-300 hover:border-emerald-500 transition-colors">
+                                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                                                <div class="flex-1">
+                                                    <input type="file" name="file"
+                                                        accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"
+                                                        onchange="handleBuktiFileChange(this, '${previewId}')"
+                                                        class="w-full text-sm text-slate-700 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-emerald-700 file:text-white hover:file:bg-emerald-800 file:cursor-pointer">
+                                                </div>
+                                            </div>
+
+                                            <!-- Spesifikasi Ketentuan File -->
+                                            <div class="mt-3 pt-3 border-t border-slate-200/80 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600">
+                                                <div class="flex items-start gap-2">
+                                                    <i class="fa-solid fa-file-circle-check text-emerald-600 mt-0.5"></i>
+                                                    <div>
+                                                        <span class="font-bold text-slate-800">Format File Spesifik:</span>
+                                                        <div class="flex flex-wrap gap-1 mt-1">
+                                                            <span class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-bold">PDF (.pdf)</span>
+                                                            <span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold">Gambar (.png, .jpg, .jpeg)</span>
+                                                            <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-bold">Word (.doc, .docx)</span>
+                                                            <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">Excel (.xls, .xlsx)</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="flex items-start gap-2">
+                                                    <i class="fa-solid fa-hard-drive text-amber-600 mt-0.5"></i>
+                                                    <div>
+                                                        <span class="font-bold text-slate-800">Kapasitas & Ketentuan Unggah:</span>
+                                                        <p class="mt-1 text-slate-600">Ukuran maksimal <strong class="text-slate-900">10 MB</strong> per file (Maks. 1 file setiap pengiriman progres).</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Preview File Terpilih -->
+                                            <div id="${previewId}" class="hidden"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Tombol Submit -->
+                                    <div class="flex items-center justify-end gap-3 pt-2">
+                                        <button type="reset" onclick="document.getElementById('${previewId}')?.classList.add('hidden')" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-bold hover:bg-slate-100 transition-all">
+                                            Reset Form
+                                        </button>
+                                        <button type="submit" class="px-6 py-2.5 rounded-xl bg-md-primary text-white text-sm font-bold hover:bg-emerald-800 shadow-sm hover:shadow active:scale-95 transition-all flex items-center gap-2 cursor-pointer">
+                                            <i class="fa-solid fa-paper-plane"></i> Kirim Bukti Tindak Lanjut
+                                        </button>
+                                    </div>
                                 </form>
                             </div>
                         `;
@@ -814,24 +1128,24 @@ function showLhaDetail(kodeLha) {
                     let auditorVerifyHTML = "";
                     if (currentRole === "AUDITOR") {
                         auditorVerifyHTML = `
-                            <div class="mt-3.5 bg-indigo-50/60 rounded-xl border border-indigo-100 p-3.5">
-                                <div class="flex items-center justify-between mb-2">
-                                    <h6 class="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+                            <div class="mt-4 bg-indigo-50/70 rounded-xl border border-indigo-200 p-4">
+                                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                    <h6 class="text-sm font-bold text-indigo-950 flex items-center gap-2">
                                         <i class="fa-solid fa-user-check text-indigo-600"></i> Verifikasi Status Evaluasi (Auditor Itjen):
                                     </h6>
-                                    <span class="text-[10px] font-semibold ${isBpkAudit ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-indigo-100 text-indigo-800'} px-2.5 py-0.5 rounded-md">
+                                    <span class="text-xs font-bold ${isBpkAudit ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-indigo-100 text-indigo-800 border border-indigo-200'} px-3 py-1 rounded-md">
                                         ${isBpkAudit ? '🛡️ Mode Verifikasi BPK-RI' : '✏️ Audit Internal Itjen'}
                                     </span>
                                 </div>
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <button onclick="updateRecStatusDirect('${rec["Kode Rekomendasi"]}', 'TUNTAS', event)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-green-600 text-white hover:bg-green-700 active:scale-95 transition-all shadow-2xs cursor-pointer inline-flex items-center gap-1.5">
-                                        <i class="fa-solid fa-circle-check text-xs"></i> Setujui TUNTAS
+                                <div class="flex flex-wrap items-center gap-2.5">
+                                    <button onclick="updateRecStatusDirect('${rec["Kode Rekomendasi"]}', 'TUNTAS', event)" class="px-4 py-2 text-xs font-bold rounded-lg bg-green-600 text-white hover:bg-green-700 active:scale-95 transition-all shadow-xs cursor-pointer inline-flex items-center gap-1.5">
+                                        <i class="fa-solid fa-circle-check"></i> Setujui TUNTAS
                                     </button>
-                                    <button onclick="updateRecStatusDirect('${rec["Kode Rekomendasi"]}', 'PROSES', event)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all shadow-2xs cursor-pointer inline-flex items-center gap-1.5">
-                                        <i class="fa-solid fa-spinner text-xs"></i> Verifikasi PROSES
+                                    <button onclick="updateRecStatusDirect('${rec["Kode Rekomendasi"]}', 'PROSES', event)" class="px-4 py-2 text-xs font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all shadow-xs cursor-pointer inline-flex items-center gap-1.5">
+                                        <i class="fa-solid fa-spinner"></i> Verifikasi PROSES
                                     </button>
-                                    <button onclick="updateRecStatusDirect('${rec["Kode Rekomendasi"]}', 'PENDING', event)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-orange-600 text-white hover:bg-orange-700 active:scale-95 transition-all shadow-2xs cursor-pointer inline-flex items-center gap-1.5">
-                                        <i class="fa-solid fa-clock text-xs"></i> Set PENDING
+                                    <button onclick="updateRecStatusDirect('${rec["Kode Rekomendasi"]}', 'PENDING', event)" class="px-4 py-2 text-xs font-bold rounded-lg bg-orange-600 text-white hover:bg-orange-700 active:scale-95 transition-all shadow-xs cursor-pointer inline-flex items-center gap-1.5">
+                                        <i class="fa-solid fa-clock"></i> Set PENDING
                                     </button>
                                 </div>
                             </div>
@@ -839,178 +1153,248 @@ function showLhaDetail(kodeLha) {
                     }
 
                     const recStatusConfig = {
-                        "TUNTAS":  { label: "Selesai",       dotColor: "bg-green-500",  textColor: "text-green-700" },
-                        "PROSES":  { label: "On Progress",   dotColor: "bg-blue-500",   textColor: "text-blue-700" },
-                        "PENDING": { label: "Belum TL",      dotColor: "bg-orange-500", textColor: "text-orange-700" },
+                        "TUNTAS":  { label: "Selesai",       dotColor: "bg-green-500",  textColor: "text-green-700",  bgColor: "bg-green-50 border-green-200" },
+                        "PROSES":  { label: "On Progress",   dotColor: "bg-blue-500",   textColor: "text-blue-700",   bgColor: "bg-blue-50 border-blue-200" },
+                        "PENDING": { label: "Belum TL",      dotColor: "bg-orange-500", textColor: "text-orange-700", bgColor: "bg-orange-50 border-orange-200" },
                     };
                     const rst = recStatusConfig[status] || recStatusConfig["PENDING"];
 
                     return `
-                        <div class="p-4 rounded-xl bg-gray-50/80 border border-gray-200/80 flex flex-col gap-3">
-                            <div class="flex items-center justify-between gap-2">
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-md border border-indigo-100">${rec["Kode Rekomendasi"]}</span>
-                                    <span class="text-xs text-gray-600 font-medium">PIC: <strong class="text-gray-900 font-semibold">${rec["PIC"]}</strong></span>
+                        <div class="p-5 rounded-2xl bg-slate-50/90 border border-slate-200 flex flex-col gap-4">
+                            <!-- Header Rekomendasi -->
+                            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
+                                <div class="flex items-center gap-2.5 flex-wrap">
+                                    <span class="font-mono text-sm font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-200">${rec["Kode Rekomendasi"]}</span>
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 text-sm font-bold">
+                                        <i class="fa-solid fa-building-user text-emerald-600"></i> PIC: ${rec["PIC"]}
+                                    </span>
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white text-slate-700 border border-slate-200 text-xs font-semibold">
+                                        <i class="fa-regular fa-calendar-check text-indigo-600"></i>
+                                        Rentang TL: <strong>${formatDateRangeText(recRange.startDate, recRange.endDate)}</strong>
+                                    </span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold ${rst.textColor}">
+                                    <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border ${rst.bgColor} ${rst.textColor}">
                                         <span class="w-2 h-2 rounded-full ${rst.dotColor}"></span>
                                         ${rst.label}
                                     </span>
                                     ${currentRole === "AUDITOR" && !isBpkAudit ? `
-                                    <button onclick="openRekomendasiModal('${t["Kode Temuan"]}', true, '${rec["Kode Rekomendasi"]}')" class="p-1 rounded-md text-gray-400 hover:text-indigo-600 transition-colors text-xs" title="Edit Rekomendasi"><i class="fa-solid fa-pen"></i></button>
-                                    <button onclick="triggerDeleteRekomendasi('${rec["Kode Rekomendasi"]}')" class="p-1 rounded-md text-gray-400 hover:text-red-600 transition-colors text-xs" title="Hapus Rekomendasi"><i class="fa-solid fa-trash"></i></button>
+                                    <button onclick="openRekomendasiModal('${t["Kode Temuan"]}', true, '${rec["Kode Rekomendasi"]}')" class="p-2 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-white transition-colors text-sm" title="Edit Rekomendasi"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="triggerDeleteRekomendasi('${rec["Kode Rekomendasi"]}')" class="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-white transition-colors text-sm" title="Hapus Rekomendasi"><i class="fa-solid fa-trash"></i></button>
                                     ` : ''}
                                 </div>
                             </div>
-                            <div>
-                                <h5 class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Rekomendasi Audit:</h5>
-                                <p class="text-xs text-gray-800 mt-0.5 leading-relaxed font-medium">${rec["Rekomendasi"]}</p>
+
+                            <!-- Uraian Rekomendasi -->
+                            <div class="bg-white p-4 rounded-xl border border-slate-200/80">
+                                <h5 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Rekomendasi Audit:</h5>
+                                <p class="text-base text-slate-900 leading-relaxed font-semibold">${rec["Rekomendasi"]}</p>
                             </div>
-                            ${rec["Rencana Aksi"] ? `
-                            <div>
-                                <h5 class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Rencana Aksi Unit Kerja:</h5>
-                                <p class="text-xs text-gray-700 mt-0.5 leading-relaxed">${rec["Rencana Aksi"]}</p>
-                            </div>` : ''}
-                            ${rec["Jadwal Pelaksanaan"] && rec["Jadwal Pelaksanaan"] !== "nan" ? `
-                            <div class="text-xs text-gray-500 font-medium">
-                                <span class="font-bold text-gray-700">Target Pelaksanaan:</span> ${rec["Jadwal Pelaksanaan"]}
-                            </div>` : ''}
+
+                            <!-- Rencana Aksi & Target Waktu -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div class="md:col-span-2 bg-white p-4 rounded-xl border border-slate-200/80">
+                                    <h5 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Rencana Aksi Unit Kerja:</h5>
+                                    <p class="text-sm text-slate-700 leading-relaxed font-medium">${rec["Rencana Aksi"] || 'Belum ada rencana aksi yang dicatat.'}</p>
+                                </div>
+                                <div class="bg-white p-4 rounded-xl border border-slate-200/80 flex flex-col justify-center gap-2">
+                                    <div>
+                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Target Pelaksanaan:</span>
+                                        <span class="text-sm font-bold text-slate-800">${rec["Jadwal Pelaksanaan"] && rec["Jadwal Pelaksanaan"] !== "nan" ? rec["Jadwal Pelaksanaan"] : "-"}</span>
+                                    </div>
+                                    <div class="pt-2 border-t border-slate-100">
+                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Rentang Tindak Lanjut:</span>
+                                        <span class="text-sm font-bold text-emerald-700">${formatDateRangeText(recRange.startDate, recRange.endDate)}</span>
+                                    </div>
+                                </div>
+                            </div>
+
                             ${financialHTML}
                             ${progressHTML}
                             ${auditorVerifyHTML}
                             ${satkerInputFormHTML}
                         </div>
                     `;
-                }).join('<hr class="border-gray-200 my-1">');
+                }).join('');
             }
 
             const childTemuan = temuanList.filter(c => c["Parent Temuan"] === t["Kode Temuan"]);
             let childrenHTML = "";
             if (childTemuan.length > 0) {
-                childrenHTML = childTemuan.map(child => processTemuan(child, true)).join('');
+                childrenHTML = `
+                    <div class="flex flex-col gap-5 mt-2">
+                        <h4 class="text-sm font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-diagram-project text-indigo-600"></i>
+                            Daftar Sub-Temuan (${childTemuan.length})
+                        </h4>
+                        ${childTemuan.map(child => processTemuan(child, true)).join('')}
+                    </div>
+                `;
             }
 
-            const borderStyle = isChild ? "ml-6 border-l-2 border-indigo-200 pl-4 bg-gray-50/40" : "bg-white border border-gray-200 shadow-2xs";
+            const borderStyle = isChild ? "ml-4 sm:ml-6 border-l-4 border-indigo-400 pl-4 sm:pl-6 bg-white border border-slate-200 shadow-xs" : "bg-white border border-slate-200 shadow-sm";
+
+            const picBadgesHTML = nodePics.length > 0
+                ? nodePics.map(p => `<span class="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold"><i class="fa-solid fa-building-user text-emerald-600"></i> ${p}</span>`).join('')
+                : `<span class="text-xs text-slate-400 italic">PIC belum ditentukan</span>`;
 
             return `
-                <div class="flex flex-col gap-4 p-5 rounded-2xl transition-all duration-200 ${borderStyle}">
+                <div class="flex flex-col gap-5 p-6 rounded-2xl transition-all duration-200 ${borderStyle}">
                     <!-- Temuan Header -->
-                    <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
                         <div class="flex items-center gap-2.5 flex-wrap">
-                            <span class="font-mono text-xs font-bold text-gray-900 bg-gray-100 px-2.5 py-1 rounded-md border border-gray-200 flex items-center gap-1.5">
-                                <i class="fa-solid fa-folder-open text-indigo-600 text-[10px]"></i>
+                            <span class="font-mono text-sm font-bold text-slate-900 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 flex items-center gap-2">
+                                <i class="fa-solid fa-folder-open text-indigo-600"></i>
                                 ${t["Kode Temuan"]}
                             </span>
-                            ${isChild ? '<span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">Sub-temuan</span>' : ''}
-                            <span class="text-xs font-semibold text-gray-500">Temuan Pemeriksaan</span>
+                            ${isChild ? '<span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-200">Sub-temuan</span>' : '<span class="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">Temuan Induk</span>'}
+                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 px-3 py-1 rounded-lg border border-slate-200">
+                                <i class="fa-regular fa-calendar text-slate-500"></i> Tgl Temuan: <strong>${temuanDateFormatted}</strong>
+                            </span>
+                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50/70 px-3 py-1 rounded-lg border border-emerald-200">
+                                <i class="fa-regular fa-calendar-check text-emerald-600"></i> Rentang TL: <strong>${formatDateRangeText(nodeRange.startDate, nodeRange.endDate)}</strong>
+                            </span>
                         </div>
-                        ${currentRole === "AUDITOR" && !isBpkAudit ? `
-                        <div class="flex gap-1 shrink-0">
-                            <button onclick="openTemuanModal('${kodeLha}', true, '${t["Kode Temuan"]}')" class="p-1.5 rounded-md text-gray-500 hover:text-indigo-600 hover:bg-gray-100 transition-colors text-xs" title="Edit Temuan"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="triggerDeleteTemuan('${t["Kode Temuan"]}')" class="p-1.5 rounded-md text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors text-xs" title="Hapus Temuan"><i class="fa-solid fa-trash"></i></button>
-                        </div>` : ''}
+                        <div class="flex items-center gap-2 flex-wrap">
+                            ${picBadgesHTML}
+                            ${currentRole === "AUDITOR" && !isBpkAudit ? `
+                            <div class="flex gap-1 shrink-0 ml-2">
+                                <button onclick="openTemuanModal('${kodeLha}', true, '${t["Kode Temuan"]}')" class="p-2 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100 transition-colors text-sm" title="Edit Temuan"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="triggerDeleteTemuan('${t["Kode Temuan"]}')" class="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors text-sm" title="Hapus Temuan"><i class="fa-solid fa-trash"></i></button>
+                            </div>` : ''}
+                        </div>
                     </div>
 
                     <!-- Kriteria & Sebab Content Block -->
-                    <div class="flex flex-col gap-3">
+                    <div class="flex flex-col gap-4">
                         <!-- Kriteria -->
-                        <div class="border-l-3 border-indigo-600 bg-indigo-50/40 p-4 rounded-r-xl">
-                            <h4 class="text-[11px] font-bold text-indigo-900 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                        <div class="border-l-4 border-indigo-600 bg-indigo-50/50 p-5 rounded-r-xl">
+                            <h4 class="text-xs font-bold text-indigo-900 uppercase tracking-wider mb-1.5 flex items-center gap-2">
                                 <i class="fa-solid fa-file-lines text-indigo-600"></i> Kriteria Temuan / Kondisi
                             </h4>
-                            <p class="text-xs font-medium text-gray-800 leading-relaxed whitespace-pre-line">${t.Kriteria || 'Tidak ada kriteria'}</p>
+                            <p class="text-base font-medium text-slate-900 leading-relaxed whitespace-pre-line">${t.Kriteria || 'Tidak ada kriteria'}</p>
                         </div>
 
                         <!-- Sebab -->
                         ${t.Sebab ? `
-                        <div class="border-l-3 border-amber-500 bg-amber-50/40 p-4 rounded-r-xl">
-                            <h4 class="text-[11px] font-bold text-amber-900 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                        <div class="border-l-4 border-amber-500 bg-amber-50/50 p-5 rounded-r-xl">
+                            <h4 class="text-xs font-bold text-amber-900 uppercase tracking-wider mb-1.5 flex items-center gap-2">
                                 <i class="fa-solid fa-circle-question text-amber-600"></i> Penyebab / Sebab
                             </h4>
-                            <p class="text-xs text-gray-700 leading-relaxed whitespace-pre-line">${t.Sebab}</p>
+                            <p class="text-sm font-medium text-slate-800 leading-relaxed whitespace-pre-line">${t.Sebab}</p>
                         </div>` : ''}
                     </div>
 
-                    <!-- Recommendations under this temuan -->
-                    <div class="flex flex-col gap-3 border-t border-gray-100 pt-4 mt-1">
+                    <!-- Recommendations directly under this temuan -->
+                    ${(directRecs.length > 0 || childTemuan.length === 0) ? `
+                    <div class="flex flex-col gap-4 border-t border-slate-200 pt-5 mt-1">
                         <div class="flex items-center justify-between">
-                            <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
+                            <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
                                 <i class="fa-solid fa-clipboard-list text-indigo-600"></i>
-                                Rekomendasi (${recs.length})
+                                Rekomendasi (${directRecs.length})
                             </h4>
                             ${currentRole === "AUDITOR" && !isBpkAudit ? `
-                            <button onclick="openRekomendasiModal('${t["Kode Temuan"]}', false)" class="px-3 py-1 rounded-md bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 active:scale-95 transition-all flex items-center gap-1 cursor-pointer">
-                                <i class="fa-solid fa-plus text-[10px]"></i> Tambah Rekomendasi
+                            <button onclick="openRekomendasiModal('${t["Kode Temuan"]}', false)" class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer">
+                                <i class="fa-solid fa-plus"></i> Tambah Rekomendasi
                             </button>` : ''}
                         </div>
                         
-                        ${recs.length > 0 ? `
-                        <div class="flex flex-col gap-3 mt-1">
+                        ${directRecs.length > 0 ? `
+                        <div class="flex flex-col gap-4 mt-1">
                             ${recsHTML}
                         </div>` : `
-                        <div class="text-center py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                            <p class="text-xs text-gray-500">Belum ada rekomendasi untuk temuan ini.</p>
+                        <div class="text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-300">
+                            <p class="text-sm text-slate-500 font-medium">Belum ada rekomendasi langsung pada butir temuan ini.</p>
                             ${currentRole === "AUDITOR" && !isBpkAudit ? `
-                            <button onclick="openRekomendasiModal('${t["Kode Temuan"]}', false)" class="mt-2 px-3 py-1 rounded-md bg-indigo-50 text-indigo-700 text-xs font-semibold hover:bg-indigo-100 transition-all inline-flex items-center gap-1 cursor-pointer">
-                                <i class="fa-solid fa-plus text-[10px]"></i> Tambah Rekomendasi
+                            <button onclick="openRekomendasiModal('${t["Kode Temuan"]}', false)" class="mt-3 px-4 py-2 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-bold hover:bg-indigo-100 transition-all inline-flex items-center gap-1.5 cursor-pointer">
+                                <i class="fa-solid fa-plus"></i> Tambah Rekomendasi
                             </button>` : ''}
                         </div>
                         `}
-                    </div>
+                    </div>` : ''}
+
+                    <!-- Sub-Temuan (if any) -->
+                    ${childrenHTML}
                 </div>
             `;
         };
 
         if (selectedTemuanId === null) {
-            // Render Findings List
+            // Render Findings List (with PIC & Tanggal Temuan & Rentang Tanggal Tindak Lanjut)
             const listItems = parentTemuan.map(t => {
-                const dateStr = t["Tanggal Input"] ? t["Tanggal Input"].split('T')[0] : '2026-07-13';
+                const dateFormatted = formatTemuanDate(t["Tanggal Input"]);
+                const temuanRange = getFollowUpRangeForTemuan(t["Kode Temuan"]);
                 const recs = getRecommendationsForFinding(t["Kode Temuan"]);
+                const pics = getUniquePicsForTemuan(t["Kode Temuan"]);
                 const status = computeTemuanStatus(t["Kode Temuan"]);
                 
                 const statusMap = {
-                    "TUNTAS":  { label: "Selesai",       dotColor: "bg-green-500",  textColor: "text-green-700" },
-                    "PROSES":  { label: "On Progress",   dotColor: "bg-blue-500",   textColor: "text-blue-700" },
-                    "PENDING": { label: "Belum TL",      dotColor: "bg-orange-500", textColor: "text-orange-700" },
+                    "TUNTAS":  { label: "Selesai",       dotColor: "bg-green-500",  textColor: "text-green-700",  bgColor: "bg-green-50 border-green-200" },
+                    "PROSES":  { label: "On Progress",   dotColor: "bg-blue-500",   textColor: "text-blue-700",   bgColor: "bg-blue-50 border-blue-200" },
+                    "PENDING": { label: "Belum TL",      dotColor: "bg-orange-500", textColor: "text-orange-700", bgColor: "bg-orange-50 border-orange-200" },
                 };
                 const st = statusMap[status] || statusMap["PENDING"];
+
+                const picBadges = pics.length > 0
+                    ? pics.map(p => `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold"><i class="fa-solid fa-building-user text-emerald-600"></i> ${p}</span>`).join('')
+                    : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-500 text-xs font-medium">PIC Belum Ditentukan</span>`;
 
                 const childTemuan = temuanList.filter(c => c["Parent Temuan"] === t["Kode Temuan"]);
                 let childrenHTML = "";
                 if (childTemuan.length > 0) {
                     childrenHTML = childTemuan.map(child => {
                         const childRecs = getRecommendationsForFinding(child["Kode Temuan"]);
+                        const childPics = getUniquePicsForTemuan(child["Kode Temuan"]);
+                        const childDateFormatted = formatTemuanDate(child["Tanggal Input"]);
+                        const childRange = getFollowUpRangeForTemuan(child["Kode Temuan"]);
                         const childStatus = computeTemuanStatus(child["Kode Temuan"]);
                         const cst = statusMap[childStatus] || statusMap["PENDING"];
 
+                        const childPicBadges = childPics.length > 0
+                            ? childPics.map(p => `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold"><i class="fa-solid fa-building-user text-emerald-600"></i> ${p}</span>`).join('')
+                            : `<span class="text-xs text-slate-400 italic">PIC Belum Ditentukan</span>`;
+
                         return `
-                            <div class="bg-gray-50/70 border border-gray-200 p-4 rounded-xl flex flex-col gap-2.5 ml-6">
-                                <div class="flex items-center justify-between gap-2 border-b border-gray-100 pb-2">
-                                    <div class="flex items-center gap-2">
-                                        <span class="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
+                            <div class="bg-slate-50/90 border border-slate-200 border-l-4 border-l-indigo-400 p-5 rounded-xl flex flex-col gap-3 ml-6 shadow-2xs">
+                                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 pb-3">
+                                    <div class="flex items-center gap-2.5 flex-wrap">
+                                        <span class="font-mono text-sm font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-md border border-indigo-200">
                                             ${child["Kode Temuan"]}
                                         </span>
-                                        <span class="text-xs font-semibold text-gray-500">Sub-temuan</span>
+                                        <span class="text-xs font-bold text-slate-600 bg-white px-2.5 py-1 rounded-md border border-slate-200">Sub-temuan</span>
+                                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-white px-2.5 py-1 rounded-md border border-slate-200">
+                                            <i class="fa-regular fa-calendar text-slate-500"></i> Tgl Temuan: <strong>${childDateFormatted}</strong>
+                                        </span>
+                                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                                            <i class="fa-regular fa-calendar-check text-emerald-600"></i> Rentang TL: <strong>${formatDateRangeText(childRange.startDate, childRange.endDate)}</strong>
+                                        </span>
                                     </div>
-                                    <span class="inline-flex items-center gap-1 text-xs font-semibold ${cst.textColor}">
-                                        <span class="w-1.5 h-1.5 rounded-full ${cst.dotColor}"></span> ${cst.label}
+                                    <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-md border ${cst.bgColor} ${cst.textColor}">
+                                        <span class="w-2 h-2 rounded-full ${cst.dotColor}"></span> ${cst.label}
                                     </span>
                                 </div>
-                                <p class="text-xs text-gray-700 line-clamp-2 leading-relaxed font-medium">
+
+                                <p class="text-sm text-slate-800 line-clamp-2 leading-relaxed font-semibold">
                                     ${child.Kriteria || 'Tidak ada kriteria'}
                                 </p>
-                                <div class="flex items-center justify-between gap-2 border-t border-gray-100 pt-2 mt-0.5">
-                                    <span class="text-xs text-gray-500 font-medium">
-                                        <i class="fa-solid fa-clipboard-list text-[10px] mr-1"></i> ${childRecs.length} Rekomendasi
-                                    </span>
+
+                                <!-- Baris PIC & Aksi Sub-Temuan -->
+                                <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 pt-3 mt-0.5">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1">PIC:</span>
+                                        ${childPicBadges}
+                                        <span class="text-slate-300 mx-1">•</span>
+                                        <span class="text-xs text-slate-600 font-bold">
+                                            <i class="fa-solid fa-clipboard-list text-indigo-600 mr-1"></i> ${childRecs.length} Rekomendasi
+                                        </span>
+                                    </div>
                                     <div class="flex gap-2 items-center">
                                         ${currentRole === "AUDITOR" && !isBpkAudit ? `
-                                        <button onclick="openTemuanModal('${kodeLha}', true, '${child["Kode Temuan"]}')" class="p-1 rounded-md text-gray-400 hover:text-indigo-600 text-xs" title="Edit Temuan"><i class="fa-solid fa-pen"></i></button>
-                                        <button onclick="triggerDeleteTemuan('${child["Kode Temuan"]}')" class="p-1 rounded-md text-gray-400 hover:text-red-600 text-xs" title="Hapus Temuan"><i class="fa-solid fa-trash"></i></button>
+                                        <button onclick="openTemuanModal('${kodeLha}', true, '${child["Kode Temuan"]}')" class="p-2 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-white text-sm" title="Edit Temuan"><i class="fa-solid fa-pen"></i></button>
+                                        <button onclick="triggerDeleteTemuan('${child["Kode Temuan"]}')" class="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-white text-sm" title="Hapus Temuan"><i class="fa-solid fa-trash"></i></button>
                                         ` : ''}
-                                        <button onclick="selectTemuanDetail('${child["Kode Temuan"]}')" class="px-3 py-1 rounded-md bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 transition-all flex items-center gap-1 cursor-pointer">
-                                            <i class="fa-solid fa-eye text-[10px]"></i> Detail
+                                        <button onclick="selectTemuanDetail('${child["Kode Temuan"]}')" class="px-4 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs">
+                                            <i class="fa-solid fa-eye"></i> Detail Sub-Temuan
                                         </button>
                                     </div>
                                 </div>
@@ -1020,34 +1404,47 @@ function showLhaDetail(kodeLha) {
                 }
 
                 return `
-                    <div class="flex flex-col gap-1">
-                        <div class="bg-white border border-gray-200/80 p-5 rounded-2xl shadow-2xs hover:border-gray-300 transition-all flex flex-col gap-3">
-                            <div class="flex items-center justify-between gap-2 border-b border-gray-100 pb-3">
-                                <div class="flex items-center gap-2.5">
-                                    <span class="font-mono text-xs font-bold text-gray-900 bg-gray-100 px-2.5 py-1 rounded-md border border-gray-200 flex items-center gap-1.5">
-                                        <i class="fa-solid fa-folder-open text-indigo-600 text-[10px]"></i>
+                    <div class="flex flex-col gap-2.5">
+                        <div class="bg-white border border-slate-200 p-6 rounded-2xl shadow-xs hover:border-slate-300 transition-all flex flex-col gap-4">
+                            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
+                                <div class="flex items-center gap-2.5 flex-wrap">
+                                    <span class="font-mono text-sm font-bold text-slate-900 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200 flex items-center gap-2">
+                                        <i class="fa-solid fa-folder-open text-indigo-600"></i>
                                         ${t["Kode Temuan"]}
                                     </span>
-                                    <span class="text-xs text-gray-500 font-medium">Tanggal: ${dateStr}</span>
+                                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 px-3 py-1 rounded-lg border border-slate-200">
+                                        <i class="fa-regular fa-calendar text-slate-500"></i> Tgl Temuan: <strong>${dateFormatted}</strong>
+                                    </span>
+                                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-200">
+                                        <i class="fa-regular fa-calendar-check text-emerald-600"></i> Rentang TL: <strong>${formatDateRangeText(temuanRange.startDate, temuanRange.endDate)}</strong>
+                                    </span>
                                 </div>
-                                <span class="inline-flex items-center gap-1.5 text-xs font-semibold ${st.textColor}">
+                                <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-lg border ${st.bgColor} ${st.textColor}">
                                     <span class="w-2 h-2 rounded-full ${st.dotColor}"></span> ${st.label}
                                 </span>
                             </div>
-                            <p class="text-xs font-semibold text-gray-800 line-clamp-2 leading-relaxed">
+
+                            <p class="text-base font-semibold text-slate-900 line-clamp-2 leading-relaxed">
                                 ${t.Kriteria || 'Tidak ada kriteria'}
                             </p>
-                            <div class="flex items-center justify-between gap-2 border-t border-gray-100 pt-3 mt-1">
-                                <span class="text-xs text-gray-600 font-medium">
-                                    <i class="fa-solid fa-clipboard-list text-indigo-600 mr-1"></i> ${recs.length} Rekomendasi Terkait
-                                </span>
+
+                            <!-- Baris PIC & Aksi Temuan Induk -->
+                            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3.5 mt-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1">PIC Terkait:</span>
+                                    ${picBadges}
+                                    <span class="text-slate-300 mx-1">•</span>
+                                    <span class="text-sm text-slate-700 font-bold">
+                                        <i class="fa-solid fa-clipboard-list text-indigo-600 mr-1"></i> ${recs.length} Rekomendasi Terkait
+                                    </span>
+                                </div>
                                 <div class="flex gap-2 items-center">
                                     ${currentRole === "AUDITOR" && !isBpkAudit ? `
-                                    <button onclick="openTemuanModal('${kodeLha}', true, '${t["Kode Temuan"]}')" class="p-1 rounded-md text-gray-400 hover:text-indigo-600 text-xs" title="Edit Temuan"><i class="fa-solid fa-pen"></i></button>
-                                    <button onclick="triggerDeleteTemuan('${t["Kode Temuan"]}')" class="p-1 rounded-md text-gray-400 hover:text-red-600 text-xs" title="Hapus Temuan"><i class="fa-solid fa-trash"></i></button>
+                                    <button onclick="openTemuanModal('${kodeLha}', true, '${t["Kode Temuan"]}')" class="p-2 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100 text-sm" title="Edit Temuan"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="triggerDeleteTemuan('${t["Kode Temuan"]}')" class="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 text-sm" title="Hapus Temuan"><i class="fa-solid fa-trash"></i></button>
                                     ` : ''}
-                                    <button onclick="selectTemuanDetail('${t["Kode Temuan"]}')" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 active:scale-95 transition-all flex items-center gap-1 cursor-pointer">
-                                        <i class="fa-solid fa-eye text-[10px]"></i> Detail Temuan
+                                    <button onclick="selectTemuanDetail('${t["Kode Temuan"]}')" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 active:scale-95 transition-all flex items-center gap-2 cursor-pointer shadow-xs">
+                                        <i class="fa-solid fa-eye"></i> Detail Temuan
                                     </button>
                                 </div>
                             </div>
@@ -1058,18 +1455,18 @@ function showLhaDetail(kodeLha) {
             }).join('');
 
             temuanSectionsHTML = `
-                <div class="flex flex-col gap-4">
+                <div class="flex flex-col gap-5">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-xs font-bold text-gray-700 tracking-wider uppercase flex items-center gap-2">
+                        <h3 class="text-base font-bold text-slate-800 tracking-wide uppercase flex items-center gap-2">
                             <i class="fa-solid fa-list-check text-indigo-600"></i>
-                            Daftar Temuan (${parentTemuan.length})
+                            Daftar Temuan Pemeriksaan (${parentTemuan.length} Temuan Induk · ${temuanList.length} Total Butir)
                         </h3>
                         ${currentRole === "AUDITOR" && !isBpkAudit ? `
-                        <button onclick="openTemuanModal('${kodeLha}', false)" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 active:scale-95 transition-all flex items-center gap-1 cursor-pointer shadow-2xs">
-                            <i class="fa-solid fa-plus text-[10px]"></i> Tambah Temuan
-                        </button>` : isBpkAudit ? `<span class="text-xs font-semibold text-amber-900 bg-amber-50 px-3 py-1 rounded-md border border-amber-200/80 inline-flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-amber-600"></i> Temuan BPK-RI (ReadOnly)</span>` : ''}
+                        <button onclick="openTemuanModal('${kodeLha}', false)" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs">
+                            <i class="fa-solid fa-plus"></i> Tambah Temuan
+                        </button>` : isBpkAudit ? `<span class="text-xs font-bold text-amber-900 bg-amber-50 px-3.5 py-1.5 rounded-lg border border-amber-200 inline-flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-amber-600"></i> Temuan BPK-RI (ReadOnly)</span>` : ''}
                     </div>
-                    <div class="flex flex-col gap-4">
+                    <div class="flex flex-col gap-5">
                         ${listItems}
                     </div>
                 </div>
@@ -1085,8 +1482,8 @@ function showLhaDetail(kodeLha) {
             
             temuanSectionsHTML = `
                 <div class="flex flex-col gap-4">
-                    <button onclick="goBackToFindings()" class="self-start px-3.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold hover:bg-indigo-100 transition-all flex items-center gap-1.5 cursor-pointer">
-                        <i class="fa-solid fa-arrow-left text-[10px]"></i> Kembali ke Daftar Temuan
+                    <button onclick="goBackToFindings()" class="self-start px-4 py-2 rounded-xl bg-indigo-50 text-indigo-700 text-sm font-bold hover:bg-indigo-100 transition-all flex items-center gap-2 cursor-pointer border border-indigo-200/60">
+                        <i class="fa-solid fa-arrow-left"></i> Kembali ke Daftar Temuan
                     </button>
                     ${processTemuan(t)}
                 </div>
@@ -1096,61 +1493,61 @@ function showLhaDetail(kodeLha) {
 
     content.innerHTML = `
         <!-- Executive LHA Document Header -->
-        <div class="px-6 py-4 border-b border-gray-200 bg-white flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div class="flex flex-col gap-1.5">
+        <div class="px-6 py-5 border-b border-slate-200 bg-white flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex flex-col gap-2">
                 <!-- Breadcrumb -->
-                <nav class="flex items-center gap-2 text-xs text-gray-500 font-medium">
-                    <button onclick="closeDetail()" class="hover:text-indigo-600 font-semibold flex items-center gap-1.5 transition-colors cursor-pointer">
-                        <i class="fa-solid fa-arrow-left text-gray-400"></i> Tabel LHA
+                <nav class="flex items-center gap-2 text-sm text-slate-500 font-medium">
+                    <button onclick="closeDetail()" class="hover:text-indigo-600 font-bold flex items-center gap-1.5 transition-colors cursor-pointer">
+                        <i class="fa-solid fa-arrow-left text-slate-400"></i> Tabel Dokumen LHA
                     </button>
-                    <span class="text-gray-300">•</span>
-                    <span class="font-bold text-gray-900">${kodeLha}</span>
+                    <span class="text-slate-300">•</span>
+                    <span class="font-bold text-slate-900">${kodeLha}</span>
                     ${selectedTemuanId ? `
-                    <span class="text-gray-300">•</span>
-                    <span class="font-semibold text-indigo-600">${selectedTemuanId}</span>
+                    <span class="text-slate-300">•</span>
+                    <span class="font-bold text-indigo-600">${selectedTemuanId}</span>
                     ` : ''}
                 </nav>
 
                 <!-- Document Title & Meta -->
                 <div class="flex items-center gap-3 flex-wrap">
-                    <h2 class="text-lg font-extrabold text-gray-900 tracking-tight">${kodeLha}</h2>
-                    <span class="text-gray-300">|</span>
-                    <span class="text-xs font-bold px-2.5 py-0.5 rounded-md ${source === 'BPK-RI' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-pink-50 text-pink-700 border border-pink-200'}">${source}</span>
-                    <span class="text-xs text-gray-500 font-medium">Tahun ${lha.Tahun || '2025'}</span>
-                    <span class="text-gray-300">•</span>
-                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold ${sc.textColor || 'text-gray-700'}">
-                        <span class="w-2 h-2 rounded-full ${sc.dotColor || 'bg-gray-400'}"></span>
+                    <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">${kodeLha}</h2>
+                    <span class="text-slate-300">|</span>
+                    <span class="text-xs font-bold px-3 py-1 rounded-md ${source === 'BPK-RI' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-pink-50 text-pink-700 border border-pink-200'}">${source}</span>
+                    <span class="text-sm text-slate-600 font-semibold">Tahun ${lha.Tahun || '2025'}</span>
+                    <span class="text-slate-300">•</span>
+                    <span class="inline-flex items-center gap-1.5 text-sm font-bold ${sc.textColor || 'text-slate-700'}">
+                        <span class="w-2.5 h-2.5 rounded-full ${sc.dotColor || 'bg-slate-400'}"></span>
                         ${lhaStatus === 'PROSES' ? 'On Progress' : lhaStatus === 'TUNTAS' ? 'Selesai' : 'Belum TL'}
                     </span>
                 </div>
             </div>
 
             <!-- Actions Header -->
-            <div class="flex items-center gap-2 shrink-0">
+            <div class="flex items-center gap-2.5 shrink-0">
                 ${currentRole === "AUDITOR" && !isBpkAudit ? `
-                <button onclick="openTemuanModal('${kodeLha}', false)" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 active:scale-95 transition-all inline-flex items-center gap-1.5 shadow-2xs cursor-pointer">
-                    <i class="fa-solid fa-plus text-xs"></i> Tambah Temuan
+                <button onclick="openTemuanModal('${kodeLha}', false)" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 active:scale-95 transition-all inline-flex items-center gap-2 shadow-xs cursor-pointer">
+                    <i class="fa-solid fa-plus"></i> Tambah Temuan
                 </button>
-                <button onclick="openLhaModal(true, '${kodeLha}')" class="p-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 active:scale-90 transition-all text-xs" title="Edit LHA">
+                <button onclick="openLhaModal(true, '${kodeLha}')" class="p-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-90 transition-all text-sm" title="Edit LHA">
                     <i class="fa-solid fa-pen"></i>
                 </button>
-                <button onclick="triggerDeleteLha('${kodeLha}')" class="p-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 active:scale-90 transition-all text-xs" title="Hapus LHA">
+                <button onclick="triggerDeleteLha('${kodeLha}')" class="p-2.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 active:scale-90 transition-all text-sm" title="Hapus LHA">
                     <i class="fa-solid fa-trash"></i>
                 </button>
                 ` : isBpkAudit ? `
-                <span class="text-xs font-semibold px-3 py-1 rounded-md bg-amber-50 text-amber-900 border border-amber-200/80 inline-flex items-center gap-1.5">
+                <span class="text-xs font-bold px-3.5 py-1.5 rounded-lg bg-amber-50 text-amber-900 border border-amber-200 inline-flex items-center gap-1.5">
                     <i class="fa-solid fa-shield-halved text-amber-600"></i> Mode Verifikasi BPK-RI
                 </span>
                 ` : ''}
 
-                <button onclick="closeDetail()" class="px-3.5 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-100 active:scale-95 transition-all text-xs font-semibold cursor-pointer">
-                    <i class="fa-solid fa-xmark text-xs mr-1"></i> Tutup
+                <button onclick="closeDetail()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100 active:scale-95 transition-all text-sm font-bold cursor-pointer">
+                    <i class="fa-solid fa-xmark mr-1"></i> Tutup
                 </button>
             </div>
         </div>
 
         <!-- Detail Body (Scrollable) -->
-        <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-6 bg-gray-50/30">
+        <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-6 bg-slate-50/40">
             <!-- BATL Section (if applicable) -->
             ${batlHTML}
 
