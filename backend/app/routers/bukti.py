@@ -4,6 +4,7 @@ from typing import List, Optional
 from datetime import datetime
 from decimal import Decimal
 import os
+import re
 
 from ..database import get_db
 from .. import models, schemas
@@ -34,6 +35,7 @@ def submit_bukti_tindak_lanjut(
     kode_rekomendasi: str = Form(...),
     output_aktual: str = Form(...),
     ntpn: Optional[str] = Form(None),
+    nilai_setoran: Optional[str] = Form(None),
     tanggal_mulai: Optional[str] = Form(None),
     tanggal_selesai: Optional[str] = Form(None),
     tanggal_tindak_lanjut: Optional[str] = Form(None),
@@ -74,6 +76,21 @@ def submit_bukti_tindak_lanjut(
             detail="Tanggal Selesai tidak boleh lebih awal dari Tanggal Mulai."
         )
 
+    # Update financial realisasi if nilai_setoran is provided
+    if nilai_setoran:
+        digits_only = re.sub(r"[^\d]", "", str(nilai_setoran))
+        if digits_only:
+            nominal_setor = Decimal(digits_only)
+            if nominal_setor > Decimal("0.00"):
+                current_realisasi = db_rec.nilai_realisasi or Decimal("0.00")
+                target_temuan = db_rec.nilai_temuan or Decimal("0.00")
+                new_realisasi = current_realisasi + nominal_setor
+                if target_temuan > Decimal("0.00") and new_realisasi > target_temuan:
+                    new_realisasi = target_temuan
+                db_rec.nilai_realisasi = new_realisasi
+                if target_temuan > Decimal("0.00"):
+                    db_rec.selisih = max(Decimal("0.00"), target_temuan - new_realisasi)
+
     # Create progress log
     new_bukti = models.TabelBuktiTindakLanjut(
         kode_rekomendasi=kode_rekomendasi,
@@ -110,7 +127,7 @@ def review_bukti_tindak_lanjut(id: int, review: schemas.BuktiTindakLaughtReview 
     if db_rec:
         if review.status_review == "TUNTAS":
             db_rec.status = "TUNTAS"
-            if db_rec.kode_rekomendasi.startswith("R-INSP"):
+            if db_rec.kode_rekomendasi.startswith("R-INSP") or (db_rec.nilai_temuan or Decimal("0.00")) > Decimal("0.00"):
                 db_rec.nilai_realisasi = db_rec.nilai_temuan
                 db_rec.selisih = Decimal("0.00")
         elif review.status_review == "PROSES":
