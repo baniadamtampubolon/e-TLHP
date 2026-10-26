@@ -18,20 +18,19 @@ $method = $_SERVER['REQUEST_METHOD'];
 $request_uri = $_SERVER['REQUEST_URI'] ?? '/';
 $path = parse_url($request_uri, PHP_URL_PATH);
 
-// Resolusi path fleksibel (Apache rewrite, query string, atau direct script)
+// Resolusi path fleksibel (Apache rewrite, query string, direct script, atau PHP built-in server)
 if (!empty($_GET['route'])) {
     $path = '/' . ltrim($_GET['route'], '/');
-} else {
-    $script_dir = dirname($_SERVER['SCRIPT_NAME'] ?? '');
-    if ($script_dir !== '/' && strpos($path, $script_dir) === 0) {
-        $path = substr($path, strlen($script_dir));
-    }
-    if (strpos($path, '/api') === 0) {
-        $path = substr($path, 4);
+}
+
+$raw_segments = explode('/', trim($path, '/'));
+$segments = [];
+foreach ($raw_segments as $s) {
+    if ($s !== '' && $s !== 'index.php' && $s !== 'api') {
+        $segments[] = $s;
     }
 }
-$path = '/' . trim($path, '/');
-$segments = array_values(array_filter(explode('/', $path)));
+$segments = array_values($segments);
 $count = count($segments);
 
 $db = get_db_connection();
@@ -140,7 +139,7 @@ if ($count >= 1 && $segments[0] === 'lha') {
             json_error("Kode LHA sudah terdaftar", 400);
         }
 
-        $stmt = $db->prepare("INSERT INTO master_lha (kode_lha, sumber_audit, tahun, status_laporan, tanggal_input) VALUES (?, ?, ?, ?, NOW())");
+        $stmt = $db->prepare("INSERT INTO master_lha (kode_lha, sumber_audit, tahun, status_laporan, tanggal_input) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)");
         $stmt->execute([$kode_lha, $sumber_audit, $tahun, $status_laporan]);
 
         $created = $db->prepare("SELECT * FROM master_lha WHERE kode_lha = ?");
@@ -223,7 +222,7 @@ if ($count >= 1 && $segments[0] === 'temuan') {
         $checkTem->execute([$kode_temuan]);
         if ($checkTem->fetch()) json_error("Kode temuan sudah terdaftar", 400);
 
-        $stmt = $db->prepare("INSERT INTO tabel_temuan (kode_temuan, kode_lha, parent_temuan, kriteria, sebab, tanggal_input) VALUES (?, ?, ?, ?, ?, NOW())");
+        $stmt = $db->prepare("INSERT INTO tabel_temuan (kode_temuan, kode_lha, parent_temuan, kriteria, sebab, tanggal_input) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)");
         $stmt->execute([$kode_temuan, $kode_lha, $parent_temuan, $kriteria, $sebab]);
 
         $created = $db->prepare("SELECT * FROM tabel_temuan WHERE kode_temuan = ?");
@@ -297,7 +296,7 @@ if ($count >= 1 && $segments[0] === 'rekomendasi') {
         $checkRec->execute([$kode_rekomendasi]);
         if ($checkRec->fetch()) json_error("Kode rekomendasi sudah terdaftar", 400);
 
-        $stmt = $db->prepare("INSERT INTO tabel_rekomendasi (kode_rekomendasi, kode_temuan, rekomendasi, pic, rencana_aksi, jadwal_pelaksanaan, status, nilai_temuan, nilai_realisasi, selisih, tanggal_input) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+        $stmt = $db->prepare("INSERT INTO tabel_rekomendasi (kode_rekomendasi, kode_temuan, rekomendasi, pic, rencana_aksi, jadwal_pelaksanaan, status, nilai_temuan, nilai_realisasi, selisih, tanggal_input) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)");
         $stmt->execute([$kode_rekomendasi, $kode_temuan, $rekomendasi, $pic, $rencana_aksi, $jadwal_pelaksanaan, $status, $nilai_temuan, $nilai_realisasi, $selisih]);
 
         $created = $db->prepare("SELECT * FROM tabel_rekomendasi WHERE kode_rekomendasi = ?");
@@ -524,9 +523,8 @@ if ($count >= 1 && $segments[0] === 'bukti') {
         $bukti = $checkBukti->fetch();
         if (!$bukti) json_error("Bukti tindak lanjut tidak ditemukan", 404);
 
-        $now = date('Y-m-d H:i:s');
-        $updateBukti = $db->prepare("UPDATE tabel_bukti_tindak_lanjut SET status_review = ?, catatan_auditor = ?, tanggal_review = ? WHERE id = ?");
-        $updateBukti->execute([$status_review, $catatan_auditor, $now, $bukti_id]);
+        $updateBukti = $db->prepare("UPDATE tabel_bukti_tindak_lanjut SET status_review = ?, catatan_auditor = ?, tanggal_review = CURRENT_TIMESTAMP WHERE id = ?");
+        $updateBukti->execute([$status_review, $catatan_auditor, $bukti_id]);
 
         // Sinkronisasi status rekomendasi induk
         $kode_rec = $bukti['kode_rekomendasi'];
@@ -598,7 +596,7 @@ if ($count >= 1 && $segments[0] === 'batl') {
 
         @file_put_contents($file_path, "Berita Acara Tindak Lanjut untuk LHA {$kode_lha}\nNomor: {$nomor_batl}\nTanggal: {$tanggal_penerbitan}");
 
-        $stmt = $db->prepare("INSERT INTO tabel_batl (kode_lha, nomor_batl, tanggal_penerbitan, file_path, tanda_tangan_auditor, tanda_tangan_satker, tanggal_input) VALUES (?, ?, ?, ?, 1, 0, NOW())");
+        $stmt = $db->prepare("INSERT INTO tabel_batl (kode_lha, nomor_batl, tanggal_penerbitan, file_path, tanda_tangan_auditor, tanda_tangan_satker, tanggal_input) VALUES (?, ?, ?, ?, 1, 0, CURRENT_TIMESTAMP)");
         $stmt->execute([$kode_lha, $nomor_batl, $tanggal_penerbitan, $relative_path]);
         $new_id = (int)$db->lastInsertId();
 
