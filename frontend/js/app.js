@@ -509,7 +509,7 @@ function calculateKPIs() {
     let selisihTotal = 0;
 
     uniqueRecs.forEach(r => {
-        if (r["Kode Rekomendasi"].startsWith("R-INSP")) {
+        if (r["Kode Rekomendasi"].startsWith("R-INSP") || (r["Nilai Temuan"] || 0) > 0) {
             targetTotal += r["Nilai Temuan"] || 0;
             realisasiTotal += r["Nilai Realisasi"] || 0;
             selisihTotal += r["Selisih"] || 0;
@@ -532,6 +532,53 @@ function formatIDR(num) {
         return (num / 1000000).toFixed(2) + ' Juta';
     } else {
         return num.toLocaleString('id-ID');
+    }
+}
+
+// Parse string Rupiah berformat titik (misal "3.000.000") menjadi angka murni (3000000)
+function parseRupiahValue(raw) {
+    if (raw === null || raw === undefined) return 0;
+    const digitsOnly = String(raw).replace(/[^0-9]/g, '');
+    return digitsOnly ? parseFloat(digitsOnly) : 0;
+}
+
+// Format angka menjadi string ribuan Indonesia (misal 3000000 -> "3.000.000")
+function formatRupiahNumber(num) {
+    const val = parseRupiahValue(num);
+    if (!val) return "0";
+    return val.toLocaleString('id-ID');
+}
+
+// Auto-format input kolom uang Rupiah saat pengguna mengetik
+function formatRupiahInput(inputEl, previewId = null) {
+    if (!inputEl) return;
+    const rawDigits = inputEl.value.replace(/[^0-9]/g, '');
+    if (!rawDigits) {
+        inputEl.value = "";
+        if (previewId) {
+            const previewEl = document.getElementById(previewId);
+            if (previewEl) {
+                previewEl.textContent = "Isi 0 jika rekomendasi bersifat administratif (non-finansial)";
+                previewEl.className = "text-xs text-emerald-700 font-medium mt-1.5";
+            }
+        }
+        return;
+    }
+
+    const numericVal = parseInt(rawDigits, 10) || 0;
+    inputEl.value = numericVal === 0 ? "0" : numericVal.toLocaleString('id-ID');
+
+    if (previewId) {
+        const previewEl = document.getElementById(previewId);
+        if (previewEl) {
+            if (numericVal > 0) {
+                previewEl.innerHTML = `<i class="fa-solid fa-coins mr-1"></i> Target Finansial: <strong>Rp ${numericVal.toLocaleString('id-ID')}</strong> (${formatIDR(numericVal)})`;
+                previewEl.className = "text-xs text-emerald-800 font-bold mt-1.5";
+            } else {
+                previewEl.textContent = "Rp 0 — Rekomendasi bersifat administratif (non-finansial)";
+                previewEl.className = "text-xs text-emerald-700 font-medium mt-1.5";
+            }
+        }
     }
 }
 
@@ -859,8 +906,9 @@ function showLhaDetail(kodeLha) {
                     const safeRecId = rec["Kode Rekomendasi"].replace(/[^a-zA-Z0-9_-]/g, '_');
 
                     // Financial metrics
+                    const isFinancialRec = rec["Kode Rekomendasi"].startsWith("R-INSP") || (rec["Nilai Temuan"] || 0) > 0;
                     let financialHTML = "";
-                    if (rec["Kode Rekomendasi"].startsWith("R-INSP")) {
+                    if (isFinancialRec) {
                         financialHTML = `
                             <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
                                 <div class="p-2 rounded-lg bg-white border border-slate-100">
@@ -1005,7 +1053,7 @@ function showLhaDetail(kodeLha) {
                     // Satker upload form — Dengan Rentang Tanggal Mulai & Tanggal Selesai + Spesifikasi File
                     let satkerInputFormHTML = "";
                     if (currentRole === "SATKER" && status !== "TUNTAS") {
-                        const isFinancial = rec["Kode Rekomendasi"].startsWith("R-INSP");
+                        const isFinancial = isFinancialRec;
                         const previewId = `filePreview_${safeRecId}`;
                         const selesaiInputId = `tglSelesai_${safeRecId}`;
                         satkerInputFormHTML = `
@@ -1048,13 +1096,28 @@ function showLhaDetail(kodeLha) {
                                     </div>
 
                                     ${isFinancial ? `
-                                    <!-- Baris Khusus Finansial: Nomor NTPN -->
-                                    <div>
-                                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1.5">
-                                            <i class="fa-solid fa-receipt text-emerald-600 mr-1"></i> Nomor NTPN (Bukti Setoran Kas Negara) <span class="text-rose-500">*</span>
-                                        </label>
-                                        <input type="text" name="ntpn" required placeholder="Masukkan 16 digit kode NTPN..."
-                                            class="w-full h-10 px-3 text-sm rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 font-medium text-slate-800">
+                                    <!-- Baris Khusus Finansial: Nomor NTPN & Nominal Penyetoran Rupiah -->
+                                    <div class="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="text-xs font-bold text-emerald-900 uppercase tracking-wider block mb-1.5">
+                                                <i class="fa-solid fa-receipt text-emerald-600 mr-1"></i> Nomor NTPN (Bukti Setoran Kas Negara) <span class="text-rose-500">*</span>
+                                            </label>
+                                            <input type="text" name="ntpn" required placeholder="Masukkan 16 digit kode NTPN..."
+                                                class="w-full h-10 px-3 text-sm rounded-xl border border-emerald-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 font-medium text-slate-800">
+                                        </div>
+                                        <div>
+                                            <label class="text-xs font-bold text-emerald-900 uppercase tracking-wider block mb-1.5">
+                                                <i class="fa-solid fa-money-bill-wave text-emerald-600 mr-1"></i> Nominal Setoran / Realisasi (Rp)
+                                            </label>
+                                            <div class="relative flex items-center">
+                                                <span class="absolute left-3.5 text-sm font-extrabold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-md border border-emerald-200 select-none pointer-events-none">Rp</span>
+                                                <input type="text" name="nilai_setoran" inputmode="numeric" autocomplete="off"
+                                                    value="${rec["Selisih"] > 0 ? formatRupiahNumber(rec["Selisih"]) : ''}"
+                                                    placeholder="Contoh: 3.000.000"
+                                                    oninput="formatRupiahInput(this)"
+                                                    class="w-full h-10 pl-14 pr-3 text-sm font-bold text-slate-900 rounded-xl border border-emerald-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                                            </div>
+                                        </div>
                                     </div>` : ''}
 
                                     <!-- Baris 2: Uraian Progres -->
@@ -1776,7 +1839,8 @@ function openRekomendasiModal(temuanKode, isEdit = false, oldKode = "") {
             picInput.value = rec.PIC || "Biro SDMO";
             rencanaInput.value = rec["Rencana Aksi"] || "";
             jadwalInput.value = rec["Jadwal Pelaksanaan"] || "";
-            nilaiInput.value = rec["Nilai Temuan"] || 0;
+            nilaiInput.value = formatRupiahNumber(rec["Nilai Temuan"] || 0);
+            formatRupiahInput(nilaiInput, 'recFormNilaiPreview');
         }
     } else {
         title.textContent = "Tambah Rekomendasi Baru";
@@ -1788,7 +1852,8 @@ function openRekomendasiModal(temuanKode, isEdit = false, oldKode = "") {
         picInput.value = "Biro SDMO";
         rencanaInput.value = "";
         jadwalInput.value = "";
-        nilaiInput.value = 0;
+        nilaiInput.value = "0";
+        formatRupiahInput(nilaiInput, 'recFormNilaiPreview');
     }
 }
 
@@ -1809,7 +1874,7 @@ async function handleRekomendasiFormSubmit(event) {
         pic: document.getElementById("recFormPic").value,
         rencana_aksi: document.getElementById("recFormRencanaAksi").value.trim() || null,
         jadwal_pelaksanaan: document.getElementById("recFormJadwal").value.trim() || null,
-        nilai_temuan: parseFloat(document.getElementById("recFormNilaiTemuan").value) || 0
+        nilai_temuan: parseRupiahValue(document.getElementById("recFormNilaiTemuan").value)
     };
     
     try {
