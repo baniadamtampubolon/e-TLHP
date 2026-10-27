@@ -75,36 +75,46 @@
             </div>
         </div>
 
-        <!-- Header Profile Section -->
-        <div id="headerProfileSection" class="hidden flex items-center gap-4">
-            <div id="roleSwitcherContainer" class="hidden flex items-center gap-2">
-                <label class="text-sm font-semibold text-slate-500 hidden md:inline">Mode Peran:</label>
-                <select id="roleSelector" onchange="switchRole()"
-                    class="h-9 px-3 text-sm font-semibold rounded-lg bg-slate-50 text-slate-700 border border-slate-200 focus:outline-none focus:border-md-primary focus:ring-1 focus:ring-md-primary cursor-pointer shadow-sm">
-                    <option value="AUDITOR">Auditor (Itjen)</option>
-                    <option value="SATKER:Biro SDMO">Simulasi: Biro SDMO</option>
-                    <option value="SATKER:Biro UKK">Simulasi: Biro UKK</option>
-                    <option value="SATKER:Biro MKDI">Simulasi: Biro MKDI</option>
-                    <option value="SATKER:HKS">Simulasi: HKS</option>
-                    <option value="SATKER:Sesdep">Simulasi: Sesdep</option>
-                    <option value="SATKER:Deputi 1">Simulasi: Deputi 1</option>
-                    <option value="SATKER:Deputi 2">Simulasi: Deputi 2</option>
-                    <option value="SATKER:Deputi 3">Simulasi: Deputi 3</option>
-                    <option value="SATKER:Deputi 4">Simulasi: Deputi 4</option>
-                    <option value="SATKER:Staf Ahli Bid. Konektifitas">Simulasi: Staf Ahli Bid. Konektifitas</option>
-                    <option value="SATKER:Biro lingkup kemenko pangan">Simulasi: Biro lingkup kemenko pangan</option>
-                    <option value="SATKER:Inspektorat">Simulasi: Inspektorat</option>
-                    <option value="SATKER:semua Deputi">Simulasi: semua Deputi</option>
-                </select>
-            </div>
-
-            <span id="roleBadge" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                <!-- Dynamic Content -->
-            </span>
-
-            <button onclick="handleLogout()" class="h-9 px-4 rounded-lg bg-rose-50 text-rose-600 border border-rose-100 text-sm font-bold hover:bg-rose-100 active:scale-95 transition-all flex items-center gap-2">
-                <i class="fa-solid fa-right-from-bracket"></i> Keluar
+        <!-- Header Right: Demo Mode Toggle & Profile Section -->
+        <div class="flex items-center gap-3">
+            <!-- Mode Demo / Produksi Toggle Button -->
+            <button id="demoModeToggleBtn" onclick="toggleDemoMode()"
+                class="h-9 px-3 sm:px-3.5 rounded-lg text-xs font-bold border transition-all flex items-center gap-2 shadow-sm active:scale-95"
+                title="Beralih antara Mode Demo dan Mode Produksi">
+                <!-- Dynamically populated by applyDemoModeUI() -->
             </button>
+
+            <!-- Header Profile Section -->
+            <div id="headerProfileSection" class="hidden flex items-center gap-4">
+                <div id="roleSwitcherContainer" class="hidden flex items-center gap-2">
+                    <label class="text-sm font-semibold text-slate-500 hidden md:inline">Mode Peran:</label>
+                    <select id="roleSelector" onchange="switchRole()"
+                        class="h-9 px-3 text-sm font-semibold rounded-lg bg-slate-50 text-slate-700 border border-slate-200 focus:outline-none focus:border-md-primary focus:ring-1 focus:ring-md-primary cursor-pointer shadow-sm">
+                        <option value="AUDITOR">Auditor (Itjen)</option>
+                        <option value="SATKER:Biro SDMO">Simulasi: Biro SDMO</option>
+                        <option value="SATKER:Biro UKK">Simulasi: Biro UKK</option>
+                        <option value="SATKER:Biro MKDI">Simulasi: Biro MKDI</option>
+                        <option value="SATKER:HKS">Simulasi: HKS</option>
+                        <option value="SATKER:Sesdep">Simulasi: Sesdep</option>
+                        <option value="SATKER:Deputi 1">Simulasi: Deputi 1</option>
+                        <option value="SATKER:Deputi 2">Simulasi: Deputi 2</option>
+                        <option value="SATKER:Deputi 3">Simulasi: Deputi 3</option>
+                        <option value="SATKER:Deputi 4">Simulasi: Deputi 4</option>
+                        <option value="SATKER:Staf Ahli Bid. Konektifitas">Simulasi: Staf Ahli Bid. Konektifitas</option>
+                        <option value="SATKER:Biro lingkup kemenko pangan">Simulasi: Biro lingkup kemenko pangan</option>
+                        <option value="SATKER:Inspektorat">Simulasi: Inspektorat</option>
+                        <option value="SATKER:semua Deputi">Simulasi: semua Deputi</option>
+                    </select>
+                </div>
+
+                <span id="roleBadge" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                    <!-- Dynamic Content -->
+                </span>
+
+                <button onclick="handleLogout()" class="h-9 px-4 rounded-lg bg-rose-50 text-rose-600 border border-rose-100 text-sm font-bold hover:bg-rose-100 active:scale-95 transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-right-from-bracket"></i> Keluar
+                </button>
+            </div>
         </div>
     </header>
 
@@ -134,9 +144,12 @@
                 <div class="flex flex-col gap-1.5">
                     <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Password</label>    
                     <div class="relative">
-                        <input type="password" name="password" required placeholder="Masukkan password..."
-                            class="w-full h-11 pl-10 pr-4 rounded-lg bg-slate-50 text-sm border border-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:bg-white transition-all text-slate-800">
+                        <input type="password" id="loginPasswordInput" name="password" required placeholder="Masukkan password..."
+                            class="w-full h-11 pl-10 pr-10 rounded-lg bg-slate-50 text-sm border border-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:bg-white transition-all text-slate-800">
                         <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600 focus:outline-none p-0.5" title="Tampilkan / Tutup Password">
+                            <i id="passwordToggleIcon" class="fa-solid fa-eye-slash text-sm"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -149,14 +162,18 @@
                 </button>
             </form>
 
-            <div class="text-xs text-slate-500 border-t border-slate-100 pt-5 mt-2">
-                <p class="font-bold text-slate-700 mb-3 text-center uppercase tracking-wide text-xs">Daftar Akun Pengujian</p>
+            <!-- Daftar Akun Pengujian (Hanya Ditampilkan Saat Mode Demo Aktif) -->
+            <div id="demoAccountsContainer" class="text-xs text-slate-500 border-t border-slate-100 pt-5 mt-2 transition-all">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="font-bold text-slate-700 uppercase tracking-wide text-xs">Daftar Akun Pengujian</p>
+                    <span class="text-[10px] bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded border border-amber-200">Mode Demo</span>
+                </div>
                 
                 <div class="max-h-36 overflow-y-auto pr-2 custom-scrollbar">
                     <!-- Kategori Auditor -->
                     <div class="mb-3">
                         <span class="inline-block bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-bold mb-1.5">AUDITOR</span>
-                        <div class="flex justify-between items-center bg-slate-50 p-2 rounded-md border border-slate-100">
+                        <div onclick="fillDemoLogin('itjen', 'admin123')" class="flex justify-between items-center bg-slate-50 hover:bg-slate-100 cursor-pointer p-2 rounded-md border border-slate-100 transition-colors" title="Klik untuk isi otomatis">
                             <span class="font-medium text-slate-600">Itjen</span>
                             <span class="font-mono font-bold text-emerald-600">itjen / admin123</span>
                         </div>
@@ -166,55 +183,55 @@
                     <div>
                         <span class="inline-block bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-bold mb-1.5">SATKER (UNIT KERJA)</span>
                         <div class="grid grid-cols-1 gap-1.5">
-                            <div class="flex justify-between items-center border-b border-slate-50 pb-1.5">
+                            <div onclick="fillDemoLogin('sdmo', 'sdmo123')" class="flex justify-between items-center border-b border-slate-50 pb-1.5 hover:bg-slate-50 p-1 rounded cursor-pointer transition-colors" title="Klik untuk isi otomatis">
                                 <span>Biro SDMO</span>
                                 <span class="font-mono font-bold text-slate-700">sdmo / sdmo123</span>
                             </div>
-                            <div class="flex justify-between items-center border-b border-slate-50 pb-1.5">
+                            <div onclick="fillDemoLogin('ukk', 'ukk123')" class="flex justify-between items-center border-b border-slate-50 pb-1.5 hover:bg-slate-50 p-1 rounded cursor-pointer transition-colors" title="Klik untuk isi otomatis">
                                 <span>Biro UKK</span>
                                 <span class="font-mono font-bold text-slate-700">ukk / ukk123</span>
                             </div>
-                            <div class="flex justify-between items-center border-b border-slate-50 pb-1.5">
+                            <div onclick="fillDemoLogin('mkdi', 'mkdi123')" class="flex justify-between items-center border-b border-slate-50 pb-1.5 hover:bg-slate-50 p-1 rounded cursor-pointer transition-colors" title="Klik untuk isi otomatis">
                                 <span>Biro MKDI</span>
                                 <span class="font-mono font-bold text-slate-700">mkdi / mkdi123</span>
                             </div>
-                            <div class="flex justify-between items-center border-b border-slate-50 pb-1.5">
+                            <div onclick="fillDemoLogin('hks', 'hks123')" class="flex justify-between items-center border-b border-slate-50 pb-1.5 hover:bg-slate-50 p-1 rounded cursor-pointer transition-colors" title="Klik untuk isi otomatis">
                                 <span>HKS</span>
                                 <span class="font-mono font-bold text-slate-700">hks / hks123</span>
                             </div>
-                            <div class="flex justify-between items-center border-b border-slate-50 pb-1.5">
+                            <div onclick="fillDemoLogin('sesdep', 'sesdep123')" class="flex justify-between items-center border-b border-slate-50 pb-1.5 hover:bg-slate-50 p-1 rounded cursor-pointer transition-colors" title="Klik untuk isi otomatis">
                                 <span>Sesdep</span>
                                 <span class="font-mono font-bold text-slate-700">sesdep / sesdep123</span>
                             </div>
-                            <div class="flex justify-between items-center border-b border-slate-50 pb-1.5">
+                            <div onclick="fillDemoLogin('deputi1', 'deputi1123')" class="flex justify-between items-center border-b border-slate-50 pb-1.5 hover:bg-slate-50 p-1 rounded cursor-pointer transition-colors" title="Klik untuk isi otomatis">
                                 <span>Deputi 1</span>
                                 <span class="font-mono font-bold text-slate-700">deputi1 / deputi1123</span>
                             </div>
-                            <div class="flex justify-between items-center border-b border-slate-50 pb-1.5">
+                            <div onclick="fillDemoLogin('deputi2', 'deputi2123')" class="flex justify-between items-center border-b border-slate-50 pb-1.5 hover:bg-slate-50 p-1 rounded cursor-pointer transition-colors" title="Klik untuk isi otomatis">
                                 <span>Deputi 2</span>
                                 <span class="font-mono font-bold text-slate-700">deputi2 / deputi2123</span>
                             </div>
-                            <div class="flex justify-between items-center border-b border-slate-50 pb-1.5">
+                            <div onclick="fillDemoLogin('deputi3', 'deputi3123')" class="flex justify-between items-center border-b border-slate-50 pb-1.5 hover:bg-slate-50 p-1 rounded cursor-pointer transition-colors" title="Klik untuk isi otomatis">
                                 <span>Deputi 3</span>
                                 <span class="font-mono font-bold text-slate-700">deputi3 / deputi3123</span>
                             </div>
-                            <div class="flex justify-between items-center border-b border-slate-50 pb-1.5">
+                            <div onclick="fillDemoLogin('deputi4', 'deputi4123')" class="flex justify-between items-center border-b border-slate-50 pb-1.5 hover:bg-slate-50 p-1 rounded cursor-pointer transition-colors" title="Klik untuk isi otomatis">
                                 <span>Deputi 4</span>
                                 <span class="font-mono font-bold text-slate-700">deputi4 / deputi4123</span>
                             </div>
-                            <div class="flex justify-between items-center border-b border-slate-50 pb-1.5">
+                            <div onclick="fillDemoLogin('staf_konektifitas', 'staf123')" class="flex justify-between items-center border-b border-slate-50 pb-1.5 hover:bg-slate-50 p-1 rounded cursor-pointer transition-colors" title="Klik untuk isi otomatis">
                                 <span>Staf Konektifitas</span>
                                 <span class="font-mono font-bold text-slate-700">staf_konektifitas / staf123</span>
                             </div>
-                            <div class="flex justify-between items-center border-b border-slate-50 pb-1.5">
+                            <div onclick="fillDemoLogin('biro_lingkup', 'biro123')" class="flex justify-between items-center border-b border-slate-50 pb-1.5 hover:bg-slate-50 p-1 rounded cursor-pointer transition-colors" title="Klik untuk isi otomatis">
                                 <span>Biro Lingkup</span>
                                 <span class="font-mono font-bold text-slate-700">biro_lingkup / biro123</span>
                             </div>
-                            <div class="flex justify-between items-center border-b border-slate-50 pb-1.5">
+                            <div onclick="fillDemoLogin('inspektorat', 'insp123')" class="flex justify-between items-center border-b border-slate-50 pb-1.5 hover:bg-slate-50 p-1 rounded cursor-pointer transition-colors" title="Klik untuk isi otomatis">
                                 <span>Inspektorat</span>
                                 <span class="font-mono font-bold text-slate-700">inspektorat / insp123</span>
                             </div>
-                            <div class="flex justify-between items-center">
+                            <div onclick="fillDemoLogin('semua_deputi', 'deputi123')" class="flex justify-between items-center hover:bg-slate-50 p-1 rounded cursor-pointer transition-colors" title="Klik untuk isi otomatis">
                                 <span>Semua Deputi</span>
                                 <span class="font-mono font-bold text-slate-700">semua_deputi / deputi123</span>
                             </div>
@@ -405,6 +422,19 @@
                                 </select>
                             </div>
 
+                            <!-- Dropdown Jenis Audit -->
+                            <div class="flex items-center h-9 px-3 rounded-md bg-white border border-slate-200 text-sm focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500 transition-all">
+                                <i class="fa-solid fa-layer-group text-purple-500 mr-2"></i>
+                                <span class="font-medium text-slate-500 mr-1 hidden sm:inline">Jenis:</span>
+                                <select id="jenisAuditFilter" onchange="applyFilters()" class="bg-transparent font-bold text-slate-700 focus:outline-none cursor-pointer border-none p-0 focus:ring-0">
+                                    <option value="ALL">Semua Jenis</option>
+                                    <option value="Audit Kinerja">Audit Kinerja (3E)</option>
+                                    <option value="Audit Keuangan">Audit Keuangan</option>
+                                    <option value="Audit Kepatuhan">Audit Kepatuhan</option>
+                                    <option value="Audit Khusus">Audit Khusus (Investigatif)</option>
+                                </select>
+                            </div>
+
                             <!-- Dropdown Tahun -->
                             <div class="flex items-center h-9 px-3 rounded-md bg-white border border-slate-200 text-sm focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500 transition-all">
                                 <i class="fa-regular fa-calendar text-emerald-500 mr-2"></i>
@@ -450,9 +480,9 @@
                             <tr>
                                 <th class="py-4 px-6 w-[180px]">No. Dokumen LHA</th>
                                 <th class="py-4 px-4 min-w-[260px]">Uraian Kegiatan & Pelaksana</th>
-                                <th class="py-4 px-4 w-[115px]">Sumber</th>
+                                <th class="py-4 px-4 w-[145px]">Sumber & Jenis Audit</th>
                                 <th class="py-4 px-4 w-[200px]">PIC / Unit Kerja</th>
-                                <th class="py-4 px-4 w-[170px]">Tanggal Tindak Lanjut</th>
+                                <th class="py-4 px-4 w-[185px]">Batas Waktu (Deadline)</th>
                                 <th class="py-4 px-4 w-[125px] text-center">Status</th>
                                 <th class="py-4 px-4 w-[200px]">Kelengkapan</th>
                             </tr>
@@ -522,6 +552,16 @@
                     </select>
                 </div>
                 <div class="flex flex-col">
+                    <label class="text-xs font-bold text-md-on-surface-variant mb-1.5 ml-1">Jenis Audit</label>
+                    <select id="lhaFormJenis" required
+                        class="w-full p-2.5 text-sm rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary font-medium">
+                        <option value="Audit Kinerja">Audit Kinerja (3E)</option>
+                        <option value="Audit Keuangan">Audit Keuangan</option>
+                        <option value="Audit Kepatuhan">Audit Kepatuhan</option>
+                        <option value="Audit Khusus">Audit Khusus (Investigatif)</option>
+                    </select>
+                </div>
+                <div class="flex flex-col">
                     <label class="text-xs font-bold text-md-on-surface-variant mb-1.5 ml-1">Tahun</label>
                     <input type="number" id="lhaFormTahun" required min="2000" max="2100"
                         class="w-full p-2.5 text-sm rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
@@ -542,43 +582,85 @@
         </div>
     </div>
 
-    <!-- 2. Temuan Modal -->
+    <!-- 2. Temuan Modal (4 Unsur Temuan: Kondisi, Kriteria, Sebab, Akibat) -->
     <div id="temuanModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden px-4">
-        <div class="bg-md-surface-container rounded-3xl max-w-lg w-full p-6 border border-md-outline/10 shadow-xl flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
-            <h3 id="temuanModalTitle" class="text-lg font-bold text-md-on-background">Tambah Temuan Baru</h3>
-            <form id="temuanForm" onsubmit="handleTemuanFormSubmit(event)" class="flex flex-col gap-4">
+        <div class="bg-md-surface-container rounded-3xl max-w-xl w-full p-6 border border-md-outline/10 shadow-xl flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+                <div>
+                    <h3 id="temuanModalTitle" class="text-lg font-bold text-slate-900">Tambah Temuan Baru</h3>
+                    <p class="text-xs text-slate-500 font-medium">Perumusan 4 unsur pokok temuan pemeriksaan</p>
+                </div>
+                <span class="text-[10px] font-mono font-bold bg-rose-50 text-rose-700 px-2 py-0.5 rounded border border-rose-200">
+                    Kriteria &gt; Kondisi
+                </span>
+            </div>
+
+            <form id="temuanForm" onsubmit="handleTemuanFormSubmit(event)" class="flex flex-col gap-3.5">
                 <input type="hidden" id="temuanFormIsEdit" value="false">
                 <input type="hidden" id="temuanFormOldKode" value="">
-                <div class="flex flex-col mb-1" id="temuanFormLhaContainer">
-                    <label class="text-xs font-bold text-md-on-surface-variant mb-1.5 ml-1">Dokumen LHP Induk</label>
+                <div class="flex flex-col" id="temuanFormLhaContainer">
+                    <label class="text-xs font-bold text-md-on-surface-variant mb-1 ml-1">Dokumen LHP Induk</label>
                     <select id="temuanFormLha" required
-                        class="w-full p-2.5 text-sm rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
+                        class="w-full p-2.5 text-sm rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary font-medium">
                         <!-- Options dynamically loaded -->
                     </select>
                 </div>
 
                 <div class="flex flex-col">
-                    <label class="text-xs font-bold text-md-on-surface-variant mb-1.5 ml-1">Kode Temuan (Unique)</label>
+                    <label class="text-xs font-bold text-md-on-surface-variant mb-1 ml-1">Kode Temuan (Unique)</label>
                     <input type="text" id="temuanFormKode" required placeholder="Contoh: T-INSP-25001..."
-                        class="w-full p-2.5 text-sm rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
-                </div>
-                <div class="flex flex-col">
-                    <label class="text-xs font-bold text-md-on-surface-variant mb-1.5 ml-1">Kriteria Temuan</label>
-                    <textarea id="temuanFormKriteria" required rows="3"
-                        placeholder="Uraikan kriteria atau deskripsi temuan..."
-                        class="w-full p-2.5 text-sm rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary"></textarea>
-                </div>
-                <div class="flex flex-col">
-                    <label class="text-xs font-bold text-md-on-surface-variant mb-1.5 ml-1">Penyebab (Sebab) - Opsional</label>
-                    <textarea id="temuanFormSebab" rows="2" placeholder="Uraikan penyebab temuan..."
-                        class="w-full p-2.5 text-sm rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary"></textarea>
+                        class="w-full p-2.5 text-sm rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary font-mono font-semibold">
                 </div>
 
-                <div class="flex gap-2 justify-end mt-2">
+                <!-- 1. KONDISI -->
+                <div class="flex flex-col">
+                    <label class="text-xs font-bold text-slate-800 mb-1 ml-1 flex items-center gap-1.5">
+                        <span class="w-4 h-4 rounded-full bg-slate-900 text-white text-[10px] flex items-center justify-center font-bold">1</span>
+                        Kondisi (Fakta Riil di Lapangan) <span class="text-rose-500">*</span>
+                    </label>
+                    <textarea id="temuanFormKondisi" required rows="2"
+                        placeholder="Uraikan fakta nyata/kondisi riil yang ditemukan di lapangan saat audit..."
+                        class="w-full p-2.5 text-sm rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary leading-relaxed"></textarea>
+                </div>
+
+                <!-- 2. KRITERIA -->
+                <div class="flex flex-col">
+                    <label class="text-xs font-bold text-indigo-900 mb-1 ml-1 flex items-center gap-1.5">
+                        <span class="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-bold">2</span>
+                        Kriteria (Aturan / Standar / SOP yang Dilanggar) <span class="text-rose-500">*</span>
+                    </label>
+                    <textarea id="temuanFormKriteria" required rows="2"
+                        placeholder="Uraikan peraturan, pasal keputusan menteri, atau SOP baku yang seharusnya dipatuhi..."
+                        class="w-full p-2.5 text-sm rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 leading-relaxed"></textarea>
+                </div>
+
+                <!-- 3. SEBAB -->
+                <div class="flex flex-col">
+                    <label class="text-xs font-bold text-amber-900 mb-1 ml-1 flex items-center gap-1.5">
+                        <span class="w-4 h-4 rounded-full bg-amber-600 text-white text-[10px] flex items-center justify-center font-bold">3</span>
+                        Sebab (Akar Penyebab Permasalahan)
+                    </label>
+                    <textarea id="temuanFormSebab" rows="2"
+                        placeholder="Mengapa kondisi terjadi? (Contoh: Kelalaian PPK, ketiadaan SOP, keterbatasan kompetensi SDM...)"
+                        class="w-full p-2.5 text-sm rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-amber-500 leading-relaxed"></textarea>
+                </div>
+
+                <!-- 4. AKIBAT -->
+                <div class="flex flex-col">
+                    <label class="text-xs font-bold text-rose-900 mb-1 ml-1 flex items-center gap-1.5">
+                        <span class="w-4 h-4 rounded-full bg-rose-600 text-white text-[10px] flex items-center justify-center font-bold">4</span>
+                        Akibat (Dampak Negatif / Risiko Kerugian)
+                    </label>
+                    <textarea id="temuanFormAkibat" rows="2"
+                        placeholder="Apa akibatnya? (Contoh: Terjadinya Kerugian Keuangan Negara sebesar Rp ..., keterlambatan target program...)"
+                        class="w-full p-2.5 text-sm rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-rose-500 leading-relaxed"></textarea>
+                </div>
+
+                <div class="flex gap-2 justify-end pt-3 border-t border-slate-200 mt-1">
                     <button type="button" onclick="closeTemuanModal()"
                         class="px-5 py-2.5 rounded-full text-sm font-bold bg-md-secondary-container text-md-on-secondary-container hover:shadow active:scale-95 transition-all">Batal</button>
                     <button type="submit"
-                        class="px-5 py-2.5 rounded-full text-sm font-bold bg-md-primary text-white hover:shadow active:scale-95 transition-all">Simpan</button>
+                        class="px-5 py-2.5 rounded-full text-sm font-bold bg-md-primary text-white hover:shadow active:scale-95 transition-all">Simpan Temuan</button>
                 </div>
             </form>
         </div>
@@ -621,16 +703,6 @@
                     </select>
                 </div>
                 <div class="flex flex-col">
-                    <label class="text-xs font-bold text-md-on-surface-variant mb-1.5 ml-1">Rencana Aksi Unit Kerja - Opsional</label>
-                    <textarea id="recFormRencanaAksi" rows="2" placeholder="Uraikan rencana aksi..."
-                        class="w-full p-2.5 text-sm rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary"></textarea>
-                </div>
-                <div class="flex flex-col">
-                    <label class="text-xs font-bold text-md-on-surface-variant mb-1.5 ml-1">Jadwal Pelaksanaan - Opsional</label>
-                    <input type="text" id="recFormJadwal" placeholder="Contoh: Triwulan I 2025..."
-                        class="w-full p-2.5 text-sm rounded-xl border border-md-outline/20 bg-white focus:outline-none focus:ring-1 focus:ring-md-primary">
-                </div>
-                <div class="flex flex-col">
                     <label class="text-xs font-bold text-md-on-surface-variant mb-1.5 ml-1">Target Nominal Penyetoran (Untuk Rekomendasi Finansial) - Rp</label>
                     <div class="relative flex items-center">
                         <span class="absolute left-0 inset-y-0 flex items-center justify-center px-3.5 text-sm font-extrabold text-emerald-700 bg-emerald-50 border-r border-md-outline/30 rounded-l-xl select-none">
@@ -648,12 +720,76 @@
                     <button type="button" onclick="closeRekomendasiModal()"
                         class="px-5 py-2.5 rounded-full text-sm font-bold bg-md-secondary-container text-md-on-secondary-container hover:shadow active:scale-95 transition-all">Batal</button>
                     <button type="submit"
-                        class="px-5 py-2.5 rounded-full text-sm font-bold bg-md-primary text-white hover:shadow active:scale-95 transition-all">Simpan</button>
+                        class="px-5 py-2.5 rounded-full text-sm font-bold bg-md-primary text-white hover:shadow active:scale-95 transition-all">Simpan Rekomendasi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. Modal Rencana Aksi (RENAKSI) Unit Kerja (Satker) -->
+    <div id="renaksiModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden px-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl flex flex-col gap-5 border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
+                        <i class="fa-solid fa-list-check text-base"></i>
+                    </div>
+                    <div>
+                        <h3 id="renaksiModalTitle" class="text-base font-bold text-slate-800">Rencana Aksi Unit Kerja (Renaksi)</h3>
+                        <p class="text-xs text-slate-500">Tetapkan strategi dan target jadwal penyelesaian tindak lanjut</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeRenaksiModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Info Rekomendasi yang sedang diisi -->
+            <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs">
+                <div class="flex items-center gap-2 mb-1">
+                    <span id="renaksiRecKode" class="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200"></span>
+                    <span id="renaksiRecPic" class="font-bold text-slate-600"></span>
+                </div>
+                <p id="renaksiRecText" class="text-slate-700 line-clamp-2 mt-1 font-medium"></p>
+            </div>
+
+            <form onsubmit="handleRenaksiFormSubmit(event)" class="flex flex-col gap-4">
+                <input type="hidden" id="renaksiRecKodeHidden">
+                
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                        Uraian Rencana Aksi (Renaksi) <span class="text-rose-500">*</span>
+                    </label>
+                    <textarea id="renaksiInputText" required rows="4" 
+                        placeholder="Jelaskan langkah-langkah konkret, koordinasi, atau regulasi yang akan disusun/dilaksanakan oleh unit kerja..."
+                        class="w-full p-3 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-slate-800 leading-relaxed"></textarea>
+                    <p class="text-[11px] text-slate-500">Rencana aksi ini disusun oleh Unit Kerja PIC sebagai acuan tindak lanjut rekomendasi audit.</p>
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                        Target Jadwal Pelaksanaan <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="text" id="renaksiInputJadwal" required
+                        placeholder="Contoh: Triwulan I 2026, April 2026, atau 60 Hari Kalender"
+                        class="w-full h-11 px-3 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-slate-800 font-medium">
+                </div>
+
+                <div class="flex gap-2 justify-end pt-3 border-t border-slate-100 mt-1">
+                    <button type="button" onclick="closeRenaksiModal()"
+                        class="px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all">Batal</button>
+                    <button type="submit"
+                        class="px-5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 transition-all shadow-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-floppy-disk"></i> Simpan Rencana Aksi
+                    </button>
                 </div>
             </form>
         </div>
     </div>
     
+    <!-- Floating Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-20 right-6 z-50 flex flex-col gap-2 pointer-events-none transition-all"></div>
+
     <script src="js/api.js" defer></script>
     <script src="js/charts.js" defer></script>
     <script src="js/app.js" defer></script>

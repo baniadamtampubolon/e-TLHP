@@ -38,6 +38,7 @@ async function loadDataFromAPI() {
             masterLHP.push({
                 "Kode LHP": lha.kode_lha,
                 "Sumber Audit": lha.sumber_audit,
+                "Jenis Audit": lha.jenis_audit || "Audit Kinerja",
                 "Tahun": lha.tahun,
                 "Status Laporan": lha.status_laporan,
                 "Tanggal Input": lha.tanggal_input
@@ -47,8 +48,10 @@ async function loadDataFromAPI() {
                     "Kode Temuan": tem.kode_temuan,
                     "Kode LHP": tem.kode_lha,
                     "Parent Temuan": tem.parent_temuan,
+                    "Kondisi": tem.kondisi || null,
                     "Kriteria": tem.kriteria,
-                    "Sebab": tem.sebab,
+                    "Sebab": tem.sebab || null,
+                    "Akibat": tem.akibat || null,
                     "Tanggal Input": tem.tanggal_input
                 });
                 
@@ -182,13 +185,7 @@ function handleBuktiFileChange(inputEl, previewId) {
 async function handleBuktiSubmit(event, kode_rekomendasi) {
     event.preventDefault();
     const form = event.target;
-    const mulaiVal = form.tanggal_mulai ? form.tanggal_mulai.value : "";
-    const selesaiVal = form.tanggal_selesai ? form.tanggal_selesai.value : "";
-
-    if (mulaiVal && selesaiVal && selesaiVal < mulaiVal) {
-        alert("Tanggal Selesai tidak boleh lebih awal dari Tanggal Mulai Tindak Lanjut.");
-        return;
-    }
+    const realisasiVal = form.tanggal_realisasi ? form.tanggal_realisasi.value : (form.tanggal_mulai ? form.tanggal_mulai.value : "");
 
     const fileInput = form.querySelector('input[type="file"]');
 

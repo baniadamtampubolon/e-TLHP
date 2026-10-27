@@ -10,6 +10,7 @@ DROP TABLE IF EXISTS `master_lha`;
 CREATE TABLE `master_lha` (
   `kode_lha` VARCHAR(50) NOT NULL,
   `sumber_audit` VARCHAR(50) NOT NULL,
+  `jenis_audit` VARCHAR(50) NOT NULL DEFAULT 'Audit Kinerja',
   `tahun` INT NOT NULL,
   `status_laporan` VARCHAR(50) NOT NULL DEFAULT 'Dalam Pemantauan',
   `tanggal_input` DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -22,8 +23,10 @@ CREATE TABLE `tabel_temuan` (
   `kode_temuan` VARCHAR(50) NOT NULL,
   `kode_lha` VARCHAR(50) NOT NULL,
   `parent_temuan` VARCHAR(50) DEFAULT NULL,
+  `kondisi` TEXT DEFAULT NULL,
   `kriteria` TEXT NOT NULL,
   `sebab` TEXT DEFAULT NULL,
+  `akibat` TEXT DEFAULT NULL,
   `tanggal_input` DATETIME DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`kode_temuan`),
   KEY `idx_temuan_lha` (`kode_lha`),

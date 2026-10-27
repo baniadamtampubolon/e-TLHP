@@ -31,6 +31,24 @@ if (strpos($uri, '/uploads/') === 0) {
     }
 }
 
+// 2b. Dokumentasi & Panduan Alur: /docs/...
+if (strpos($uri, '/docs/') === 0) {
+    $docFile = __DIR__ . $uri;
+    if (file_exists($docFile) && !is_dir($docFile)) {
+        $ext = strtolower(pathinfo($docFile, PATHINFO_EXTENSION));
+        $mimes = [
+            'html' => 'text/html; charset=UTF-8',
+            'md'   => 'text/markdown; charset=UTF-8',
+            'pdf'  => 'application/pdf',
+            'png'  => 'image/png',
+            'jpg'  => 'image/jpeg',
+        ];
+        header('Content-Type: ' . ($mimes[$ext] ?? 'text/plain'));
+        readfile($docFile);
+        exit();
+    }
+}
+
 // 3. Berkas statis frontend (js, css, gambar, font)
 $clean_path = ltrim($uri, '/');
 if (strpos($clean_path, 'frontend/') === 0) {

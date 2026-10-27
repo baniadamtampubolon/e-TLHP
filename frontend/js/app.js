@@ -12,8 +12,12 @@ let currentRole = "AUDITOR"; // Default Role: AUDITOR or SATKER
 let currentUser = null;      // Logged in user object
 let simulatedPic = null;     // Simulated Satker PIC in Dev Mode
 
+// Demo Mode state: true by default or persisted in localStorage
+let isDemoMode = localStorage.getItem("isDemoMode") !== null ? localStorage.getItem("isDemoMode") === "true" : true;
+
 // Initialize App
 window.addEventListener('DOMContentLoaded', () => {
+    applyDemoModeUI(false);
     checkAuthSession();
 });
 
@@ -23,6 +27,8 @@ function checkAuthSession() {
     const loginCard = document.getElementById("loginCardSection");
     const dashboardMain = document.getElementById("dashboardMainSection");
     const headerProfile = document.getElementById("headerProfileSection");
+
+    applyDemoModeUI(false);
 
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
@@ -60,14 +66,25 @@ function renderHeaderProfile() {
     if (!badge || !currentUser) return;
     
     if (currentUser.role === "AUDITOR") {
-        badge.className = "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold bg-md-primary/10 text-md-primary";
-        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-md-primary animate-pulse"></span> Auditor: ${currentUser.username.toUpperCase()}`;
+        if (simulatedPic) {
+            badge.className = "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold bg-md-tertiary/10 text-md-tertiary";
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-md-tertiary animate-pulse"></span> Simulasi: ${simulatedPic}`;
+        } else {
+            badge.className = "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold bg-md-primary/10 text-md-primary";
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-md-primary animate-pulse"></span> Auditor: ${currentUser.username.toUpperCase()}`;
+        }
         
-        // Show role switcher only for Auditor (admin feature for simulation)
+        // Show role switcher only for Auditor in Demo Mode
         const switcher = document.getElementById("roleSwitcherContainer");
-        if (switcher) switcher.classList.remove("hidden");
-        const roleSel = document.getElementById("roleSelector");
-        if (roleSel) roleSel.value = currentRole;
+        if (switcher) {
+            if (isDemoMode) {
+                switcher.classList.remove("hidden");
+                const roleSel = document.getElementById("roleSelector");
+                if (roleSel) roleSel.value = simulatedPic ? `SATKER:${simulatedPic}` : "AUDITOR";
+            } else {
+                switcher.classList.add("hidden");
+            }
+        }
     } else {
         badge.className = "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold bg-md-tertiary/10 text-md-tertiary";
         badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-md-tertiary animate-pulse"></span> Satker: ${currentUser.pic}`;
@@ -76,6 +93,168 @@ function renderHeaderProfile() {
         const switcher = document.getElementById("roleSwitcherContainer");
         if (switcher) switcher.classList.add("hidden");
     }
+}
+
+// Toggle Demo Mode (Active vs Launch/Production Ready)
+function toggleDemoMode() {
+    isDemoMode = !isDemoMode;
+    localStorage.setItem("isDemoMode", isDemoMode ? "true" : "false");
+    
+    // When switching to Production Mode: reset simulation and ensure real user role
+    if (!isDemoMode) {
+        simulatedPic = null;
+        if (currentUser) {
+            currentRole = currentUser.role;
+            const roleSel = document.getElementById("roleSelector");
+            if (roleSel) roleSel.value = "AUDITOR";
+        }
+    }
+    
+    // Apply UI state changes
+    applyDemoModeUI(true);
+    
+    // Re-render dashboard header and reload data if logged in
+    if (currentUser) {
+        renderHeaderProfile();
+        loadDataFromAPI();
+    }
+}
+
+// Apply visual representation for Demo Mode vs Production Mode
+function applyDemoModeUI(showToast = false) {
+    const toggleBtn = document.getElementById("demoModeToggleBtn");
+    const demoAccounts = document.getElementById("demoAccountsContainer");
+    const switcher = document.getElementById("roleSwitcherContainer");
+    
+    // Close password preview & reset eye icon
+    const passInput = document.getElementById("loginPasswordInput");
+    const passIcon = document.getElementById("passwordToggleIcon");
+    if (passInput) passInput.type = "password";
+    if (passIcon) {
+        passIcon.className = "fa-solid fa-eye-slash text-sm";
+    }
+
+    // Update Toggle Button UI in Navbar
+    if (toggleBtn) {
+        if (isDemoMode) {
+            toggleBtn.className = "h-9 px-3 sm:px-3.5 rounded-lg text-xs font-bold border transition-all flex items-center gap-2 shadow-sm active:scale-95 bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100";
+            toggleBtn.title = "Mode Demo Aktif. Klik untuk beralih ke Mode Produksi (Siap Rilis).";
+            toggleBtn.innerHTML = `
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                </span>
+                <i class="fa-solid fa-flask text-amber-600"></i>
+                <span class="hidden sm:inline text-amber-700">Mode:</span>
+                <span class="uppercase tracking-wider font-extrabold text-amber-900">Demo</span>
+            `;
+        } else {
+            toggleBtn.className = "h-9 px-3 sm:px-3.5 rounded-lg text-xs font-bold border transition-all flex items-center gap-2 shadow-sm active:scale-95 bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100";
+            toggleBtn.title = "Mode Produksi Aktif (Siap Launch). Klik untuk mengaktifkan Mode Demo.";
+            toggleBtn.innerHTML = `
+                <i class="fa-solid fa-rocket text-emerald-600"></i>
+                <span class="hidden sm:inline text-emerald-700">Mode:</span>
+                <span class="uppercase tracking-wider font-extrabold text-emerald-900">Produksi (Live)</span>
+            `;
+        }
+    }
+
+    // Toggle demo accounts list on login card
+    if (demoAccounts) {
+        if (isDemoMode) {
+            demoAccounts.classList.remove("hidden");
+        } else {
+            demoAccounts.classList.add("hidden");
+        }
+    }
+
+    // Toggle simulation dropdown in header
+    if (switcher) {
+        if (isDemoMode && currentUser && currentUser.role === "AUDITOR") {
+            switcher.classList.remove("hidden");
+        } else {
+            switcher.classList.add("hidden");
+        }
+    }
+
+    // Trigger toast notification if requested
+    if (showToast) {
+        if (isDemoMode) {
+            showToastNotification("Mode Demo diaktifkan. Fitur simulasi peran Auditor & daftar akun pengujian tersedia.", "warning");
+        } else {
+            showToastNotification("Mode Produksi siap rilis. Mode simulasi dinonaktifkan & daftar password ditutup.", "success");
+        }
+    }
+}
+
+// Toggle login password visibility (Eye icon)
+function togglePasswordVisibility() {
+    const input = document.getElementById("loginPasswordInput");
+    const icon = document.getElementById("passwordToggleIcon");
+    if (!input || !icon) return;
+    
+    if (input.type === "password") {
+        input.type = "text";
+        icon.className = "fa-solid fa-eye text-sm text-emerald-600";
+    } else {
+        input.type = "password";
+        icon.className = "fa-solid fa-eye-slash text-sm text-slate-400";
+    }
+}
+
+// Auto fill credentials when clicking test accounts in Demo Mode
+function fillDemoLogin(username, password) {
+    if (!isDemoMode) return;
+    const userField = document.querySelector('input[name="username"]');
+    const passField = document.getElementById('loginPasswordInput');
+    if (userField) userField.value = username;
+    if (passField) {
+        passField.value = password;
+        passField.type = "password";
+        const icon = document.getElementById("passwordToggleIcon");
+        if (icon) icon.className = "fa-solid fa-eye-slash text-sm text-slate-400";
+    }
+}
+
+// Floating Toast Notification
+function showToastNotification(message, type = "info") {
+    const container = document.getElementById("toastContainer");
+    if (!container) return;
+    
+    const toast = document.createElement("div");
+    const isWarn = type === "warning";
+    const bgClass = isWarn 
+        ? "bg-slate-900/95 text-white border-amber-500/50 shadow-amber-900/20" 
+        : "bg-slate-900/95 text-white border-emerald-500/50 shadow-emerald-900/20";
+    
+    toast.className = `pointer-events-auto px-4 py-3 rounded-xl shadow-2xl border text-sm flex items-center gap-3 backdrop-blur-md transform transition-all duration-300 translate-y-[-10px] opacity-0 ${bgClass}`;
+    
+    const icon = isWarn ? "fa-flask text-amber-400" : "fa-rocket text-emerald-400";
+    const badgeText = isWarn ? "Mode Demo Aktif" : "Mode Produksi Siap Launch";
+    const badgeColor = isWarn ? "text-amber-400" : "text-emerald-400";
+    
+    toast.innerHTML = `
+        <div class="w-8 h-8 rounded-lg ${isWarn ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/20 text-emerald-400'} flex items-center justify-center shrink-0">
+            <i class="fa-solid ${icon}"></i>
+        </div>
+        <div class="flex-1">
+            <p class="font-extrabold text-[11px] uppercase tracking-wider ${badgeColor}">${badgeText}</p>
+            <p class="text-xs font-medium text-slate-200 mt-0.5">${message}</p>
+        </div>
+    `;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.remove("translate-y-[-10px]", "opacity-0");
+        toast.classList.add("translate-y-0", "opacity-100");
+    }, 10);
+    
+    setTimeout(() => {
+        toast.classList.remove("translate-y-0", "opacity-100");
+        toast.classList.add("translate-y-[-10px]", "opacity-0");
+        setTimeout(() => toast.remove(), 350);
+    }, 3800);
 }
 
 // Handle Login Form Submit
@@ -107,13 +286,14 @@ async function handleLoginSubmit(event) {
 // Handle Logout
 function handleLogout() {
     localStorage.removeItem("currentUser");
+    simulatedPic = null;
     closeDetail();
     checkAuthSession();
 }
 
 // Switch user role (Only visible for Auditor for simulation/review convenience)
 async function switchRole() {
-    if (!currentUser || currentUser.role !== "AUDITOR") return;
+    if (!isDemoMode || !currentUser || currentUser.role !== "AUDITOR") return;
     const roleVal = document.getElementById('roleSelector').value;
     
     const badge = document.getElementById('roleBadge');
@@ -306,6 +486,72 @@ function getFollowUpInfoForLha(kodeLha) {
     };
 }
 
+// Menghitung Batas Waktu (Deadline) Yuridis 60 Hari sesuai regulasi audit (UU No. 15/2004)
+function getLhaDeadlineInfo(lha) {
+    const baseDateStr = lha["Tanggal Input"] || `${lha.Tahun || 2025}-01-01`;
+    const baseDate = new Date(baseDateStr);
+    const validBase = isNaN(baseDate.getTime()) ? new Date() : baseDate;
+    
+    // Deadline resmi 60 hari kalender sejak penerbitan LHA
+    const deadlineDate = new Date(validBase.getTime() + 60 * 24 * 60 * 60 * 1000);
+    const today = new Date();
+    
+    const diffTime = deadlineDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    const lhaStatus = computeLhaStatus(lha["Kode LHP"]);
+    const isTuntas = (lhaStatus === "TUNTAS");
+    const isOverdue = diffDays < 0 && !isTuntas;
+    
+    return {
+        deadlineDate,
+        deadlineFormatted: formatTemuanDate(deadlineDate.toISOString()),
+        diffDays,
+        isOverdue,
+        isTuntas,
+        lhaStatus
+    };
+}
+
+function getRecDeadlineInfo(rec, lha) {
+    const baseDateStr = rec["Tanggal Input"] || (lha ? lha["Tanggal Input"] : null) || "2025-01-01";
+    const baseDate = new Date(baseDateStr);
+    const validBase = isNaN(baseDate.getTime()) ? new Date() : baseDate;
+    
+    const deadlineDate = new Date(validBase.getTime() + 60 * 24 * 60 * 60 * 1000);
+    const today = new Date();
+    
+    const diffTime = deadlineDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    const isTuntas = (rec.Status === "TUNTAS");
+    const isOverdue = diffDays < 0 && !isTuntas;
+    
+    let statusBadgeText = "";
+    let statusText = "";
+    
+    if (isTuntas) {
+        statusBadgeText = "Tuntas";
+        statusText = "Tuntas Tepat Waktu";
+    } else if (isOverdue) {
+        statusBadgeText = `Lewat ${Math.abs(diffDays)} Hari`;
+        statusText = `Melampaui batas waktu 60 hari (${Math.abs(diffDays)} hari)`;
+    } else {
+        statusBadgeText = `Sisa ${diffDays} Hari`;
+        statusText = `Sisa waktu ${diffDays} hari kalender`;
+    }
+    
+    return {
+        deadlineDate,
+        deadlineText: formatTemuanDate(deadlineDate.toISOString()),
+        diffDays,
+        isOverdue,
+        isTuntas,
+        statusBadgeText,
+        statusText
+    };
+}
+
 // Get unique PICs for a specific finding (including sub-findings)
 function getUniquePicsForTemuan(temuanId) {
     const recs = getRecommendationsForFinding(temuanId);
@@ -336,6 +582,7 @@ function getRecommendationsForLha(kodeLha) {
 function applyFilters() {
     const searchVal = document.getElementById('searchInput')?.value.toLowerCase() || "";
     const sourceVal = document.getElementById('sourceFilter')?.value || "ALL";
+    const jenisAuditVal = document.getElementById('jenisAuditFilter')?.value || "ALL";
     const picVal = document.getElementById('picFilter')?.value || "ALL";
     const statusVal = document.getElementById('statusFilter')?.value || "ALL";
     const tahunVal = document.getElementById('tahunFilter')?.value || "ALL";
@@ -344,12 +591,15 @@ function applyFilters() {
         let matchSearch = !searchVal;
         if (!matchSearch) {
             if (lha["Kode LHP"] && lha["Kode LHP"].toLowerCase().includes(searchVal)) matchSearch = true;
+            if (!matchSearch && lha["Jenis Audit"] && lha["Jenis Audit"].toLowerCase().includes(searchVal)) matchSearch = true;
             if (!matchSearch) {
                 const temuanList = tabelTemuan.filter(t => t["Kode LHP"] === lha["Kode LHP"]);
                 matchSearch = temuanList.some(t => 
+                    (t.Kondisi && t.Kondisi.toLowerCase().includes(searchVal)) ||
                     (t.Kriteria && t.Kriteria.toLowerCase().includes(searchVal)) ||
                     (t["Kode Temuan"] && t["Kode Temuan"].toLowerCase().includes(searchVal)) ||
-                    (t.Sebab && t.Sebab.toLowerCase().includes(searchVal))
+                    (t.Sebab && t.Sebab.toLowerCase().includes(searchVal)) ||
+                    (t.Akibat && t.Akibat.toLowerCase().includes(searchVal))
                 );
             }
             if (!matchSearch) {
@@ -364,6 +614,9 @@ function applyFilters() {
 
         // Source filter
         const matchSource = (sourceVal === "ALL") || (lha["Sumber Audit"] === sourceVal);
+
+        // Jenis Audit filter (Audit Kinerja, Audit Keuangan, Audit Kepatuhan, Audit Khusus)
+        const matchJenisAudit = (jenisAuditVal === "ALL") || ((lha["Jenis Audit"] || "Audit Kinerja") === jenisAuditVal);
 
         // PIC filter: check if any recommendation under this LHA matches the PIC
         let matchPic = (picVal === "ALL");
@@ -382,7 +635,7 @@ function applyFilters() {
         // Tahun filter
         const matchTahun = (tahunVal === "ALL") || (lha.Tahun && lha.Tahun.toString() === tahunVal);
 
-        return matchSearch && matchSource && matchPic && matchStatus && matchTahun;
+        return matchSearch && matchSource && matchJenisAudit && matchPic && matchStatus && matchTahun;
     });
 
     renderLhaList();
@@ -443,6 +696,9 @@ function filterLhaStatusChip(status) {
 function resetFilters() {
     document.getElementById('searchInput').value = "";
     document.getElementById('sourceFilter').value = "ALL";
+    if (document.getElementById('jenisAuditFilter')) {
+        document.getElementById('jenisAuditFilter').value = "ALL";
+    }
     if (document.getElementById('tahunFilter')) {
         document.getElementById('tahunFilter').value = "ALL";
     }
@@ -621,6 +877,37 @@ function renderLhaList() {
     });
 }
 
+// Helper badge rendering for 4 Audit Types
+function getJenisAuditBadge(jenis = "Audit Kinerja") {
+    const j = jenis || "Audit Kinerja";
+    const map = {
+        "Audit Kinerja": {
+            label: "Audit Kinerja",
+            bg: "bg-blue-50 text-blue-700 border-blue-200",
+            icon: "fa-chart-line"
+        },
+        "Audit Keuangan": {
+            label: "Audit Keuangan",
+            bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
+            icon: "fa-money-bill-wave"
+        },
+        "Audit Kepatuhan": {
+            label: "Audit Kepatuhan",
+            bg: "bg-purple-50 text-purple-700 border-purple-200",
+            icon: "fa-scale-balanced"
+        },
+        "Audit Khusus": {
+            label: "Audit Khusus",
+            bg: "bg-rose-50 text-rose-700 border-rose-200",
+            icon: "fa-shield-halved"
+        }
+    };
+    const config = map[j] || map["Audit Kinerja"];
+    return `<span class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2 py-0.5 rounded-md border ${config.bg} whitespace-nowrap">
+        <i class="fa-solid ${config.icon} text-[10px]"></i> ${config.label}
+    </span>`;
+}
+
 function createLhaTableRowEl(lha, index) {
     const tr = document.createElement('tr');
     const kodeLha = lha["Kode LHP"];
@@ -677,30 +964,49 @@ function createLhaTableRowEl(lha, index) {
         picHTML += `<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-xs font-bold border border-indigo-100">+${pics.length - 2} lainnya</span>`;
     }
 
-    // Rentang Tanggal Tindak Lanjut Info (Mulai - Selesai)
-    const followUpInfo = getFollowUpInfoForLha(kodeLha);
-    let tanggalTlHTML = '';
-    if (followUpInfo.startDate || followUpInfo.endDate) {
-        tanggalTlHTML = `
+    // Batas Waktu (Deadline) Kepatuhan 60 Hari & Status
+    const dlInfo = getLhaDeadlineInfo(lha);
+    let deadlineHTML = '';
+    if (dlInfo.isTuntas) {
+        deadlineHTML = `
             <div class="flex flex-col gap-1 text-xs">
                 <div class="flex items-center gap-1.5 text-slate-700">
-                    <span class="font-bold text-slate-500 w-12">Mulai:</span>
-                    <span class="font-bold text-slate-900">${formatTemuanDate(followUpInfo.startDate)}</span>
+                    <span class="font-bold text-slate-500">Jatuh Tempo:</span>
+                    <span class="font-bold text-slate-800">${dlInfo.deadlineFormatted}</span>
                 </div>
-                <div class="flex items-center gap-1.5 text-emerald-700">
-                    <span class="font-bold text-slate-500 w-12">Selesai:</span>
-                    <span class="font-bold text-emerald-700">${formatTemuanDate(followUpInfo.endDate)}</span>
+                <div>
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <i class="fa-solid fa-check text-[10px]"></i> Tuntas Tepat Waktu
+                    </span>
+                </div>
+            </div>
+        `;
+    } else if (dlInfo.isOverdue) {
+        deadlineHTML = `
+            <div class="flex flex-col gap-1 text-xs">
+                <div class="flex items-center gap-1.5 text-slate-700">
+                    <span class="font-bold text-slate-500">Jatuh Tempo:</span>
+                    <span class="font-bold text-rose-700">${dlInfo.deadlineFormatted}</span>
+                </div>
+                <div>
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200">
+                        <i class="fa-solid fa-triangle-exclamation text-[10px]"></i> Lewat ${Math.abs(dlInfo.diffDays)} Hari
+                    </span>
                 </div>
             </div>
         `;
     } else {
-        tanggalTlHTML = `
-            <div class="flex flex-col gap-0.5">
-                <span class="text-sm font-medium text-slate-400 italic flex items-center gap-1.5">
-                    <i class="fa-regular fa-clock text-slate-400"></i>
-                    Belum ada TL
-                </span>
-                <span class="text-xs text-slate-400">Menunggu tindak lanjut</span>
+        deadlineHTML = `
+            <div class="flex flex-col gap-1 text-xs">
+                <div class="flex items-center gap-1.5 text-slate-700">
+                    <span class="font-bold text-slate-500">Jatuh Tempo:</span>
+                    <span class="font-bold text-slate-900">${dlInfo.deadlineFormatted}</span>
+                </div>
+                <div>
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                        <i class="fa-regular fa-clock text-[10px]"></i> Sisa ${dlInfo.diffDays} Hari
+                    </span>
+                </div>
             </div>
         `;
     }
@@ -719,7 +1025,10 @@ function createLhaTableRowEl(lha, index) {
             </div>
         </td>
         <td class="py-4 px-4 align-top">
-            <span class="inline-block text-xs font-bold px-3 py-1 rounded-md ${source === 'BPK-RI' ? 'bg-indigo-100 text-indigo-700' : 'bg-pink-100 text-pink-700'}">${source}</span>
+            <div class="flex flex-col gap-1.5 items-start">
+                <span class="inline-block text-xs font-bold px-2.5 py-0.5 rounded-md ${source === 'BPK-RI' ? 'bg-indigo-100 text-indigo-700' : 'bg-pink-100 text-pink-700'}">${source}</span>
+                ${getJenisAuditBadge(lha["Jenis Audit"])}
+            </div>
         </td>
         <td class="py-4 px-4 align-top">
             <div class="flex flex-wrap items-center gap-1.5 leading-relaxed">
@@ -727,7 +1036,7 @@ function createLhaTableRowEl(lha, index) {
             </div>
         </td>
         <td class="py-4 px-4 align-top">
-            ${tanggalTlHTML}
+            ${deadlineHTML}
         </td>
         <td class="py-4 px-4 align-top text-center">
             <span class="inline-flex items-center gap-1.5 text-xs font-bold ${st.textColor} ${st.bgColor} px-3 py-1.5 rounded-md">
@@ -843,6 +1152,7 @@ function showLhaDetail(kodeLha) {
     const allLhaRecs = getRecommendationsForLha(kodeLha);
     const isAllTuntas = allLhaRecs.length > 0 && allLhaRecs.every(r => r.Status === "TUNTAS");
     const isBatlIssued = lha["Status Laporan"] && lha["Status Laporan"].includes("BATL");
+    const lhaDeadline = getLhaDeadlineInfo(lha);
 
     // BATL Section
     let batlHTML = "";
@@ -896,6 +1206,7 @@ function showLhaDetail(kodeLha) {
             const directRecs = tabelRekomendasi.filter(r => r["Kode Temuan"] === t["Kode Temuan"]);
             const nodePics = getUniquePicsForTemuan(t["Kode Temuan"]);
             const nodeRange = getFollowUpRangeForTemuan(t["Kode Temuan"]);
+            const lhaDeadline = getLhaDeadlineInfo(lha);
             const temuanDateFormatted = formatTemuanDate(t["Tanggal Input"]);
 
             let recsHTML = "";
@@ -903,6 +1214,7 @@ function showLhaDetail(kodeLha) {
                 recsHTML = directRecs.map(rec => {
                     const status = rec.Status;
                     const recRange = getFollowUpRangeForRec(rec["Kode Rekomendasi"]);
+                    const recDeadline = getRecDeadlineInfo(rec, lha);
                     const safeRecId = rec["Kode Rekomendasi"].replace(/[^a-zA-Z0-9_-]/g, '_');
 
                     // Financial metrics
@@ -943,7 +1255,7 @@ function showLhaDetail(kodeLha) {
                                     <table class="w-full text-left border-collapse">
                                         <thead class="bg-slate-100 border-b border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider">
                                             <tr>
-                                                <th class="py-3 px-4 w-[210px]">Rentang Tanggal Tindak Lanjut</th>
+                                                <th class="py-3 px-4 w-[210px]">Tanggal Dokumen & Waktu Unggah</th>
                                                 <th class="py-3 px-4">Uraian Progres / Output Aktual</th>
                                                 <th class="py-3 px-4 w-[210px]">Bukti Dukung & NTPN</th>
                                                 <th class="py-3 px-4 w-[140px] text-center">Status Review</th>
@@ -1009,13 +1321,13 @@ function showLhaDetail(kodeLha) {
                                                             <div class="flex flex-col gap-1 text-xs">
                                                                 <div class="flex items-center gap-1.5 text-slate-700">
                                                                     <i class="fa-regular fa-calendar text-indigo-600"></i>
-                                                                    <span class="font-semibold text-slate-500">Mulai:</span>
+                                                                    <span class="font-semibold text-slate-500">Tgl Dokumen:</span>
                                                                     <strong class="text-slate-900">${tglMulaiFormatted}</strong>
                                                                 </div>
-                                                                <div class="flex items-center gap-1.5 text-emerald-700">
-                                                                    <i class="fa-regular fa-calendar-check text-emerald-600"></i>
-                                                                    <span class="font-semibold text-slate-500">Selesai:</span>
-                                                                    <strong class="text-emerald-700">${tglSelesaiFormatted}</strong>
+                                                                <div class="flex items-center gap-1.5 text-slate-500">
+                                                                    <i class="fa-regular fa-clock text-slate-400"></i>
+                                                                    <span class="font-semibold text-slate-500">Diunggah:</span>
+                                                                    <strong class="text-slate-700 font-medium">${formatTemuanDate(log["Tanggal Submit"] || log["Tanggal Mulai"])}</strong>
                                                                 </div>
                                                             </div>
                                                         </td>
@@ -1050,12 +1362,11 @@ function showLhaDetail(kodeLha) {
                         `;
                     }
 
-                    // Satker upload form — Dengan Rentang Tanggal Mulai & Tanggal Selesai + Spesifikasi File
+                    // Satker upload form — Dengan Tanggal Dokumen/Realisasi & Info Batas Waktu 60 Hari
                     let satkerInputFormHTML = "";
                     if (currentRole === "SATKER" && status !== "TUNTAS") {
                         const isFinancial = isFinancialRec;
                         const previewId = `filePreview_${safeRecId}`;
-                        const selesaiInputId = `tglSelesai_${safeRecId}`;
                         satkerInputFormHTML = `
                             <div class="mt-4 p-5 bg-white rounded-2xl border-2 border-emerald-600/20 shadow-sm">
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-100">
@@ -1065,7 +1376,7 @@ function showLhaDetail(kodeLha) {
                                         </div>
                                         <div>
                                             <h6 class="text-sm font-bold text-slate-900">Formulir Unggah Bukti Tindak Lanjut</h6>
-                                            <p class="text-xs text-slate-500">Lengkapi rentang waktu pelaksanaan, uraian capaian aktual, serta dokumen bukti dukung resmi</p>
+                                            <p class="text-xs text-slate-500">Unggah dokumen pertanggungjawaban fisik dan catat capaian riil tindak lanjut rekomendasi</p>
                                         </div>
                                     </div>
                                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
@@ -1075,22 +1386,34 @@ function showLhaDetail(kodeLha) {
 
                                 <form id="form_${rec["Kode Rekomendasi"]}" onsubmit="handleBuktiSubmit(event, '${rec["Kode Rekomendasi"]}')" class="flex flex-col gap-4">
                                     
-                                    <!-- Baris 1: Rentang Tanggal Tindak Lanjut (Tanggal Mulai & Tanggal Selesai) -->
-                                    <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-200">
-                                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2.5">
-                                            <i class="fa-regular fa-calendar-days text-emerald-600 mr-1"></i> Rentang Tanggal Tindak Lanjut <span class="text-rose-500">*</span>
-                                        </label>
+                                    <!-- Baris 1: Informasi Batas Waktu Regulasi & Tanggal Realisasi Fisik Dokumen -->
+                                    <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-200 flex flex-col gap-3">
+                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-lg bg-indigo-50/80 border border-indigo-200/80 text-xs text-indigo-950">
+                                            <div class="flex items-center gap-2">
+                                                <i class="fa-solid fa-scale-balanced text-indigo-600 text-sm"></i>
+                                                <span><strong>Batas Waktu Yuridis (UU No. 15/2004):</strong> 60 hari kalender sejak LHA diterbitkan (Jatuh tempo: <strong>${recDeadline.deadlineText}</strong>)</span>
+                                            </div>
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold text-[11px] ${recDeadline.isOverdue ? 'bg-rose-100 text-rose-800 border border-rose-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'}">
+                                                <i class="fa-solid fa-hourglass-half"></i> ${recDeadline.statusBadgeText}
+                                            </span>
+                                        </div>
+
                                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div>
-                                                <label class="text-xs font-semibold text-slate-600 block mb-1">Tanggal Mulai Tindak Lanjut <span class="text-rose-500">*</span></label>
-                                                <input type="date" name="tanggal_mulai" value="${todayISO}" required
-                                                    onchange="syncBuktiDateRange(this, '${selesaiInputId}')"
+                                                <label class="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1.5">
+                                                    <i class="fa-regular fa-calendar-check text-emerald-600 mr-1"></i> Tanggal Dokumen / Realisasi Riil <span class="text-rose-500">*</span>
+                                                </label>
+                                                <input type="date" name="tanggal_realisasi" value="${todayISO}" required
                                                     class="w-full h-10 px-3 text-sm rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 font-medium text-slate-800">
+                                                <span class="text-[11px] text-slate-500 mt-1 block">Tanggal terbit dokumen surat dinas, kuitansi, atau bukti fisik pendukung.</span>
                                             </div>
                                             <div>
-                                                <label class="text-xs font-semibold text-slate-600 block mb-1">Tanggal Selesai Tindak Lanjut <span class="text-rose-500">*</span></label>
-                                                <input type="date" id="${selesaiInputId}" name="tanggal_selesai" value="${todayISO}" min="${todayISO}" required
-                                                    class="w-full h-10 px-3 text-sm rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 font-medium text-slate-800">
+                                                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+                                                    <i class="fa-regular fa-clock text-slate-400 mr-1"></i> Waktu Pengunggahan Sistem
+                                                </label>
+                                                <input type="text" value="Terekam Otomatis saat Unggah" disabled
+                                                    class="w-full h-10 px-3 text-sm rounded-xl border border-slate-200 bg-slate-100 font-medium text-slate-500 cursor-not-allowed">
+                                                <span class="text-[11px] text-slate-500 mt-1 block">Sistem otomatis mencatat timestamp untuk verifikasi ketepatan waktu.</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1231,9 +1554,10 @@ function showLhaDetail(kodeLha) {
                                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 text-sm font-bold">
                                         <i class="fa-solid fa-building-user text-emerald-600"></i> PIC: ${rec["PIC"]}
                                     </span>
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white text-slate-700 border border-slate-200 text-xs font-semibold">
-                                        <i class="fa-regular fa-calendar-check text-indigo-600"></i>
-                                        Rentang TL: <strong>${formatDateRangeText(recRange.startDate, recRange.endDate)}</strong>
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg ${recDeadline.isOverdue ? 'bg-rose-50 text-rose-800 border-rose-200' : 'bg-white text-slate-700 border-slate-200'} border text-xs font-semibold">
+                                        <i class="fa-solid fa-hourglass-half ${recDeadline.isOverdue ? 'text-rose-600' : 'text-indigo-600'}"></i>
+                                        Batas Waktu (60 Hari): <strong>${recDeadline.deadlineText}</strong>
+                                        <span class="text-[11px] font-bold ${recDeadline.isOverdue ? 'text-rose-700' : 'text-emerald-700'}">(${recDeadline.statusBadgeText})</span>
                                     </span>
                                 </div>
                                 <div class="flex items-center gap-2">
@@ -1256,21 +1580,51 @@ function showLhaDetail(kodeLha) {
 
                             <!-- Rencana Aksi & Target Waktu -->
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <div class="md:col-span-2 bg-white p-4 rounded-xl border border-slate-200/80">
-                                    <h5 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Rencana Aksi Unit Kerja:</h5>
-                                    <p class="text-sm text-slate-700 leading-relaxed font-medium">${rec["Rencana Aksi"] || 'Belum ada rencana aksi yang dicatat.'}</p>
+                                <div class="md:col-span-2 bg-white p-4 rounded-xl border border-slate-200/80 flex flex-col justify-between">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-1.5">
+                                            <h5 class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                                <i class="fa-solid fa-list-check text-emerald-600"></i>
+                                                Rencana Aksi Unit Kerja (Renaksi):
+                                            </h5>
+                                            ${currentRole === "SATKER" ? `
+                                            <button onclick="openRenaksiModal('${rec["Kode Rekomendasi"]}')" 
+                                                class="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-all flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95">
+                                                <i class="fa-solid fa-pen-to-square"></i> ${rec["Rencana Aksi"] ? 'Ubah Renaksi' : '+ Buat Renaksi'}
+                                            </button>` : ''}
+                                        </div>
+                                        <p class="text-sm text-slate-800 leading-relaxed font-medium">
+                                            ${rec["Rencana Aksi"] || '<span class="text-slate-400 italic font-normal">Belum ada rencana aksi yang dicatat oleh Unit Kerja.</span>'}
+                                        </p>
+                                    </div>
                                 </div>
                                 <div class="bg-white p-4 rounded-xl border border-slate-200/80 flex flex-col justify-center gap-2">
                                     <div>
                                         <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Target Pelaksanaan:</span>
-                                        <span class="text-sm font-bold text-slate-800">${rec["Jadwal Pelaksanaan"] && rec["Jadwal Pelaksanaan"] !== "nan" ? rec["Jadwal Pelaksanaan"] : "-"}</span>
+                                        <span class="text-sm font-bold text-slate-800">${rec["Jadwal Pelaksanaan"] && rec["Jadwal Pelaksanaan"] !== "nan" ? rec["Jadwal Pelaksanaan"] : '<span class="text-slate-400 italic font-normal">Belum ditentukan</span>'}</span>
                                     </div>
                                     <div class="pt-2 border-t border-slate-100">
-                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Rentang Tindak Lanjut:</span>
-                                        <span class="text-sm font-bold text-emerald-700">${formatDateRangeText(recRange.startDate, recRange.endDate)}</span>
+                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Batas Waktu Penyelesaian:</span>
+                                        <span class="text-sm font-bold ${recDeadline.isOverdue ? 'text-rose-600' : 'text-indigo-900'}">${recDeadline.deadlineText}</span>
+                                        <span class="text-xs font-semibold block ${recDeadline.isOverdue ? 'text-rose-600' : 'text-slate-500'}">${recDeadline.statusText}</span>
                                     </div>
                                 </div>
                             </div>
+
+                            ${currentRole === "SATKER" && !rec["Rencana Aksi"] ? `
+                            <!-- Banner Pengingat Satker untuk Menyusun Renaksi -->
+                            <div class="mt-3 p-4 rounded-xl bg-amber-50/90 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-900">
+                                <div class="flex items-start gap-2.5">
+                                    <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 text-base"></i>
+                                    <div>
+                                        <p class="text-xs font-bold uppercase tracking-wider">Rencana Aksi (Renaksi) Belum Disusun</p>
+                                        <p class="text-xs text-amber-800 mt-0.5">Unit Kerja dianjurkan menyusun Rencana Aksi dan target jadwal terlebih dahulu untuk acuan evaluasi pemantauan.</p>
+                                    </div>
+                                </div>
+                                <button onclick="openRenaksiModal('${rec["Kode Rekomendasi"]}')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white shrink-0 shadow-sm transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer">
+                                    <i class="fa-solid fa-plus"></i> Susun Renaksi Sekarang
+                                </button>
+                            </div>` : ''}
 
                             ${financialHTML}
                             ${progressHTML}
@@ -1314,8 +1668,8 @@ function showLhaDetail(kodeLha) {
                             <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 px-3 py-1 rounded-lg border border-slate-200">
                                 <i class="fa-regular fa-calendar text-slate-500"></i> Tgl Temuan: <strong>${temuanDateFormatted}</strong>
                             </span>
-                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50/70 px-3 py-1 rounded-lg border border-emerald-200">
-                                <i class="fa-regular fa-calendar-check text-emerald-600"></i> Rentang TL: <strong>${formatDateRangeText(nodeRange.startDate, nodeRange.endDate)}</strong>
+                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold ${lhaDeadline.isOverdue ? 'text-rose-800 bg-rose-50 border-rose-200' : 'text-indigo-800 bg-indigo-50 border-indigo-200'} px-3 py-1 rounded-lg border">
+                                <i class="fa-solid fa-hourglass-half ${lhaDeadline.isOverdue ? 'text-rose-600' : 'text-indigo-600'}"></i> Batas Waktu: <strong>${lhaDeadline.deadlineFormatted}</strong>
                             </span>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
@@ -1328,24 +1682,80 @@ function showLhaDetail(kodeLha) {
                         </div>
                     </div>
 
-                    <!-- Kriteria & Sebab Content Block -->
-                    <div class="flex flex-col gap-4">
-                        <!-- Kriteria -->
-                        <div class="border-l-4 border-indigo-600 bg-indigo-50/50 p-5 rounded-r-xl">
-                            <h4 class="text-xs font-bold text-indigo-900 uppercase tracking-wider mb-1.5 flex items-center gap-2">
-                                <i class="fa-solid fa-file-lines text-indigo-600"></i> Kriteria Temuan / Kondisi
-                            </h4>
-                            <p class="text-base font-medium text-slate-900 leading-relaxed whitespace-pre-line">${t.Kriteria || 'Tidak ada kriteria'}</p>
+                    <!-- Struktur 4 Unsur Temuan Pemeriksaan -->
+                    <div class="flex flex-col gap-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-list-ol text-indigo-600 text-sm"></i>
+                                <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Struktur 4 Unsur Pokok Temuan Audit</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200" title="Kriteria > Kondisi = Terjadi Deviasi/Temuan">
+                                    <i class="fa-solid fa-scale-unbalanced text-[10px]"></i> Kriteria &gt; Kondisi = Temuan
+                                </span>
+                                <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200" title="Rekomendasi meniadakan Sebab & memulihkan Akibat">
+                                    <i class="fa-solid fa-wrench text-[10px]"></i> Rekomendasi = Solusi Atas Sebab & Akibat
+                                </span>
+                            </div>
                         </div>
 
-                        <!-- Sebab -->
-                        ${t.Sebab ? `
-                        <div class="border-l-4 border-amber-500 bg-amber-50/50 p-5 rounded-r-xl">
-                            <h4 class="text-xs font-bold text-amber-900 uppercase tracking-wider mb-1.5 flex items-center gap-2">
-                                <i class="fa-solid fa-circle-question text-amber-600"></i> Penyebab / Sebab
-                            </h4>
-                            <p class="text-sm font-medium text-slate-800 leading-relaxed whitespace-pre-line">${t.Sebab}</p>
-                        </div>` : ''}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                            <!-- 1. Kondisi -->
+                            <div class="flex flex-col border-l-4 border-slate-800 bg-slate-50/70 p-4 rounded-r-xl border border-slate-200">
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                                        <span class="w-4 h-4 rounded-full bg-slate-900 text-white text-[10px] flex items-center justify-center font-bold">1</span>
+                                        Kondisi (Fakta Riil di Lapangan)
+                                    </h4>
+                                    <span class="text-[10px] font-semibold text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">Realita Aktual</span>
+                                </div>
+                                <p class="text-sm font-medium text-slate-900 leading-relaxed whitespace-pre-line flex-1">
+                                    ${t.Kondisi || (t.Kriteria ? `<span class="text-slate-700">${t.Kriteria}</span>` : '<span class="text-slate-400 italic">Kondisi belum dirinci spesifik.</span>')}
+                                </p>
+                            </div>
+
+                            <!-- 2. Kriteria -->
+                            <div class="flex flex-col border-l-4 border-indigo-600 bg-indigo-50/50 p-4 rounded-r-xl border border-indigo-100">
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <h4 class="text-xs font-bold text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
+                                        <span class="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-bold">2</span>
+                                        Kriteria (Dasar Hukum / SOP)
+                                    </h4>
+                                    <span class="text-[10px] font-semibold text-indigo-700 bg-white px-2 py-0.5 rounded border border-indigo-200">Tolok Ukur / Standar</span>
+                                </div>
+                                <p class="text-sm font-medium text-slate-900 leading-relaxed whitespace-pre-line flex-1">
+                                    ${t.Kriteria || '<span class="text-slate-400 italic">Kriteria belum diisi.</span>'}
+                                </p>
+                            </div>
+
+                            <!-- 3. Sebab -->
+                            <div class="flex flex-col border-l-4 border-amber-500 bg-amber-50/50 p-4 rounded-r-xl border border-amber-100">
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <h4 class="text-xs font-bold text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
+                                        <span class="w-4 h-4 rounded-full bg-amber-600 text-white text-[10px] flex items-center justify-center font-bold">3</span>
+                                        Sebab (Akar Penyebab Masalah)
+                                    </h4>
+                                    <span class="text-[10px] font-semibold text-amber-700 bg-white px-2 py-0.5 rounded border border-amber-200">Akar Masalah (Why)</span>
+                                </div>
+                                <p class="text-sm font-medium text-slate-800 leading-relaxed whitespace-pre-line flex-1">
+                                    ${t.Sebab || '<span class="text-slate-400 italic">Sebab belum diuraikan.</span>'}
+                                </p>
+                            </div>
+
+                            <!-- 4. Akibat -->
+                            <div class="flex flex-col border-l-4 border-rose-500 bg-rose-50/50 p-4 rounded-r-xl border border-rose-100">
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <h4 class="text-xs font-bold text-rose-900 uppercase tracking-wider flex items-center gap-1.5">
+                                        <span class="w-4 h-4 rounded-full bg-rose-600 text-white text-[10px] flex items-center justify-center font-bold">4</span>
+                                        Akibat (Dampak / Kerugian Negara)
+                                    </h4>
+                                    <span class="text-[10px] font-semibold text-rose-700 bg-white px-2 py-0.5 rounded border border-rose-200">Dampak & Risiko</span>
+                                </div>
+                                <p class="text-sm font-medium text-slate-800 leading-relaxed whitespace-pre-line flex-1">
+                                    ${t.Akibat || '<span class="text-slate-400 italic">Akibat belum diuraikan.</span>'}
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Recommendations directly under this temuan -->
@@ -1383,7 +1793,7 @@ function showLhaDetail(kodeLha) {
         };
 
         if (selectedTemuanId === null) {
-            // Render Findings List (with PIC & Tanggal Temuan & Rentang Tanggal Tindak Lanjut)
+            // Render Findings List (with PIC, Tanggal Temuan, dan Batas Waktu Tindak Lanjut 60 Hari)
             const listItems = parentTemuan.map(t => {
                 const dateFormatted = formatTemuanDate(t["Tanggal Input"]);
                 const temuanRange = getFollowUpRangeForTemuan(t["Kode Temuan"]);
@@ -1428,8 +1838,8 @@ function showLhaDetail(kodeLha) {
                                         <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-white px-2.5 py-1 rounded-md border border-slate-200">
                                             <i class="fa-regular fa-calendar text-slate-500"></i> Tgl Temuan: <strong>${childDateFormatted}</strong>
                                         </span>
-                                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
-                                            <i class="fa-regular fa-calendar-check text-emerald-600"></i> Rentang TL: <strong>${formatDateRangeText(childRange.startDate, childRange.endDate)}</strong>
+                                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold ${lhaDeadline.isOverdue ? 'text-rose-800 bg-rose-50 border-rose-200' : 'text-indigo-800 bg-indigo-50 border-indigo-200'} px-2.5 py-1 rounded-md border">
+                                            <i class="fa-solid fa-hourglass-half ${lhaDeadline.isOverdue ? 'text-rose-600' : 'text-indigo-600'}"></i> Batas Waktu: <strong>${lhaDeadline.deadlineFormatted}</strong>
                                         </span>
                                     </div>
                                     <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-md border ${cst.bgColor} ${cst.textColor}">
@@ -1437,9 +1847,32 @@ function showLhaDetail(kodeLha) {
                                     </span>
                                 </div>
 
-                                <p class="text-sm text-slate-800 line-clamp-2 leading-relaxed font-semibold">
-                                    ${child.Kriteria || 'Tidak ada kriteria'}
-                                </p>
+                                <!-- 4 Unsur Temuan Preview Sub-Temuan -->
+                                <div class="flex flex-col gap-2">
+                                    <div class="flex items-start gap-2">
+                                        <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-900 text-white shrink-0 mt-0.5">1. Kondisi</span>
+                                        <p class="text-sm font-bold text-slate-900 line-clamp-2 leading-relaxed">
+                                            ${child.Kondisi || child.Kriteria || 'Temuan Pemeriksaan'}
+                                        </p>
+                                    </div>
+                                    <div class="flex items-start gap-2 text-xs text-slate-600">
+                                        <span class="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 shrink-0">2. Kriteria</span>
+                                        <p class="line-clamp-1 italic text-slate-600">${child.Kriteria || '-'}</p>
+                                    </div>
+                                    ${(child.Sebab || child.Akibat) ? `
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1 pt-2 border-t border-slate-200/60 text-xs">
+                                        ${child.Sebab ? `
+                                        <div class="flex items-start gap-1.5 text-amber-900 bg-amber-50/80 p-2 rounded-lg border border-amber-200/70">
+                                            <span class="font-bold text-[10px] uppercase bg-amber-200/60 px-1 py-0.2 rounded shrink-0">3. Sebab</span>
+                                            <span class="line-clamp-1">${child.Sebab}</span>
+                                        </div>` : ''}
+                                        ${child.Akibat ? `
+                                        <div class="flex items-start gap-1.5 text-rose-900 bg-rose-50/80 p-2 rounded-lg border border-rose-200/70">
+                                            <span class="font-bold text-[10px] uppercase bg-rose-200/60 px-1 py-0.2 rounded shrink-0">4. Akibat</span>
+                                            <span class="line-clamp-1">${child.Akibat}</span>
+                                        </div>` : ''}
+                                    </div>` : ''}
+                                </div>
 
                                 <!-- Baris PIC & Aksi Sub-Temuan -->
                                 <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 pt-3 mt-0.5">
@@ -1478,8 +1911,8 @@ function showLhaDetail(kodeLha) {
                                     <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 px-3 py-1 rounded-lg border border-slate-200">
                                         <i class="fa-regular fa-calendar text-slate-500"></i> Tgl Temuan: <strong>${dateFormatted}</strong>
                                     </span>
-                                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-200">
-                                        <i class="fa-regular fa-calendar-check text-emerald-600"></i> Rentang TL: <strong>${formatDateRangeText(temuanRange.startDate, temuanRange.endDate)}</strong>
+                                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold ${lhaDeadline.isOverdue ? 'text-rose-800 bg-rose-50 border-rose-200' : 'text-indigo-800 bg-indigo-50 border-indigo-200'} px-3 py-1 rounded-lg border">
+                                        <i class="fa-solid fa-hourglass-half ${lhaDeadline.isOverdue ? 'text-rose-600' : 'text-indigo-600'}"></i> Batas Waktu: <strong>${lhaDeadline.deadlineFormatted}</strong>
                                     </span>
                                 </div>
                                 <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-lg border ${st.bgColor} ${st.textColor}">
@@ -1487,9 +1920,32 @@ function showLhaDetail(kodeLha) {
                                 </span>
                             </div>
 
-                            <p class="text-base font-semibold text-slate-900 line-clamp-2 leading-relaxed">
-                                ${t.Kriteria || 'Tidak ada kriteria'}
-                            </p>
+                            <!-- 4 Unsur Temuan Preview Temuan Induk -->
+                            <div class="flex flex-col gap-2">
+                                <div class="flex items-start gap-2">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-900 text-white shrink-0 mt-0.5">1. Kondisi</span>
+                                    <p class="text-base font-bold text-slate-900 line-clamp-2 leading-relaxed">
+                                        ${t.Kondisi || t.Kriteria || 'Temuan Pemeriksaan'}
+                                    </p>
+                                </div>
+                                <div class="flex items-start gap-2 text-xs text-slate-600">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 shrink-0">2. Kriteria</span>
+                                    <p class="line-clamp-1 italic text-slate-600">${t.Kriteria || '-'}</p>
+                                </div>
+                                ${(t.Sebab || t.Akibat) ? `
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1 pt-2 border-t border-slate-100 text-xs">
+                                    ${t.Sebab ? `
+                                    <div class="flex items-start gap-1.5 text-amber-900 bg-amber-50/80 p-2 rounded-lg border border-amber-200/70">
+                                        <span class="font-bold text-[10px] uppercase bg-amber-200/60 px-1 py-0.2 rounded shrink-0">3. Sebab</span>
+                                        <span class="line-clamp-1">${t.Sebab}</span>
+                                    </div>` : ''}
+                                    ${t.Akibat ? `
+                                    <div class="flex items-start gap-1.5 text-rose-900 bg-rose-50/80 p-2 rounded-lg border border-rose-200/70">
+                                        <span class="font-bold text-[10px] uppercase bg-rose-200/60 px-1 py-0.2 rounded shrink-0">4. Akibat</span>
+                                        <span class="line-clamp-1">${t.Akibat}</span>
+                                    </div>` : ''}
+                                </div>` : ''}
+                            </div>
 
                             <!-- Baris PIC & Aksi Temuan Induk -->
                             <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3.5 mt-1">
@@ -1576,6 +2032,7 @@ function showLhaDetail(kodeLha) {
                     <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">${kodeLha}</h2>
                     <span class="text-slate-300">|</span>
                     <span class="text-xs font-bold px-3 py-1 rounded-md ${source === 'BPK-RI' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-pink-50 text-pink-700 border border-pink-200'}">${source}</span>
+                    ${getJenisAuditBadge(lha["Jenis Audit"])}
                     <span class="text-sm text-slate-600 font-semibold">Tahun ${lha.Tahun || '2025'}</span>
                     <span class="text-slate-300">•</span>
                     <span class="inline-flex items-center gap-1.5 text-sm font-bold ${sc.textColor || 'text-slate-700'}">
@@ -1634,6 +2091,7 @@ function openLhaModal(isEdit = false, oldKode = "") {
     const oldKodeInput = document.getElementById("lhaFormOldKode");
     const kodeInput = document.getElementById("lhaFormKode");
     const sumberInput = document.getElementById("lhaFormSumber");
+    const jenisInput = document.getElementById("lhaFormJenis");
     const tahunInput = document.getElementById("lhaFormTahun");
     const statusInput = document.getElementById("lhaFormStatus");
     
@@ -1650,6 +2108,7 @@ function openLhaModal(isEdit = false, oldKode = "") {
         const lha = masterLHP.find(l => l["Kode LHP"] === oldKode);
         if (lha) {
             sumberInput.value = lha["Sumber Audit"] || "BPK-RI";
+            if (jenisInput) jenisInput.value = lha["Jenis Audit"] || "Audit Kinerja";
             tahunInput.value = lha["Tahun"] || new Date().getFullYear();
             statusInput.value = lha["Status Laporan"] || "";
         }
@@ -1660,6 +2119,7 @@ function openLhaModal(isEdit = false, oldKode = "") {
         kodeInput.value = "";
         kodeInput.disabled = false;
         sumberInput.value = "BPK-RI";
+        if (jenisInput) jenisInput.value = "Audit Kinerja";
         tahunInput.value = new Date().getFullYear();
         statusInput.value = "Dalam Pemantauan";
     }
@@ -1677,6 +2137,7 @@ async function handleLhaFormSubmit(event) {
     const lhaData = {
         kode_lha: document.getElementById("lhaFormKode").value.trim(),
         sumber_audit: document.getElementById("lhaFormSumber").value,
+        jenis_audit: document.getElementById("lhaFormJenis")?.value || "Audit Kinerja",
         tahun: parseInt(document.getElementById("lhaFormTahun").value),
         status_laporan: document.getElementById("lhaFormStatus").value.trim()
     };
@@ -1711,8 +2172,10 @@ function openTemuanModal(lhaKode, isEdit = false, oldKode = "") {
     const oldKodeInput = document.getElementById("temuanFormOldKode");
     const lhaSelect = document.getElementById("temuanFormLha");
     const kodeInput = document.getElementById("temuanFormKode");
+    const kondisiInput = document.getElementById("temuanFormKondisi");
     const kriteriaInput = document.getElementById("temuanFormKriteria");
     const sebabInput = document.getElementById("temuanFormSebab");
+    const akibatInput = document.getElementById("temuanFormAkibat");
     
     if (!modal) return;
     modal.classList.remove("hidden");
@@ -1720,7 +2183,7 @@ function openTemuanModal(lhaKode, isEdit = false, oldKode = "") {
     // Populate LHP dropdown options dynamically
     if (lhaSelect) {
         lhaSelect.innerHTML = masterLHP.map(l => 
-            `<option value="${l["Kode LHP"]}">${l["Kode LHP"]} (${l["Sumber Audit"]})</option>`
+            `<option value="${l["Kode LHP"]}">${l["Kode LHP"]} (${l["Sumber Audit"]} - ${l["Jenis Audit"] || 'Audit Kinerja'})</option>`
         ).join('');
     }
     
@@ -1737,8 +2200,10 @@ function openTemuanModal(lhaKode, isEdit = false, oldKode = "") {
                 lhaSelect.value = tem["Kode LHP"] || "";
                 lhaSelect.disabled = true;
             }
-            kriteriaInput.value = tem.Kriteria || "";
-            sebabInput.value = tem.Sebab || "";
+            if (kondisiInput) kondisiInput.value = tem.Kondisi || "";
+            if (kriteriaInput) kriteriaInput.value = tem.Kriteria || "";
+            if (sebabInput) sebabInput.value = tem.Sebab || "";
+            if (akibatInput) akibatInput.value = tem.Akibat || "";
         }
     } else {
         title.textContent = "Tambah Temuan Baru";
@@ -1746,8 +2211,10 @@ function openTemuanModal(lhaKode, isEdit = false, oldKode = "") {
         oldKodeInput.value = "";
         kodeInput.value = "";
         kodeInput.disabled = false;
-        kriteriaInput.value = "";
-        sebabInput.value = "";
+        if (kondisiInput) kondisiInput.value = "";
+        if (kriteriaInput) kriteriaInput.value = "";
+        if (sebabInput) sebabInput.value = "";
+        if (akibatInput) akibatInput.value = "";
         
         if (lhaSelect) {
             if (lhaKode) {
@@ -1776,8 +2243,10 @@ async function handleTemuanFormSubmit(event) {
     const temuanData = {
         kode_temuan: document.getElementById("temuanFormKode").value.trim(),
         kode_lha: lhaKode,
+        kondisi: document.getElementById("temuanFormKondisi")?.value.trim() || null,
         kriteria: document.getElementById("temuanFormKriteria").value.trim(),
-        sebab: document.getElementById("temuanFormSebab").value.trim() || null,
+        sebab: document.getElementById("temuanFormSebab")?.value.trim() || null,
+        akibat: document.getElementById("temuanFormAkibat")?.value.trim() || null,
         parent_temuan: null
     };
     
@@ -1807,7 +2276,7 @@ async function triggerDeleteTemuan(kode_temuan) {
     }
 }
 
-// 3. Rekomendasi Modal
+// 3. Rekomendasi Modal (Auditor: Rekomendasi, PIC, & Target Finansial)
 function openRekomendasiModal(temuanKode, isEdit = false, oldKode = "") {
     const modal = document.getElementById("rekomendasiModal");
     const title = document.getElementById("rekomendasiModalTitle");
@@ -1817,8 +2286,6 @@ function openRekomendasiModal(temuanKode, isEdit = false, oldKode = "") {
     const kodeInput = document.getElementById("recFormKode");
     const textInput = document.getElementById("recFormText");
     const picInput = document.getElementById("recFormPic");
-    const rencanaInput = document.getElementById("recFormRencanaAksi");
-    const jadwalInput = document.getElementById("recFormJadwal");
     const nilaiInput = document.getElementById("recFormNilaiTemuan");
     
     if (!modal) return;
@@ -1837,8 +2304,6 @@ function openRekomendasiModal(temuanKode, isEdit = false, oldKode = "") {
         if (rec) {
             textInput.value = rec.Rekomendasi || "";
             picInput.value = rec.PIC || "Biro SDMO";
-            rencanaInput.value = rec["Rencana Aksi"] || "";
-            jadwalInput.value = rec["Jadwal Pelaksanaan"] || "";
             nilaiInput.value = formatRupiahNumber(rec["Nilai Temuan"] || 0);
             formatRupiahInput(nilaiInput, 'recFormNilaiPreview');
         }
@@ -1850,8 +2315,6 @@ function openRekomendasiModal(temuanKode, isEdit = false, oldKode = "") {
         kodeInput.disabled = false;
         textInput.value = "";
         picInput.value = "Biro SDMO";
-        rencanaInput.value = "";
-        jadwalInput.value = "";
         nilaiInput.value = "0";
         formatRupiahInput(nilaiInput, 'recFormNilaiPreview');
     }
@@ -1867,13 +2330,16 @@ async function handleRekomendasiFormSubmit(event) {
     const oldKode = document.getElementById("recFormOldKode").value;
     const temuanKode = document.getElementById("recFormTemuan").value;
     
+    const existingRec = isEdit ? tabelRekomendasi.find(r => r["Kode Rekomendasi"] === oldKode) : null;
+    
     const recData = {
         kode_rekomendasi: document.getElementById("recFormKode").value.trim(),
         kode_temuan: temuanKode,
         rekomendasi: document.getElementById("recFormText").value.trim(),
         pic: document.getElementById("recFormPic").value,
-        rencana_aksi: document.getElementById("recFormRencanaAksi").value.trim() || null,
-        jadwal_pelaksanaan: document.getElementById("recFormJadwal").value.trim() || null,
+        // Rencana Aksi & Jadwal Pelaksanaan diisi oleh Satker (tidak ditimpa Auditor)
+        rencana_aksi: existingRec ? (existingRec["Rencana Aksi"] || null) : null,
+        jadwal_pelaksanaan: existingRec ? (existingRec["Jadwal Pelaksanaan"] || null) : null,
         nilai_temuan: parseRupiahValue(document.getElementById("recFormNilaiTemuan").value)
     };
     
@@ -1884,6 +2350,60 @@ async function handleRekomendasiFormSubmit(event) {
         loadDataFromAPI();
     } catch (err) {
         alert(err.message);
+    }
+}
+
+// 4. Modal Rencana Aksi (RENAKSI) Unit Kerja (Satker)
+function openRenaksiModal(kodeRekomendasi) {
+    const modal = document.getElementById("renaksiModal");
+    if (!modal) return;
+    
+    const rec = tabelRekomendasi.find(r => r["Kode Rekomendasi"] === kodeRekomendasi);
+    if (!rec) return;
+
+    document.getElementById("renaksiRecKodeHidden").value = kodeRekomendasi;
+    document.getElementById("renaksiRecKode").textContent = kodeRekomendasi;
+    document.getElementById("renaksiRecPic").textContent = `Unit PIC: ${rec.PIC || currentUser?.pic || 'Satker'}`;
+    document.getElementById("renaksiRecText").textContent = rec.Rekomendasi || "";
+    document.getElementById("renaksiInputText").value = rec["Rencana Aksi"] || "";
+    document.getElementById("renaksiInputJadwal").value = (rec["Jadwal Pelaksanaan"] && rec["Jadwal Pelaksanaan"] !== "nan") ? rec["Jadwal Pelaksanaan"] : "";
+
+    modal.classList.remove("hidden");
+}
+
+function closeRenaksiModal() {
+    document.getElementById("renaksiModal")?.classList.add("hidden");
+}
+
+async function handleRenaksiFormSubmit(event) {
+    event.preventDefault();
+    const kodeRekomendasi = document.getElementById("renaksiRecKodeHidden").value;
+    const rencanaAksi = document.getElementById("renaksiInputText").value.trim();
+    const jadwalPelaksanaan = document.getElementById("renaksiInputJadwal").value.trim();
+
+    if (!kodeRekomendasi) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/rekomendasi/${encodeURIComponent(kodeRekomendasi)}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                rencana_aksi: rencanaAksi,
+                jadwal_pelaksanaan: jadwalPelaksanaan
+            })
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || "Gagal menyimpan Rencana Aksi.");
+        }
+
+        closeRenaksiModal();
+        showToastNotification("Rencana Aksi Unit Kerja (Renaksi) berhasil disimpan!", "success");
+        await loadDataFromAPI();
+    } catch (err) {
+        console.error(err);
+        alert(err.message || "Terjadi kesalahan saat menyimpan Rencana Aksi.");
     }
 }
 

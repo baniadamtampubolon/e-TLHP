@@ -126,6 +126,7 @@ if ($count >= 1 && $segments[0] === 'lha') {
         $input = get_json_input();
         $kode_lha = trim($input['kode_lha'] ?? '');
         $sumber_audit = trim($input['sumber_audit'] ?? '');
+        $jenis_audit = trim($input['jenis_audit'] ?? 'Audit Kinerja');
         $tahun = (int)($input['tahun'] ?? date('Y'));
         $status_laporan = trim($input['status_laporan'] ?? 'Dalam Pemantauan');
 
@@ -139,8 +140,8 @@ if ($count >= 1 && $segments[0] === 'lha') {
             json_error("Kode LHA sudah terdaftar", 400);
         }
 
-        $stmt = $db->prepare("INSERT INTO master_lha (kode_lha, sumber_audit, tahun, status_laporan, tanggal_input) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)");
-        $stmt->execute([$kode_lha, $sumber_audit, $tahun, $status_laporan]);
+        $stmt = $db->prepare("INSERT INTO master_lha (kode_lha, sumber_audit, jenis_audit, tahun, status_laporan, tanggal_input) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)");
+        $stmt->execute([$kode_lha, $sumber_audit, $jenis_audit, $tahun, $status_laporan]);
 
         $created = $db->prepare("SELECT * FROM master_lha WHERE kode_lha = ?");
         $created->execute([$kode_lha]);
@@ -171,11 +172,12 @@ if ($count >= 1 && $segments[0] === 'lha') {
             if (!$existing) json_error("LHA tidak ditemukan", 404);
 
             $sumber_audit = trim($input['sumber_audit'] ?? $existing['sumber_audit']);
+            $jenis_audit = trim($input['jenis_audit'] ?? ($existing['jenis_audit'] ?? 'Audit Kinerja'));
             $tahun = isset($input['tahun']) ? (int)$input['tahun'] : $existing['tahun'];
             $status_laporan = trim($input['status_laporan'] ?? $existing['status_laporan']);
 
-            $update = $db->prepare("UPDATE master_lha SET sumber_audit = ?, tahun = ?, status_laporan = ? WHERE kode_lha = ?");
-            $update->execute([$sumber_audit, $tahun, $status_laporan, $kode_lha]);
+            $update = $db->prepare("UPDATE master_lha SET sumber_audit = ?, jenis_audit = ?, tahun = ?, status_laporan = ? WHERE kode_lha = ?");
+            $update->execute([$sumber_audit, $jenis_audit, $tahun, $status_laporan, $kode_lha]);
 
             $stmt->execute([$kode_lha]);
             $res = $stmt->fetch();
@@ -205,8 +207,10 @@ if ($count >= 1 && $segments[0] === 'temuan') {
         $kode_temuan = trim($input['kode_temuan'] ?? '');
         $kode_lha = trim($input['kode_lha'] ?? '');
         $parent_temuan = !empty($input['parent_temuan']) ? trim($input['parent_temuan']) : null;
+        $kondisi = isset($input['kondisi']) ? trim($input['kondisi']) : null;
         $kriteria = trim($input['kriteria'] ?? '');
-        $sebab = trim($input['sebab'] ?? '');
+        $sebab = isset($input['sebab']) ? trim($input['sebab']) : null;
+        $akibat = isset($input['akibat']) ? trim($input['akibat']) : null;
 
         if (empty($kode_temuan) || empty($kode_lha) || empty($kriteria)) {
             json_error("Kode Temuan, Kode LHA, dan Kriteria wajib diisi", 400);
@@ -222,8 +226,8 @@ if ($count >= 1 && $segments[0] === 'temuan') {
         $checkTem->execute([$kode_temuan]);
         if ($checkTem->fetch()) json_error("Kode temuan sudah terdaftar", 400);
 
-        $stmt = $db->prepare("INSERT INTO tabel_temuan (kode_temuan, kode_lha, parent_temuan, kriteria, sebab, tanggal_input) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)");
-        $stmt->execute([$kode_temuan, $kode_lha, $parent_temuan, $kriteria, $sebab]);
+        $stmt = $db->prepare("INSERT INTO tabel_temuan (kode_temuan, kode_lha, parent_temuan, kondisi, kriteria, sebab, akibat, tanggal_input) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)");
+        $stmt->execute([$kode_temuan, $kode_lha, $parent_temuan, $kondisi, $kriteria, $sebab, $akibat]);
 
         $created = $db->prepare("SELECT * FROM tabel_temuan WHERE kode_temuan = ?");
         $created->execute([$kode_temuan]);
@@ -243,11 +247,13 @@ if ($count >= 1 && $segments[0] === 'temuan') {
             $existing = $check->fetch();
             if (!$existing) json_error("Temuan tidak ditemukan", 404);
 
+            $kondisi = isset($input['kondisi']) ? trim($input['kondisi']) : ($existing['kondisi'] ?? null);
             $kriteria = trim($input['kriteria'] ?? $existing['kriteria']);
-            $sebab = isset($input['sebab']) ? trim($input['sebab']) : $existing['sebab'];
+            $sebab = isset($input['sebab']) ? trim($input['sebab']) : ($existing['sebab'] ?? null);
+            $akibat = isset($input['akibat']) ? trim($input['akibat']) : ($existing['akibat'] ?? null);
 
-            $update = $db->prepare("UPDATE tabel_temuan SET kriteria = ?, sebab = ? WHERE kode_temuan = ?");
-            $update->execute([$kriteria, $sebab, $kode_temuan]);
+            $update = $db->prepare("UPDATE tabel_temuan SET kondisi = ?, kriteria = ?, sebab = ?, akibat = ? WHERE kode_temuan = ?");
+            $update->execute([$kondisi, $kriteria, $sebab, $akibat, $kode_temuan]);
 
             $check->execute([$kode_temuan]);
             json_response($check->fetch());
@@ -418,6 +424,7 @@ if ($count >= 1 && $segments[0] === 'bukti') {
         $output_aktual = trim($_POST['output_aktual'] ?? '');
         $ntpn = !empty($_POST['ntpn']) ? trim($_POST['ntpn']) : null;
         $nilai_setoran = $_POST['nilai_setoran'] ?? null;
+        $tanggal_realisasi = !empty($_POST['tanggal_realisasi']) ? trim($_POST['tanggal_realisasi']) : null;
         $tanggal_mulai = !empty($_POST['tanggal_mulai']) ? trim($_POST['tanggal_mulai']) : null;
         $tanggal_selesai = !empty($_POST['tanggal_selesai']) ? trim($_POST['tanggal_selesai']) : null;
         $tanggal_tindak_lanjut = !empty($_POST['tanggal_tindak_lanjut']) ? trim($_POST['tanggal_tindak_lanjut']) : null;
@@ -454,10 +461,10 @@ if ($count >= 1 && $segments[0] === 'bukti') {
             }
         }
 
-        // Resolusi rentang tanggal
+        // Resolusi tanggal dokumen riil / submit
         $now = date('Y-m-d H:i:s');
-        $parsed_mulai = $tanggal_mulai ?: ($tanggal_tindak_lanjut ?: $now);
-        $parsed_selesai = $tanggal_selesai ?: ($tanggal_tindak_lanjut ?: $parsed_mulai);
+        $parsed_mulai = $tanggal_realisasi ?: ($tanggal_mulai ?: ($tanggal_tindak_lanjut ?: $now));
+        $parsed_selesai = $tanggal_realisasi ?: ($tanggal_selesai ?: ($tanggal_tindak_lanjut ?: $parsed_mulai));
 
         if ($parsed_mulai && $parsed_selesai && $parsed_selesai < $parsed_mulai) {
             json_error("Tanggal Selesai tidak boleh lebih awal dari Tanggal Mulai.", 400);
