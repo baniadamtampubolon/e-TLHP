@@ -26,3 +26,9 @@
 
 # Keamanan direktori dasar
 Options -Indexes
+
+# Lindungi file rahasia (.env, .git, .db, .sql) dari akses publik browser
+<FilesMatch "^\.(env|git|gitignore)|.*\.(db|sql)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>

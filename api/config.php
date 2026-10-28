@@ -6,36 +6,61 @@
  * Konfigurasi Koneksi Database MySQL & Pengaturan Lingkungan
  */
 
-// 0. Muat Variabel Lingkungan dari Berkas .env (Jika Ada)
-$env_paths = [__DIR__ . '/../.env', __DIR__ . '/.env'];
+// 0. Muat Variabel Lingkungan dari Berkas .env (Prioritas Utama untuk Hostinger)
+$env_vars = [];
+$env_paths = [
+    __DIR__ . '/../.env', // Lokasi root public_html/.env
+    __DIR__ . '/.env',    // Lokasi folder public_html/api/.env
+];
+
 foreach ($env_paths as $env_file) {
-    if (file_exists($env_file)) {
+    if (file_exists($env_file) && is_readable($env_file)) {
         $lines = file($env_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         foreach ($lines as $line) {
             $line = trim($line);
-            if ($line === '' || strpos($line, '#') === 0) continue;
+            // Lewati baris komentar atau baris kosong
+            if ($line === '' || strpos($line, '#') === 0 || strpos($line, ';') === 0) continue;
             if (strpos($line, '=') !== false) {
                 list($key, $val) = explode('=', $line, 2);
                 $key = trim($key);
                 $val = trim($val, " \t\n\r\0\x0B\"'");
-                if (!isset($_ENV[$key])) {
-                    $_ENV[$key] = $val;
-                    putenv("$key=$val");
-                }
+                $env_vars[$key] = $val;
+                $_ENV[$key] = $val;
+                $_SERVER[$key] = $val;
+                @putenv("$key=$val");
             }
         }
         break;
     }
 }
 
+// Helper pengambil nilai konfigurasi dengan urutan prioritas:
+// 1. File .env ($env_vars) -> 2. $_ENV -> 3. $_SERVER -> 4. getenv() -> 5. Default
+$get_env = function($key, $default = '') use ($env_vars) {
+    if (isset($env_vars[$key]) && $env_vars[$key] !== '') {
+        return $env_vars[$key];
+    }
+    if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+        return $_ENV[$key];
+    }
+    if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
+        return $_SERVER[$key];
+    }
+    $val = @getenv($key);
+    if ($val !== false && $val !== '') {
+        return $val;
+    }
+    return $default;
+};
+
 // 1. Pengaturan Database MySQL Hostinger
-// Catatan untuk Hostinger: Buat database di hPanel -> Databases -> MySQL Databases,
-// lalu masukkan nama database, user, dan password yang Anda buat di bawah ini (atau gunakan berkas .env):
-define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
-define('DB_NAME', getenv('DB_NAME') ?: 'tlhp_db');
-define('DB_USER', getenv('DB_USER') ?: 'root');
-define('DB_PASS', getenv('DB_PASS') ?: '');
-define('DB_CHARSET', 'utf8mb4');
+// Nilai akan selalu diambil dari berkas .env Anda di Hostinger.
+// Ketika Anda melakukan git push / pull, konfigurasi database TIDAK AKAN PERNAH ter-reset.
+define('DB_HOST', $get_env('DB_HOST', 'localhost'));
+define('DB_NAME', $get_env('DB_NAME', 'tlhp_db'));
+define('DB_USER', $get_env('DB_USER', 'root'));
+define('DB_PASS', $get_env('DB_PASS', ''));
+define('DB_CHARSET', $get_env('DB_CHARSET', 'utf8mb4'));
 
 // 2. Direktori Penyimpanan Berkas Upload Eviden (PDF, Gambar, dll.)
 define('UPLOAD_DIR', __DIR__ . '/../uploads/');
