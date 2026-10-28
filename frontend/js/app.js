@@ -15,11 +15,17 @@ let simulatedPic = null;     // Simulated Satker PIC in Dev Mode
 // Demo Mode state: true by default or persisted in localStorage
 let isDemoMode = localStorage.getItem("isDemoMode") !== null ? localStorage.getItem("isDemoMode") === "true" : true;
 
-// Initialize App
-window.addEventListener('DOMContentLoaded', () => {
+// Initialize App safely whether DOM is loading or already parsed
+function initApp() {
     applyDemoModeUI(false);
     checkAuthSession();
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
 
 // Check if user is logged in (persisted in localStorage)
 function checkAuthSession() {
