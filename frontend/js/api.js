@@ -126,18 +126,6 @@ async function loadDataFromAPI() {
     }
 }
 
-// Sync Tanggal Mulai & Tanggal Selesai in Form Bukti
-function syncBuktiDateRange(mulaiInput, selesaiId) {
-    const selesaiInput = document.getElementById(selesaiId);
-    if (!mulaiInput || !selesaiInput) return;
-    if (mulaiInput.value) {
-        selesaiInput.min = mulaiInput.value;
-        if (selesaiInput.value && selesaiInput.value < mulaiInput.value) {
-            selesaiInput.value = mulaiInput.value;
-        }
-    }
-}
-
 // Validate and preview selected file in Form Bukti Tindak Lanjut
 function handleBuktiFileChange(inputEl, previewId) {
     const previewEl = document.getElementById(previewId);

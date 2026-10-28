@@ -88,7 +88,7 @@ function renderCharts() {
             datasets: [{
                 label: 'Jumlah Rekomendasi',
                 data: picData,
-                backgroundColor: '#4338CA',
+                backgroundColor: '#047857',
                 borderRadius: 4,
                 barPercentage: 0.7
             }]
