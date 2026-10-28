@@ -295,12 +295,16 @@ async function submitLogin(username, password) {
         body: JSON.stringify({ username, password })
     });
     
+    let responseData = null;
+    try {
+        responseData = await response.json();
+    } catch (_) {}
+
     if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.detail || "Login gagal. Username atau password salah.");
+        throw new Error((responseData && responseData.detail) || "Login gagal. Username atau password salah.");
     }
     
-    return await response.json();
+    return responseData || {};
 }
 
 // CRUD Operations for Master Data Audit
