@@ -71,33 +71,27 @@ function renderHeaderProfile() {
     const badge = document.getElementById('roleBadge');
     if (!badge || !currentUser) return;
     
+    const switcher = document.getElementById("roleSwitcherContainer");
     if (currentUser.role === "AUDITOR") {
-        if (simulatedPic) {
-            badge.className = "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold bg-md-tertiary/10 text-md-tertiary";
-            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-md-tertiary"></span> Simulasi: ${simulatedPic}`;
-        } else {
-            badge.className = "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold bg-md-primary/10 text-md-primary";
-            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-md-primary"></span> Auditor: ${currentUser.username.toUpperCase()}`;
-        }
-        
-        // Show role switcher only for Auditor in Demo Mode
-        const switcher = document.getElementById("roleSwitcherContainer");
-        if (switcher) {
-            if (isDemoMode) {
+        if (isDemoMode) {
+            if (switcher) {
                 switcher.classList.remove("hidden");
                 const roleSel = document.getElementById("roleSelector");
                 if (roleSel) roleSel.value = simulatedPic ? `SATKER:${simulatedPic}` : "AUDITOR";
-            } else {
-                switcher.classList.add("hidden");
             }
+            // Hide badge when switcher is visible to eliminate duplicate role display
+            badge.classList.add("hidden");
+        } else {
+            if (switcher) switcher.classList.add("hidden");
+            badge.classList.remove("hidden");
+            badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200";
+            badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-slate-700"></span> Auditor: ${currentUser.username.toUpperCase()}`;
         }
     } else {
-        badge.className = "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold bg-md-tertiary/10 text-md-tertiary";
-        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-md-tertiary"></span> Satker: ${currentUser.pic}`;
-        
-        // Hide role switcher for Satker
-        const switcher = document.getElementById("roleSwitcherContainer");
         if (switcher) switcher.classList.add("hidden");
+        badge.classList.remove("hidden");
+        badge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-800 border border-slate-200";
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-slate-700"></span> Satker: ${currentUser.pic}`;
     }
 }
 
@@ -305,16 +299,14 @@ async function switchRole() {
     if (roleVal === "AUDITOR") {
         currentRole = "AUDITOR";
         simulatedPic = null;
-        badge.className = "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold bg-md-primary/10 text-md-primary";
-        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-md-primary"></span> Auditor: ${currentUser.username.toUpperCase()}`;
         if (addLhaBtn) addLhaBtn.classList.remove("hidden");
     } else if (roleVal.startsWith("SATKER:")) {
         currentRole = "SATKER";
         simulatedPic = roleVal.substring(7);
-        badge.className = "inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-semibold bg-md-tertiary/10 text-md-tertiary";
-        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-md-tertiary"></span> Simulasi: ${simulatedPic}`;
         if (addLhaBtn) addLhaBtn.classList.add("hidden");
     }
+    
+    if (badge) badge.classList.add("hidden");
     
     // Reload and refilter data based on simulatedPic
     await loadDataFromAPI();
@@ -775,34 +767,10 @@ function renderLhaList() {
 }
 
 // Helper badge rendering for 4 Audit Types
+// Clean text label for Jenis Audit
 function getJenisAuditBadge(jenis = "Audit Kinerja") {
     const j = jenis || "Audit Kinerja";
-    const map = {
-        "Audit Kinerja": {
-            label: "Audit Kinerja",
-            bg: "bg-slate-100 text-slate-700 border-slate-300",
-            icon: "fa-chart-line"
-        },
-        "Audit Keuangan": {
-            label: "Audit Keuangan",
-            bg: "bg-gold-50 text-gold-800 border-gold-200",
-            icon: "fa-money-bill-wave"
-        },
-        "Audit Kepatuhan": {
-            label: "Audit Kepatuhan",
-            bg: "bg-teal-50 text-teal-800 border-teal-200",
-            icon: "fa-scale-balanced"
-        },
-        "Audit Khusus": {
-            label: "Audit Khusus",
-            bg: "bg-rose-50 text-rose-700 border-rose-200",
-            icon: "fa-shield-halved"
-        }
-    };
-    const config = map[j] || map["Audit Kinerja"];
-    return `<span class="inline-flex items-center gap-1.5 text-xs font-bold px-2 py-0.5 rounded-md border ${config.bg} whitespace-nowrap">
-        <i class="fa-solid ${config.icon} text-xs"></i> ${config.label}
-    </span>`;
+    return `<span class="text-xs text-slate-500 font-medium">${j}</span>`;
 }
 
 function createLhaTableRowEl(lha, index) {
@@ -810,7 +778,7 @@ function createLhaTableRowEl(lha, index) {
     const kodeLha = lha["Kode LHP"];
     const isSelected = selectedLhaId === kodeLha;
     
-    tr.className = `transition-colors duration-150 cursor-pointer ${isSelected ? 'bg-slate-50/70' : 'hover:bg-slate-50'}`;
+    tr.className = `transition-colors duration-150 cursor-pointer ${isSelected ? 'bg-slate-50' : 'hover:bg-slate-50/70'}`;
     tr.onclick = (e) => {
         if (e.target.closest('button')) return;
         selectLha(kodeLha);
@@ -834,125 +802,115 @@ function createLhaTableRowEl(lha, index) {
 
     const progressPercent = recs.length > 0 ? Math.round((finishedRecs.length / recs.length) * 100) : 0;
 
-    // Status styling
+    // Status styling - clean institutional chip with border
     const statusMap = {
-        "TUNTAS":  { label: "Selesai",       dotColor: "bg-green-500",  textColor: "text-green-700",  bgColor: "bg-green-50" },
-        "PROSES":  { label: "On Progress",   dotColor: "bg-amber-500",  textColor: "text-amber-800",  bgColor: "bg-amber-50" },
-        "PENDING": { label: "Belum TL",      dotColor: "bg-orange-500", textColor: "text-orange-700", bgColor: "bg-orange-50" },
-        "KOSONG":  { label: "Kosong",        dotColor: "bg-gray-400",   textColor: "text-gray-500",   bgColor: "bg-gray-50" },
+        "TUNTAS":  { label: "Selesai",       dotColor: "bg-emerald-600", textColor: "text-emerald-700",  bgColor: "bg-emerald-50/80 border-emerald-200/60" },
+        "PROSES":  { label: "On Progress",   dotColor: "bg-amber-600",   textColor: "text-amber-800",    bgColor: "bg-amber-50/80 border-amber-200/60" },
+        "PENDING": { label: "Belum TL",      dotColor: "bg-rose-500",    textColor: "text-rose-700",     bgColor: "bg-rose-50/80 border-rose-200/60" },
+        "KOSONG":  { label: "Kosong",        dotColor: "bg-slate-400",   textColor: "text-slate-500",    bgColor: "bg-slate-50 border-slate-200" },
     };
     const st = statusMap[lhaStatus] || statusMap["PENDING"];
 
     // Progress bar color
-    const barColor = progressPercent === 100 ? 'bg-green-500' 
+    const barColor = progressPercent === 100 ? 'bg-emerald-600' 
         : progressPercent >= 50 ? 'bg-amber-500' 
         : progressPercent > 0 ? 'bg-orange-400' 
-        : 'bg-gray-300';
+        : 'bg-slate-300';
 
-    // PIC list
+    // PIC list - clean text, no capsule badge soup
     const pics = getUniquePicsForLha(kodeLha);
     let picHTML = '';
     if (pics.length === 0) {
-        picHTML = '<span class="text-slate-400 italic text-sm">—</span>';
+        picHTML = '<span class="text-slate-400 italic text-xs">—</span>';
     } else if (pics.length <= 2) {
-        picHTML = pics.map(p => `<span class="inline-flex items-center px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200">${p}</span>`).join(' ');
+        picHTML = `<div class="flex flex-col gap-0.5 text-xs text-slate-700 font-medium">${pics.map(p => `<span>${p}</span>`).join('')}</div>`;
     } else {
-        picHTML = pics.slice(0, 2).map(p => `<span class="inline-flex items-center px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200">${p}</span>`).join(' ');
-        picHTML += `<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-50 text-slate-700 text-xs font-bold border border-slate-100">+${pics.length - 2} lainnya</span>`;
+        const tooltipAll = pics.join(', ');
+        picHTML = `
+            <div class="flex flex-col gap-0.5 text-xs text-slate-700 font-medium" title="${tooltipAll}">
+                ${pics.slice(0, 2).map(p => `<span>${p}</span>`).join('')}
+                <span class="text-[11px] text-slate-500 font-semibold cursor-help underline decoration-slate-300 underline-offset-2">+${pics.length - 2} unit kerja lainnya</span>
+            </div>
+        `;
     }
 
-    // Batas Waktu (Deadline) Kepatuhan 60 Hari & Status
+    // Batas Waktu (Deadline) Kepatuhan 60 Hari & Status - integrated typography
     const dlInfo = getLhaDeadlineInfo(lha);
     let deadlineHTML = '';
     if (dlInfo.isTuntas) {
         deadlineHTML = `
-            <div class="flex flex-col gap-1 text-xs">
-                <div class="flex items-center gap-1.5 text-slate-700">
-                    <span class="font-bold text-slate-500">Jatuh Tempo:</span>
-                    <span class="font-bold text-slate-800">${dlInfo.deadlineFormatted}</span>
-                </div>
-                <div>
-                    <span class="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        <i class="fa-solid fa-check text-xs"></i> Tuntas Tepat Waktu
-                    </span>
-                </div>
+            <div class="flex flex-col gap-0.5 text-xs">
+                <span class="font-semibold text-slate-800">${dlInfo.deadlineFormatted}</span>
+                <span class="text-[11px] font-semibold text-emerald-700 flex items-center gap-1">
+                    <i class="fa-solid fa-check text-[10px]"></i> Selesai
+                </span>
             </div>
         `;
     } else if (dlInfo.isOverdue) {
         deadlineHTML = `
-            <div class="flex flex-col gap-1 text-xs">
-                <div class="flex items-center gap-1.5 text-slate-700">
-                    <span class="font-bold text-slate-500">Jatuh Tempo:</span>
-                    <span class="font-bold text-rose-700">${dlInfo.deadlineFormatted}</span>
-                </div>
-                <div>
-                    <span class="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200">
-                        <i class="fa-solid fa-triangle-exclamation text-xs"></i> Lewat ${Math.abs(dlInfo.diffDays)} Hari
-                    </span>
-                </div>
+            <div class="flex flex-col gap-0.5 text-xs">
+                <span class="font-bold text-rose-700">${dlInfo.deadlineFormatted}</span>
+                <span class="text-[11px] font-semibold text-rose-600 flex items-center gap-1">
+                    <i class="fa-solid fa-circle-exclamation text-[10px]"></i> Lewat ${Math.abs(dlInfo.diffDays)} hari
+                </span>
             </div>
         `;
     } else {
         deadlineHTML = `
-            <div class="flex flex-col gap-1 text-xs">
-                <div class="flex items-center gap-1.5 text-slate-700">
-                    <span class="font-bold text-slate-500">Jatuh Tempo:</span>
-                    <span class="font-bold text-slate-900">${dlInfo.deadlineFormatted}</span>
-                </div>
-                <div>
-                    <span class="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
-                        <i class="fa-regular fa-clock text-xs"></i> Sisa ${dlInfo.diffDays} Hari
-                    </span>
-                </div>
+            <div class="flex flex-col gap-0.5 text-xs">
+                <span class="font-semibold text-slate-800">${dlInfo.deadlineFormatted}</span>
+                <span class="text-[11px] font-medium text-slate-500">
+                    Sisa ${dlInfo.diffDays} hari
+                </span>
             </div>
         `;
     }
 
     tr.innerHTML = `
-        <td class="py-4 px-6 align-top">
-            <div class="flex flex-col gap-1">
+        <td class="py-3.5 px-6 align-top">
+            <div class="flex flex-col gap-0.5">
                 <span class="text-sm font-bold text-slate-900">${kodeLha}</span>
-                <span class="text-xs font-semibold text-slate-500">Tahun ${lha.Tahun || '2025'}</span>
+                <span class="text-xs text-slate-500">Tahun ${lha.Tahun || '2025'}</span>
             </div>
         </td>
-        <td class="py-4 px-4 align-top">
-            <div class="flex flex-col gap-1.5 pr-4">
-                <p class="text-sm font-semibold text-slate-800 leading-relaxed line-clamp-2">${mainKriteria}</p>
-                <span class="text-xs font-medium text-slate-500">${temuanCount} Temuan · ${recs.length} Rekomendasi</span>
+        <td class="py-3.5 px-4 align-top">
+            <div class="flex flex-col gap-1 pr-4">
+                <p class="text-sm font-semibold text-slate-800 leading-snug line-clamp-2">${mainKriteria}</p>
+                <span class="text-xs text-slate-500 font-medium">${temuanCount} Temuan · ${recs.length} Rekomendasi</span>
             </div>
         </td>
-        <td class="py-4 px-4 align-top">
-            <div class="flex flex-col gap-1.5 items-start">
-                <span class="inline-block text-xs font-bold px-2.5 py-0.5 rounded-md ${source === 'BPK-RI' ? 'bg-slate-100 text-slate-700' : 'bg-pink-100 text-pink-700'}">${source}</span>
+        <td class="py-3.5 px-4 align-top">
+            <div class="flex flex-col gap-0.5 items-start">
+                <span class="text-xs font-bold text-slate-900">${source}</span>
                 ${getJenisAuditBadge(lha["Jenis Audit"])}
             </div>
         </td>
-        <td class="py-4 px-4 align-top">
-            <div class="flex flex-wrap items-center gap-1.5 leading-relaxed">
-                ${picHTML}
-            </div>
+        <td class="py-3.5 px-4 align-top">
+            ${picHTML}
         </td>
-        <td class="py-4 px-4 align-top">
+        <td class="py-3.5 px-4 align-top">
             ${deadlineHTML}
         </td>
-        <td class="py-4 px-4 align-top text-center">
-            <span class="inline-flex items-center gap-1.5 text-xs font-bold ${st.textColor} ${st.bgColor} px-3 py-1.5 rounded-md">
-                <span class="w-2 h-2 rounded-full ${st.dotColor}"></span>
+        <td class="py-3.5 px-4 align-top text-center">
+            <span class="inline-flex items-center gap-1.5 text-xs font-semibold ${st.textColor} ${st.bgColor} px-2.5 py-1 rounded-md border">
+                <span class="w-1.5 h-1.5 rounded-full ${st.dotColor}"></span>
                 ${st.label}
             </span>
         </td>
-        <td class="py-4 px-4 align-top">
-            <div class="flex flex-col gap-2 min-w-[155px]">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs text-slate-600 font-semibold">${finishedRecs.length}/${recs.length} Tuntas</span>
-                    <span class="text-xs font-bold ${progressPercent === 100 ? 'text-green-600' : progressPercent > 0 ? 'text-amber-700' : 'text-slate-400'}">${progressPercent}%</span>
+        <td class="py-3.5 px-4 align-top">
+            <div class="flex flex-col gap-1.5 min-w-[130px]">
+                <div class="flex items-center justify-between text-xs">
+                    <span class="font-medium text-slate-600">${finishedRecs.length}/${recs.length} Tuntas</span>
+                    <span class="font-bold text-slate-800">${progressPercent}%</span>
                 </div>
-                <div class="w-full bg-slate-200 rounded-full h-2">
-                    <div class="h-2 rounded-full transition-all duration-500 ${barColor}" style="width: ${progressPercent}%"></div>
+                <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                    <div class="h-1.5 rounded-full transition-all duration-300 ${barColor}" style="width: ${progressPercent}%"></div>
                 </div>
-                <button onclick="selectLha('${kodeLha}')" class="self-end mt-1 px-3.5 py-1.5 rounded-lg bg-md-primary text-white text-xs font-bold hover:bg-emerald-800 active:scale-95 transition-all inline-flex items-center gap-1.5 cursor-pointer">
-                    <i class="fa-solid fa-eye"></i> Detail
-                </button>
+                <div class="mt-0.5 flex justify-end">
+                    <span class="text-xs font-semibold text-emerald-800 hover:text-emerald-950 inline-flex items-center gap-1 cursor-pointer">
+                        <span>Detail</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                    </span>
+                </div>
             </div>
         </td>
     `;
@@ -1387,26 +1345,21 @@ function showLhaDetail(kodeLha) {
                     return `
                         <div class="p-5 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col gap-3.5">
                             <!-- Header Rekomendasi -->
-                            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                                <div class="flex items-center gap-2.5 flex-wrap">
-                                    <span class="font-mono text-xs font-bold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">${rec["Kode Rekomendasi"]}</span>
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
-                                        <i class="fa-solid fa-building-user text-emerald-600"></i> PIC: ${rec["PIC"]}
-                                    </span>
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md ${recDeadline.isOverdue ? 'bg-rose-50 text-rose-800 border-rose-200' : 'bg-slate-50 text-slate-700 border-slate-200'} border text-xs font-semibold">
-                                        <i class="fa-solid fa-hourglass-half ${recDeadline.isOverdue ? 'text-rose-600' : 'text-slate-500'}"></i>
-                                        Batas Waktu (60 Hari): <strong>${recDeadline.deadlineText}</strong>
-                                        <span class="text-xs font-bold ${recDeadline.isOverdue ? 'text-rose-700' : 'text-emerald-700'}">(${recDeadline.statusBadgeText})</span>
-                                    </span>
+                            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-2.5">
+                                <div class="flex items-center gap-3 flex-wrap text-xs">
+                                    <span class="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">${rec["Kode Rekomendasi"]}</span>
+                                    <span class="text-slate-600">PIC: <strong class="text-slate-800">${rec["PIC"]}</strong></span>
+                                    <span class="text-slate-300">•</span>
+                                    <span class="text-slate-500">Jatuh Tempo: <strong class="${recDeadline.isOverdue ? 'text-rose-700' : 'text-slate-700'}">${recDeadline.deadlineText}</strong></span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-md border ${rst.bgColor} ${rst.textColor}">
-                                        <span class="w-2 h-2 rounded-full ${rst.dotColor}"></span>
+                                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-md border ${rst.bgColor} ${rst.textColor}">
+                                        <span class="w-1.5 h-1.5 rounded-full ${rst.dotColor}"></span>
                                         ${rst.label}
                                     </span>
                                     ${currentRole === "AUDITOR" && !isBpkAudit ? `
-                                    <button onclick="openRekomendasiModal('${t["Kode Temuan"]}', true, '${rec["Kode Rekomendasi"]}')" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors text-xs" title="Edit Rekomendasi"><i class="fa-solid fa-pen"></i></button>
-                                    <button onclick="triggerDeleteRekomendasi('${rec["Kode Rekomendasi"]}')" class="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors text-xs" title="Hapus Rekomendasi"><i class="fa-solid fa-trash"></i></button>
+                                    <button onclick="openRekomendasiModal('${t["Kode Temuan"]}', true, '${rec["Kode Rekomendasi"]}')" class="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors text-xs" title="Edit Rekomendasi"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="triggerDeleteRekomendasi('${rec["Kode Rekomendasi"]}')" class="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors text-xs" title="Hapus Rekomendasi"><i class="fa-solid fa-trash"></i></button>
                                     ` : ''}
                                 </div>
                             </div>
@@ -1476,34 +1429,36 @@ function showLhaDetail(kodeLha) {
                 `;
             }
 
-            const borderStyle = isChild ? "ml-4 sm:ml-6 border-l-4 border-slate-400 pl-4 sm:pl-6 bg-white border border-slate-200" : "bg-white border border-slate-200";
+            const borderStyle = isChild ? "ml-4 sm:ml-6 border-l-4 border-slate-300 pl-4 sm:pl-6 bg-white border border-slate-200" : "bg-white border border-slate-200";
 
             const picBadgesHTML = nodePics.length > 0
-                ? nodePics.map(p => `<span class="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold"><i class="fa-solid fa-building-user text-emerald-600"></i> ${p}</span>`).join('')
+                ? `<span class="text-xs font-medium text-slate-700">PIC: <strong>${nodePics.join(', ')}</strong></span>`
                 : `<span class="text-xs text-slate-400 italic">PIC belum ditentukan</span>`;
 
             return `
                 <div class="flex flex-col gap-5 p-6 rounded-xl transition-all duration-200 ${borderStyle}">
                     <!-- Temuan Header -->
-                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
-                        <div class="flex items-center gap-2.5 flex-wrap">
-                            <span class="font-mono text-sm font-bold text-slate-900 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 flex items-center gap-2">
-                                <i class="fa-solid fa-folder-open text-slate-600"></i>
-                                ${t["Kode Temuan"]}
-                            </span>
-                            ${isChild ? '<span class="text-xs font-bold text-slate-700 bg-slate-50 px-3 py-1 rounded-lg border border-slate-200">Sub-temuan</span>' : '<span class="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">Temuan Induk</span>'}
-                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 px-3 py-1 rounded-lg border border-slate-200">
-                                <i class="fa-regular fa-calendar text-slate-500"></i> Tgl Temuan: <strong>${temuanDateFormatted}</strong>
-                            </span>
-                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold ${lhaDeadline.isOverdue ? 'text-rose-800 bg-rose-50 border-rose-200' : 'text-slate-800 bg-slate-50 border-slate-200'} px-3 py-1 rounded-lg border">
-                                <i class="fa-solid fa-hourglass-half ${lhaDeadline.isOverdue ? 'text-rose-600' : 'text-slate-600'}"></i> Batas Waktu: <strong>${lhaDeadline.deadlineFormatted}</strong>
-                            </span>
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+                        <div class="flex flex-col gap-1">
+                            <div class="flex items-center gap-2.5 flex-wrap">
+                                <span class="font-mono text-sm font-bold text-slate-900 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
+                                    ${t["Kode Temuan"]}
+                                </span>
+                                <span class="text-xs font-semibold text-slate-600">
+                                    (${isChild ? 'Sub-temuan' : 'Temuan Induk'})
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-3 text-xs text-slate-500 font-medium">
+                                <span>Tgl Input: <strong class="text-slate-700">${temuanDateFormatted}</strong></span>
+                                <span>•</span>
+                                <span>Batas Waktu: <strong class="${lhaDeadline.isOverdue ? 'text-rose-700' : 'text-slate-700'}">${lhaDeadline.deadlineFormatted}</strong></span>
+                            </div>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
                             ${picBadgesHTML}
                             ${currentRole === "AUDITOR" && !isBpkAudit ? `
                             <div class="flex gap-1 shrink-0 ml-2">
-                                <button onclick="openTemuanModal('${kodeLha}', true, '${t["Kode Temuan"]}')" class="p-2 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-slate-100 transition-colors text-sm" title="Edit Temuan"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="openTemuanModal('${kodeLha}', true, '${t["Kode Temuan"]}')" class="p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors text-sm" title="Edit Temuan"><i class="fa-solid fa-pen"></i></button>
                                 <button onclick="triggerDeleteTemuan('${t["Kode Temuan"]}')" class="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors text-sm" title="Hapus Temuan"><i class="fa-solid fa-trash"></i></button>
                             </div>` : ''}
                         </div>
@@ -1511,74 +1466,53 @@ function showLhaDetail(kodeLha) {
 
                     <!-- Struktur 4 Unsur Temuan Pemeriksaan -->
                     <div class="flex flex-col gap-3">
-                        <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200">
-                            <div class="flex items-center gap-2">
-                                <i class="fa-solid fa-list-ol text-slate-600 text-sm"></i>
-                                <span class="text-xs font-bold text-slate-800">Struktur 4 Unsur Pokok Temuan Audit</span>
-                            </div>
-                            <div class="flex items-center gap-1.5 flex-wrap">
-                                <span class="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200" title="Kriteria > Kondisi = Terjadi Deviasi/Temuan">
-                                    <i class="fa-solid fa-scale-unbalanced text-xs"></i> Kriteria &gt; Kondisi = Temuan
-                                </span>
-                                <span class="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200" title="Rekomendasi meniadakan Sebab & memulihkan Akibat">
-                                    <i class="fa-solid fa-wrench text-xs"></i> Rekomendasi = Solusi Atas Sebab & Akibat
-                                </span>
-                            </div>
+                        <div class="flex items-center justify-between pb-1.5 border-b border-slate-200">
+                            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                4 Unsur Pokok Temuan Pemeriksaan
+                            </span>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                             <!-- 1. Kondisi -->
-                            <div class="flex flex-col border-l-4 border-slate-800 bg-slate-50/70 p-4 rounded-r-xl border border-slate-200">
-                                <div class="flex items-center justify-between mb-1.5">
-                                    <h4 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                                        <span class="w-5 h-5 rounded-full bg-slate-900 text-white text-xs flex items-center justify-center font-bold">1</span>
-                                        Kondisi (Fakta Riil di Lapangan)
-                                    </h4>
-                                    <span class="text-xs font-semibold text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">Realita Aktual</span>
+                            <div class="flex flex-col bg-slate-50/70 p-4 rounded-xl border border-slate-200/90">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="w-5 h-5 rounded bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center shrink-0">1</span>
+                                    <h4 class="text-xs font-bold text-slate-800">Kondisi <span class="text-slate-400 font-normal">(Fakta Riil di Lapangan)</span></h4>
                                 </div>
-                                <p class="text-sm font-medium text-slate-900 leading-relaxed whitespace-pre-line flex-1">
+                                <p class="text-sm font-normal text-slate-800 leading-relaxed whitespace-pre-line flex-1">
                                     ${t.Kondisi || (t.Kriteria ? `<span class="text-slate-700">${t.Kriteria}</span>` : '<span class="text-slate-400 italic">Kondisi belum dirinci spesifik.</span>')}
                                 </p>
                             </div>
 
                             <!-- 2. Kriteria -->
-                            <div class="flex flex-col border-l-4 border-slate-600 bg-slate-50/50 p-4 rounded-r-xl border border-slate-100">
-                                <div class="flex items-center justify-between mb-1.5">
-                                    <h4 class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                                        <span class="w-5 h-5 rounded-full bg-md-primary text-white text-xs flex items-center justify-center font-bold">2</span>
-                                        Kriteria (Dasar Hukum / SOP)
-                                    </h4>
-                                    <span class="text-xs font-semibold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">Tolok Ukur / Standar</span>
+                            <div class="flex flex-col bg-slate-50/70 p-4 rounded-xl border border-slate-200/90">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="w-5 h-5 rounded bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center shrink-0">2</span>
+                                    <h4 class="text-xs font-bold text-slate-800">Kriteria <span class="text-slate-400 font-normal">(Dasar Hukum / SOP / Ketentuan)</span></h4>
                                 </div>
-                                <p class="text-sm font-medium text-slate-900 leading-relaxed whitespace-pre-line flex-1">
+                                <p class="text-sm font-normal text-slate-800 leading-relaxed whitespace-pre-line flex-1">
                                     ${t.Kriteria || '<span class="text-slate-400 italic">Kriteria belum diisi.</span>'}
                                 </p>
                             </div>
 
                             <!-- 3. Sebab -->
-                            <div class="flex flex-col border-l-4 border-amber-500 bg-amber-50/50 p-4 rounded-r-xl border border-amber-100">
-                                <div class="flex items-center justify-between mb-1.5">
-                                    <h4 class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
-                                        <span class="w-5 h-5 rounded-full bg-amber-600 text-white text-xs flex items-center justify-center font-bold">3</span>
-                                        Sebab (Akar Penyebab Masalah)
-                                    </h4>
-                                    <span class="text-xs font-semibold text-amber-700 bg-white px-2 py-0.5 rounded border border-amber-200">Akar Masalah (Why)</span>
+                            <div class="flex flex-col bg-slate-50/70 p-4 rounded-xl border border-slate-200/90">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="w-5 h-5 rounded bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center shrink-0">3</span>
+                                    <h4 class="text-xs font-bold text-slate-800">Sebab <span class="text-slate-400 font-normal">(Akar Penyebab Permasalahan)</span></h4>
                                 </div>
-                                <p class="text-sm font-medium text-slate-800 leading-relaxed whitespace-pre-line flex-1">
+                                <p class="text-sm font-normal text-slate-800 leading-relaxed whitespace-pre-line flex-1">
                                     ${t.Sebab || '<span class="text-slate-400 italic">Sebab belum diuraikan.</span>'}
                                 </p>
                             </div>
 
                             <!-- 4. Akibat -->
-                            <div class="flex flex-col border-l-4 border-rose-500 bg-rose-50/50 p-4 rounded-r-xl border border-rose-100">
-                                <div class="flex items-center justify-between mb-1.5">
-                                    <h4 class="text-xs font-bold text-rose-900 flex items-center gap-1.5">
-                                        <span class="w-5 h-5 rounded-full bg-rose-600 text-white text-xs flex items-center justify-center font-bold">4</span>
-                                        Akibat (Dampak / Kerugian Negara)
-                                    </h4>
-                                    <span class="text-xs font-semibold text-rose-700 bg-white px-2 py-0.5 rounded border border-rose-200">Dampak & Risiko</span>
+                            <div class="flex flex-col bg-slate-50/70 p-4 rounded-xl border border-slate-200/90">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="w-5 h-5 rounded bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center shrink-0">4</span>
+                                    <h4 class="text-xs font-bold text-slate-800">Akibat <span class="text-slate-400 font-normal">(Dampak / Risiko Kerugian Negara)</span></h4>
                                 </div>
-                                <p class="text-sm font-medium text-slate-800 leading-relaxed whitespace-pre-line flex-1">
+                                <p class="text-sm font-normal text-slate-800 leading-relaxed whitespace-pre-line flex-1">
                                     ${t.Akibat || '<span class="text-slate-400 italic">Akibat belum diuraikan.</span>'}
                                 </p>
                             </div>
@@ -1635,8 +1569,8 @@ function showLhaDetail(kodeLha) {
                 const st = statusMap[status] || statusMap["PENDING"];
 
                 const picBadges = pics.length > 0
-                    ? pics.map(p => `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold"><i class="fa-solid fa-building-user text-emerald-600"></i> ${p}</span>`).join('')
-                    : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-500 text-xs font-medium">PIC Belum Ditentukan</span>`;
+                    ? `<span class="text-xs font-medium text-slate-700">${pics.join(', ')}</span>`
+                    : `<span class="text-xs text-slate-400 italic">Belum Ditentukan</span>`;
 
                 const childTemuan = temuanList.filter(c => c["Parent Temuan"] === t["Kode Temuan"]);
                 let childrenHTML = "";
@@ -1649,73 +1583,73 @@ function showLhaDetail(kodeLha) {
                         const cst = statusMap[childStatus] || statusMap["PENDING"];
 
                         const childPicBadges = childPics.length > 0
-                            ? childPics.map(p => `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold"><i class="fa-solid fa-building-user text-emerald-600"></i> ${p}</span>`).join('')
-                            : `<span class="text-xs text-slate-400 italic">PIC Belum Ditentukan</span>`;
+                            ? `<span class="text-xs font-medium text-slate-700">${childPics.join(', ')}</span>`
+                            : `<span class="text-xs text-slate-400 italic">Belum Ditentukan</span>`;
 
                         return `
-                            <div class="bg-slate-50/90 border border-slate-200 border-l-4 border-l-slate-400 p-5 rounded-xl flex flex-col gap-3 ml-6">
-                                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 pb-3">
-                                    <div class="flex items-center gap-2.5 flex-wrap">
-                                        <span class="font-mono text-sm font-bold text-slate-700 bg-slate-50 px-3 py-1 rounded-md border border-slate-200">
-                                            ${child["Kode Temuan"]}
-                                        </span>
-                                        <span class="text-xs font-bold text-slate-600 bg-white px-2.5 py-1 rounded-md border border-slate-200">Sub-temuan</span>
-                                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-white px-2.5 py-1 rounded-md border border-slate-200">
-                                            <i class="fa-regular fa-calendar text-slate-500"></i> Tgl Temuan: <strong>${childDateFormatted}</strong>
-                                        </span>
-                                        <span class="inline-flex items-center gap-1.5 text-xs font-semibold ${lhaDeadline.isOverdue ? 'text-rose-800 bg-rose-50 border-rose-200' : 'text-slate-800 bg-slate-50 border-slate-200'} px-2.5 py-1 rounded-md border">
-                                            <i class="fa-solid fa-hourglass-half ${lhaDeadline.isOverdue ? 'text-rose-600' : 'text-slate-600'}"></i> Batas Waktu: <strong>${lhaDeadline.deadlineFormatted}</strong>
-                                        </span>
+                            <div class="bg-slate-50/80 border border-slate-200 border-l-4 border-l-slate-400 p-5 rounded-xl flex flex-col gap-3 ml-6">
+                                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-2.5">
+                                    <div class="flex flex-col gap-0.5">
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-mono text-sm font-bold text-slate-800">${child["Kode Temuan"]}</span>
+                                            <span class="text-xs font-semibold text-slate-500">(Sub-temuan)</span>
+                                        </div>
+                                        <div class="text-xs text-slate-500">
+                                            <span>Tgl: <strong class="text-slate-700">${childDateFormatted}</strong></span>
+                                            <span class="mx-1">•</span>
+                                            <span>Jatuh Tempo: <strong class="${lhaDeadline.isOverdue ? 'text-rose-700' : 'text-slate-700'}">${lhaDeadline.deadlineFormatted}</strong></span>
+                                        </div>
                                     </div>
-                                    <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-md border ${cst.bgColor} ${cst.textColor}">
-                                        <span class="w-2 h-2 rounded-full ${cst.dotColor}"></span> ${cst.label}
+                                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-md border ${cst.bgColor} ${cst.textColor}">
+                                        <span class="w-1.5 h-1.5 rounded-full ${cst.dotColor}"></span> ${cst.label}
                                     </span>
                                 </div>
 
                                 <!-- 4 Unsur Temuan Preview Sub-Temuan -->
-                                <div class="flex flex-col gap-2">
-                                    <div class="flex items-start gap-2">
-                                        <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-900 text-white shrink-0 mt-0.5">1. Kondisi</span>
-                                        <p class="text-sm font-bold text-slate-900 line-clamp-2 leading-relaxed">
+                                <div class="flex flex-col gap-1.5">
+                                    <div>
+                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-0.5">Kondisi:</span>
+                                        <p class="text-sm font-semibold text-slate-900 line-clamp-2 leading-relaxed">
                                             ${child.Kondisi || child.Kriteria || 'Temuan Pemeriksaan'}
                                         </p>
                                     </div>
-                                    <div class="flex items-start gap-2 text-xs text-slate-600">
-                                        <span class="text-xs font-semibold px-1.5 py-0.5 rounded bg-slate-50 text-slate-700 border border-slate-200 shrink-0">2. Kriteria</span>
-                                        <p class="line-clamp-1 italic text-slate-600">${child.Kriteria || '-'}</p>
-                                    </div>
+                                    ${child.Kriteria ? `
+                                    <div class="text-xs text-slate-600">
+                                        <span class="font-semibold text-slate-500">Kriteria:</span>
+                                        <span class="line-clamp-1 text-slate-700 font-medium">${child.Kriteria}</span>
+                                    </div>` : ''}
                                     ${(child.Sebab || child.Akibat) ? `
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1 pt-2 border-t border-slate-200/60 text-xs">
                                         ${child.Sebab ? `
-                                        <div class="flex items-start gap-1.5 text-amber-900 bg-amber-50/80 p-2 rounded-lg border border-amber-200/70">
-                                            <span class="font-bold text-xs bg-amber-200/60 px-1.5 py-0.5 rounded shrink-0">3. Sebab</span>
-                                            <span class="line-clamp-1">${child.Sebab}</span>
+                                        <div class="text-slate-700 bg-white p-2.5 rounded-lg border border-slate-200">
+                                            <span class="font-bold text-slate-700 block mb-0.5">Sebab:</span>
+                                            <span class="line-clamp-2">${child.Sebab}</span>
                                         </div>` : ''}
                                         ${child.Akibat ? `
-                                        <div class="flex items-start gap-1.5 text-rose-900 bg-rose-50/80 p-2 rounded-lg border border-rose-200/70">
-                                            <span class="font-bold text-xs bg-rose-200/60 px-1.5 py-0.5 rounded shrink-0">4. Akibat</span>
-                                            <span class="line-clamp-1">${child.Akibat}</span>
+                                        <div class="text-slate-700 bg-white p-2.5 rounded-lg border border-slate-200">
+                                            <span class="font-bold text-slate-700 block mb-0.5">Akibat:</span>
+                                            <span class="line-clamp-2">${child.Akibat}</span>
                                         </div>` : ''}
                                     </div>` : ''}
                                 </div>
 
                                 <!-- Baris PIC & Aksi Sub-Temuan -->
-                                <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 pt-3 mt-0.5">
-                                    <div class="flex flex-wrap items-center gap-2">
-                                        <span class="text-xs font-semibold text-slate-500 mr-1">PIC:</span>
+                                <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 pt-2.5 mt-0.5">
+                                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                                        <span class="font-semibold text-slate-500">PIC:</span>
                                         ${childPicBadges}
                                         <span class="text-slate-300 mx-1">•</span>
-                                        <span class="text-xs text-slate-600 font-bold">
-                                            <i class="fa-solid fa-clipboard-list text-slate-600 mr-1"></i> ${childRecs.length} Rekomendasi
+                                        <span class="text-slate-700 font-bold">
+                                            ${childRecs.length} Rekomendasi
                                         </span>
                                     </div>
                                     <div class="flex gap-2 items-center">
                                         ${currentRole === "AUDITOR" && !isBpkAudit ? `
-                                        <button onclick="openTemuanModal('${kodeLha}', true, '${child["Kode Temuan"]}')" class="p-2 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-white text-sm" title="Edit Temuan"><i class="fa-solid fa-pen"></i></button>
-                                        <button onclick="triggerDeleteTemuan('${child["Kode Temuan"]}')" class="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-white text-sm" title="Hapus Temuan"><i class="fa-solid fa-trash"></i></button>
+                                        <button onclick="openTemuanModal('${kodeLha}', true, '${child["Kode Temuan"]}')" class="p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-white text-xs" title="Edit Temuan"><i class="fa-solid fa-pen"></i></button>
+                                        <button onclick="triggerDeleteTemuan('${child["Kode Temuan"]}')" class="p-1.5 rounded text-slate-400 hover:text-red-600 hover:bg-white text-xs" title="Hapus Temuan"><i class="fa-solid fa-trash"></i></button>
                                         ` : ''}
-                                        <button onclick="selectTemuanDetail('${child["Kode Temuan"]}')" class="px-4 py-1.5 rounded-lg bg-md-primary text-white text-xs font-bold hover:bg-emerald-800 transition-all flex items-center gap-1.5 cursor-pointer">
-                                            <i class="fa-solid fa-eye"></i> Detail Sub-Temuan
+                                        <button onclick="selectTemuanDetail('${child["Kode Temuan"]}')" class="px-3 py-1.5 rounded-lg bg-md-primary text-white text-xs font-semibold hover:bg-emerald-800 transition-all flex items-center gap-1.5 cursor-pointer">
+                                            Detail Sub-Temuan <i class="fa-solid fa-arrow-right text-[10px]"></i>
                                         </button>
                                     </div>
                                 </div>
@@ -1727,68 +1661,68 @@ function showLhaDetail(kodeLha) {
                 return `
                     <div class="flex flex-col gap-2.5">
                         <div class="bg-white border border-slate-200 p-6 rounded-xl hover:border-slate-300 transition-all flex flex-col gap-4">
-                            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
-                                <div class="flex items-center gap-2.5 flex-wrap">
-                                    <span class="font-mono text-sm font-bold text-slate-900 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200 flex items-center gap-2">
-                                        <i class="fa-solid fa-folder-open text-slate-600"></i>
-                                        ${t["Kode Temuan"]}
-                                    </span>
-                                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 px-3 py-1 rounded-lg border border-slate-200">
-                                        <i class="fa-regular fa-calendar text-slate-500"></i> Tgl Temuan: <strong>${dateFormatted}</strong>
-                                    </span>
-                                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold ${lhaDeadline.isOverdue ? 'text-rose-800 bg-rose-50 border-rose-200' : 'text-slate-800 bg-slate-50 border-slate-200'} px-3 py-1 rounded-lg border">
-                                        <i class="fa-solid fa-hourglass-half ${lhaDeadline.isOverdue ? 'text-rose-600' : 'text-slate-600'}"></i> Batas Waktu: <strong>${lhaDeadline.deadlineFormatted}</strong>
-                                    </span>
+                            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                                <div class="flex flex-col gap-0.5">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono text-sm font-bold text-slate-900">${t["Kode Temuan"]}</span>
+                                        <span class="text-xs font-semibold text-slate-500">(Temuan Induk)</span>
+                                    </div>
+                                    <div class="text-xs text-slate-500">
+                                        <span>Tgl: <strong class="text-slate-700">${dateFormatted}</strong></span>
+                                        <span class="mx-1">•</span>
+                                        <span>Jatuh Tempo: <strong class="${lhaDeadline.isOverdue ? 'text-rose-700' : 'text-slate-700'}">${lhaDeadline.deadlineFormatted}</strong></span>
+                                    </div>
                                 </div>
-                                <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-lg border ${st.bgColor} ${st.textColor}">
-                                    <span class="w-2 h-2 rounded-full ${st.dotColor}"></span> ${st.label}
+                                <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-md border ${st.bgColor} ${st.textColor}">
+                                    <span class="w-1.5 h-1.5 rounded-full ${st.dotColor}"></span> ${st.label}
                                 </span>
                             </div>
 
                             <!-- 4 Unsur Temuan Preview Temuan Induk -->
                             <div class="flex flex-col gap-2">
-                                <div class="flex items-start gap-2">
-                                    <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-900 text-white shrink-0 mt-0.5">1. Kondisi</span>
-                                    <p class="text-base font-bold text-slate-900 line-clamp-2 leading-relaxed">
+                                <div>
+                                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-0.5">Kondisi:</span>
+                                    <p class="text-base font-semibold text-slate-900 line-clamp-2 leading-relaxed">
                                         ${t.Kondisi || t.Kriteria || 'Temuan Pemeriksaan'}
                                     </p>
                                 </div>
-                                <div class="flex items-start gap-2 text-xs text-slate-600">
-                                    <span class="text-xs font-semibold px-1.5 py-0.5 rounded bg-slate-50 text-slate-700 border border-slate-200 shrink-0">2. Kriteria</span>
-                                    <p class="line-clamp-1 italic text-slate-600">${t.Kriteria || '-'}</p>
-                                </div>
+                                ${t.Kriteria ? `
+                                <div class="text-xs text-slate-600">
+                                    <span class="font-semibold text-slate-500">Kriteria:</span>
+                                    <span class="line-clamp-1 text-slate-700 font-medium">${t.Kriteria}</span>
+                                </div>` : ''}
                                 ${(t.Sebab || t.Akibat) ? `
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1 pt-2 border-t border-slate-100 text-xs">
                                     ${t.Sebab ? `
-                                    <div class="flex items-start gap-1.5 text-amber-900 bg-amber-50/80 p-2 rounded-lg border border-amber-200/70">
-                                        <span class="font-bold text-xs bg-amber-200/60 px-1.5 py-0.5 rounded shrink-0">3. Sebab</span>
-                                        <span class="line-clamp-1">${t.Sebab}</span>
+                                    <div class="text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                                        <span class="font-bold text-slate-700 block mb-0.5">Sebab:</span>
+                                        <span class="line-clamp-2">${t.Sebab}</span>
                                     </div>` : ''}
                                     ${t.Akibat ? `
-                                    <div class="flex items-start gap-1.5 text-rose-900 bg-rose-50/80 p-2 rounded-lg border border-rose-200/70">
-                                        <span class="font-bold text-xs bg-rose-200/60 px-1.5 py-0.5 rounded shrink-0">4. Akibat</span>
-                                        <span class="line-clamp-1">${t.Akibat}</span>
+                                    <div class="text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                                        <span class="font-bold text-slate-700 block mb-0.5">Akibat:</span>
+                                        <span class="line-clamp-2">${t.Akibat}</span>
                                     </div>` : ''}
                                 </div>` : ''}
                             </div>
 
                             <!-- Baris PIC & Aksi Temuan Induk -->
-                            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3.5 mt-1">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <span class="text-xs font-semibold text-slate-500 mr-1">PIC Terkait:</span>
+                            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3 mt-1">
+                                <div class="flex flex-wrap items-center gap-2 text-xs">
+                                    <span class="font-semibold text-slate-500">PIC Terkait:</span>
                                     ${picBadges}
                                     <span class="text-slate-300 mx-1">•</span>
-                                    <span class="text-sm text-slate-700 font-bold">
-                                        <i class="fa-solid fa-clipboard-list text-slate-600 mr-1"></i> ${recs.length} Rekomendasi Terkait
+                                    <span class="text-slate-700 font-bold">
+                                        ${recs.length} Rekomendasi Terkait
                                     </span>
                                 </div>
                                 <div class="flex gap-2 items-center">
                                     ${currentRole === "AUDITOR" && !isBpkAudit ? `
-                                    <button onclick="openTemuanModal('${kodeLha}', true, '${t["Kode Temuan"]}')" class="p-2 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-slate-100 text-sm" title="Edit Temuan"><i class="fa-solid fa-pen"></i></button>
-                                    <button onclick="triggerDeleteTemuan('${t["Kode Temuan"]}')" class="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 text-sm" title="Hapus Temuan"><i class="fa-solid fa-trash"></i></button>
+                                    <button onclick="openTemuanModal('${kodeLha}', true, '${t["Kode Temuan"]}')" class="p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 text-xs" title="Edit Temuan"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="triggerDeleteTemuan('${t["Kode Temuan"]}')" class="p-1.5 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 text-xs" title="Hapus Temuan"><i class="fa-solid fa-trash"></i></button>
                                     ` : ''}
-                                    <button onclick="selectTemuanDetail('${t["Kode Temuan"]}')" class="px-4 py-2 rounded-lg bg-md-primary text-white text-sm font-bold hover:bg-emerald-800 active:scale-95 transition-all flex items-center gap-2 cursor-pointer">
-                                        <i class="fa-solid fa-eye"></i> Detail Temuan
+                                    <button onclick="selectTemuanDetail('${t["Kode Temuan"]}')" class="px-3.5 py-1.5 rounded-lg bg-md-primary text-white text-xs font-semibold hover:bg-emerald-800 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer">
+                                        Detail Temuan <i class="fa-solid fa-arrow-right text-[10px]"></i>
                                     </button>
                                 </div>
                             </div>
