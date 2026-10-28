@@ -498,264 +498,427 @@
     <!-- ========================================== -->
 
     <!-- 1. LHA Modal -->
-    <div id="lhaModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden px-4">
-        <div class="bg-white rounded-xl max-w-md w-full p-6 border border-slate-200 shadow-xl flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
-                <h3 id="lhaModalTitle" class="text-base font-bold text-slate-900">Tambah LHA Baru</h3>
-                <button type="button" onclick="closeLhaModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded transition-colors" aria-label="Tutup modal">
-                    <i class="fa-solid fa-xmark text-lg"></i>
+    <div id="lhaModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs hidden p-4 sm:p-6 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-xl w-full border border-slate-200/90 shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200 overflow-hidden my-auto">
+            
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-white shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
+                        <i class="fa-solid fa-folder-plus text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 id="lhaModalTitle" class="text-base font-bold text-slate-900 leading-tight">Tambah LHA Baru</h3>
+                        <p class="text-xs text-slate-500 font-normal mt-0.5">Registrasi dokumen Laporan Hasil Pemeriksaan (LHP/LHA)</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeLhaModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors" aria-label="Tutup modal">
+                    <i class="fa-solid fa-xmark text-base"></i>
                 </button>
             </div>
 
-            <form id="lhaForm" onsubmit="handleLhaFormSubmit(event)" class="flex flex-col gap-4">
+            <form id="lhaForm" onsubmit="handleLhaFormSubmit(event)" class="flex flex-col">
                 <input type="hidden" id="lhaFormIsEdit" value="false">
                 <input type="hidden" id="lhaFormOldKode" value="">
 
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-semibold text-slate-700">Kode LHP (Unique)</label>
-                    <input type="text" id="lhaFormKode" required placeholder="Contoh: LHP-2025-001..."
-                        class="w-full h-10 px-3 text-sm rounded-lg border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 font-mono">
-                </div>
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-semibold text-slate-700">Sumber Audit</label>
-                    <select id="lhaFormSumber" required
-                        class="w-full h-10 px-3 text-sm rounded-lg border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 font-medium">
-                        <option value="BPK-RI">BPK-RI</option>
-                        <option value="Inspektorat">Inspektorat</option>
-                    </select>
-                </div>
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-semibold text-slate-700">Jenis Audit</label>
-                    <select id="lhaFormJenis" required
-                        class="w-full h-10 px-3 text-sm rounded-lg border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 font-medium">
-                        <option value="Audit Kinerja">Audit Kinerja (3E)</option>
-                        <option value="Audit Keuangan">Audit Keuangan</option>
-                        <option value="Audit Kepatuhan">Audit Kepatuhan</option>
-                        <option value="Audit Khusus">Audit Khusus (Investigatif)</option>
-                    </select>
-                </div>
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-semibold text-slate-700">Tahun</label>
-                    <input type="number" id="lhaFormTahun" required min="2000" max="2100"
-                        class="w-full h-10 px-3 text-sm rounded-lg border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 font-medium">
-                </div>
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-semibold text-slate-700">Status Laporan</label>
-                    <input type="text" id="lhaFormStatus" required placeholder="Contoh: Dalam Pemantauan..."
-                        class="w-full h-10 px-3 text-sm rounded-lg border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 font-medium">
+                <div class="p-6 flex flex-col gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+                        <div class="md:col-span-8 flex flex-col gap-1.5">
+                            <label class="text-xs font-semibold text-slate-700 flex items-center justify-between">
+                                <span>Nomor / Kode LHP <span class="text-rose-500">*</span></span>
+                                <span class="text-[11px] font-mono text-slate-400">ID Dokumen</span>
+                            </label>
+                            <input type="text" id="lhaFormKode" required placeholder="Contoh: LHP-BPK-2025-01"
+                                class="w-full h-10 px-3 text-xs md:text-sm rounded-lg border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 font-mono font-semibold">
+                        </div>
+
+                        <div class="md:col-span-4 flex flex-col gap-1.5">
+                            <label class="text-xs font-semibold text-slate-700">
+                                Tahun Pemeriksaan <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="number" id="lhaFormTahun" required min="2000" max="2100"
+                                class="w-full h-10 px-3 text-xs md:text-sm rounded-lg border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 font-medium">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-semibold text-slate-700">
+                                Sumber Audit / Pemeriksa <span class="text-rose-500">*</span>
+                            </label>
+                            <select id="lhaFormSumber" required
+                                class="w-full h-10 px-3 text-xs md:text-sm rounded-lg border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 font-medium">
+                                <option value="BPK-RI">BPK-RI (Eksternal)</option>
+                                <option value="Inspektorat">Inspektorat (APIP Internal)</option>
+                            </select>
+                        </div>
+
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs font-semibold text-slate-700">
+                                Jenis Pemeriksaan / Audit <span class="text-rose-500">*</span>
+                            </label>
+                            <select id="lhaFormJenis" required
+                                class="w-full h-10 px-3 text-xs md:text-sm rounded-lg border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 font-medium">
+                                <option value="Audit Kinerja">Audit Kinerja (3E)</option>
+                                <option value="Audit Keuangan">Audit Keuangan</option>
+                                <option value="Audit Kepatuhan">Audit Kepatuhan</option>
+                                <option value="Audit Khusus">Audit Khusus (Investigatif)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-semibold text-slate-700 flex items-center justify-between">
+                            <span>Status Laporan <span class="text-rose-500">*</span></span>
+                            <span class="text-[11px] text-slate-400">Contoh: Dalam Pemantauan</span>
+                        </label>
+                        <input type="text" id="lhaFormStatus" required placeholder="Dalam Pemantauan"
+                            class="w-full h-10 px-3 text-xs md:text-sm rounded-lg border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 font-medium">
+                    </div>
                 </div>
 
-                <div class="flex gap-2.5 justify-end pt-3 border-t border-slate-200 mt-1">
-                    <button type="button" onclick="closeLhaModal()"
-                        class="h-10 px-4 rounded-lg text-sm font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 active:scale-95 transition-all">Batal</button>
-                    <button type="submit"
-                        class="h-10 px-5 rounded-lg text-sm font-semibold bg-slate-900 text-white hover:bg-slate-800 active:scale-95 transition-all">Simpan LHA</button>
+                <div class="px-6 py-3.5 bg-slate-50/90 border-t border-slate-200 flex items-center justify-between shrink-0">
+                    <span class="text-xs text-slate-500 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-info text-slate-400"></i>
+                        <span>Kolom bertanda <span class="text-rose-500 font-bold">*</span> wajib diisi.</span>
+                    </span>
+                    <div class="flex items-center gap-2.5">
+                        <button type="button" onclick="closeLhaModal()"
+                            class="h-9 px-4 rounded-lg text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900 active:scale-95 transition-all">
+                            Batal
+                        </button>
+                        <button type="submit"
+                            class="h-9 px-5 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 active:scale-95 transition-all flex items-center gap-1.5 shadow-xs">
+                            <i class="fa-solid fa-floppy-disk text-xs"></i>
+                            <span>Simpan LHA</span>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- 2. Temuan Modal (4 Unsur Pokok Temuan Pemeriksaan) -->
-    <div id="temuanModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden px-4">
-        <div class="bg-white rounded-xl max-w-xl w-full p-6 border border-slate-200 shadow-xl flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
-                <div>
-                    <h3 id="temuanModalTitle" class="text-base font-bold text-slate-900">Tambah Temuan Baru</h3>
-                    <p class="text-xs text-slate-500 font-medium mt-0.5">Perumusan 4 unsur pokok temuan pemeriksaan standar BPK / APIP</p>
+    <div id="temuanModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs hidden p-4 sm:p-6 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-4xl w-full border border-slate-200/90 shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] overflow-hidden my-auto">
+            
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-white shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
+                        <i class="fa-solid fa-file-signature text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 id="temuanModalTitle" class="text-base font-bold text-slate-900 leading-tight">Tambah Temuan Baru</h3>
+                        <p class="text-xs text-slate-500 font-normal mt-0.5">Formulir 4 unsur pokok temuan pemeriksaan standar BPK-RI & APIP</p>
+                    </div>
                 </div>
-                <button type="button" onclick="closeTemuanModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded transition-colors" aria-label="Tutup modal">
-                    <i class="fa-solid fa-xmark text-lg"></i>
+                <button type="button" onclick="closeTemuanModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors" aria-label="Tutup modal">
+                    <i class="fa-solid fa-xmark text-base"></i>
                 </button>
             </div>
 
-            <form id="temuanForm" onsubmit="handleTemuanFormSubmit(event)" class="flex flex-col gap-3.5">
+            <!-- Form Body with Scrollbar -->
+            <form id="temuanForm" onsubmit="handleTemuanFormSubmit(event)" class="flex flex-col flex-1 overflow-y-auto custom-scrollbar">
                 <input type="hidden" id="temuanFormIsEdit" value="false">
                 <input type="hidden" id="temuanFormOldKode" value="">
                 
-                <div class="flex flex-col gap-1" id="temuanFormLhaContainer">
-                    <label class="text-xs font-semibold text-slate-700">Dokumen LHP Induk</label>
-                    <select id="temuanFormLha" required
-                        class="w-full h-10 px-3 text-sm rounded-lg border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 font-medium">
-                        <!-- Options dynamically loaded -->
-                    </select>
+                <div class="p-6 flex flex-col gap-5">
+                    
+                    <!-- Metadata Section: Induk LHP & Kode Temuan -->
+                    <div class="bg-slate-50/70 p-4 rounded-xl border border-slate-200/80">
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+                            <div class="md:col-span-7 flex flex-col gap-1.5" id="temuanFormLhaContainer">
+                                <label class="text-xs font-semibold text-slate-700 flex items-center justify-between">
+                                    <span>Dokumen LHP Induk <span class="text-rose-500">*</span></span>
+                                    <span class="text-[11px] text-slate-400 font-normal">Konteks audit induk</span>
+                                </label>
+                                <div class="relative">
+                                    <select id="temuanFormLha" required
+                                        class="w-full h-10 px-3 text-xs md:text-sm rounded-lg border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 font-medium">
+                                        <!-- Options dynamically loaded -->
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="md:col-span-5 flex flex-col gap-1.5">
+                                <label class="text-xs font-semibold text-slate-700 flex items-center justify-between">
+                                    <span>Kode Temuan <span class="text-rose-500">*</span></span>
+                                    <span class="text-[11px] font-mono text-slate-400 font-normal">ID Unik</span>
+                                </label>
+                                <input type="text" id="temuanFormKode" required placeholder="Contoh: T-INSP-25001"
+                                    class="w-full h-10 px-3 text-xs md:text-sm rounded-lg border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 font-mono font-semibold tracking-wide">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4 Unsur Pokok Heading -->
+                    <div class="flex items-center gap-2 pt-1">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Perumusan 4 Unsur Pokok Temuan</span>
+                        <div class="h-px bg-slate-200 flex-1"></div>
+                        <span class="text-[11px] text-slate-400">Analisis Standar APIP</span>
+                    </div>
+
+                    <!-- 4 Unsur Pokok 2x2 Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        <!-- 1. KONDISI -->
+                        <div class="bg-white rounded-xl border border-slate-200/90 p-4 flex flex-col gap-2 focus-within:border-slate-700 focus-within:ring-1 focus-within:ring-slate-700/20 transition-all shadow-2xs">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-5 h-5 rounded-md bg-slate-100 text-slate-700 text-xs font-bold flex items-center justify-center border border-slate-200">1</span>
+                                    <span class="text-xs font-bold text-slate-900 uppercase tracking-wide">Kondisi</span>
+                                    <span class="text-rose-500 font-bold">*</span>
+                                </div>
+                                <span class="text-[11px] text-slate-500 font-normal text-right">Fakta riil di lapangan</span>
+                            </div>
+                            <textarea id="temuanFormKondisi" required rows="3"
+                                placeholder="Uraikan fakta nyata atau kondisi riil yang ditemukan auditor saat pemeriksaan fisik/dokumen di lapangan..."
+                                class="w-full p-2.5 text-xs md:text-sm rounded-lg border border-slate-200 bg-slate-50/50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-slate-800 leading-relaxed custom-scrollbar transition-colors"></textarea>
+                        </div>
+
+                        <!-- 2. KRITERIA -->
+                        <div class="bg-white rounded-xl border border-slate-200/90 p-4 flex flex-col gap-2 focus-within:border-slate-700 focus-within:ring-1 focus-within:ring-slate-700/20 transition-all shadow-2xs">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-5 h-5 rounded-md bg-slate-100 text-slate-700 text-xs font-bold flex items-center justify-center border border-slate-200">2</span>
+                                    <span class="text-xs font-bold text-slate-900 uppercase tracking-wide">Kriteria</span>
+                                    <span class="text-rose-500 font-bold">*</span>
+                                </div>
+                                <span class="text-[11px] text-slate-500 font-normal text-right">Tolok ukur / regulasi</span>
+                            </div>
+                            <textarea id="temuanFormKriteria" required rows="3"
+                                placeholder="Uraikan peraturan perundang-undangan, pasal keputusan menteri, atau SOP baku yang seharusnya dipatuhi..."
+                                class="w-full p-2.5 text-xs md:text-sm rounded-lg border border-slate-200 bg-slate-50/50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-slate-800 leading-relaxed custom-scrollbar transition-colors"></textarea>
+                        </div>
+
+                        <!-- 3. SEBAB -->
+                        <div class="bg-white rounded-xl border border-slate-200/90 p-4 flex flex-col gap-2 focus-within:border-slate-700 focus-within:ring-1 focus-within:ring-slate-700/20 transition-all shadow-2xs">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-5 h-5 rounded-md bg-slate-100 text-slate-700 text-xs font-bold flex items-center justify-center border border-slate-200">3</span>
+                                    <span class="text-xs font-bold text-slate-900 uppercase tracking-wide">Sebab</span>
+                                </div>
+                                <span class="text-[11px] text-slate-500 font-normal text-right">Akar masalah</span>
+                            </div>
+                            <textarea id="temuanFormSebab" rows="3"
+                                placeholder="Mengapa kondisi terjadi? (Misal: Kelalaian PPK, ketiadaan SOP internal, keterbatasan kompetensi pelaksana)..."
+                                class="w-full p-2.5 text-xs md:text-sm rounded-lg border border-slate-200 bg-slate-50/50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-slate-800 leading-relaxed custom-scrollbar transition-colors"></textarea>
+                        </div>
+
+                        <!-- 4. AKIBAT -->
+                        <div class="bg-white rounded-xl border border-slate-200/90 p-4 flex flex-col gap-2 focus-within:border-slate-700 focus-within:ring-1 focus-within:ring-slate-700/20 transition-all shadow-2xs">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-5 h-5 rounded-md bg-slate-100 text-slate-700 text-xs font-bold flex items-center justify-center border border-slate-200">4</span>
+                                    <span class="text-xs font-bold text-slate-900 uppercase tracking-wide">Akibat</span>
+                                </div>
+                                <span class="text-[11px] text-slate-500 font-normal text-right">Dampak / risiko kerugian</span>
+                            </div>
+                            <textarea id="temuanFormAkibat" rows="3"
+                                placeholder="Apa dampak atau akibatnya? (Misal: Potensi kerugian keuangan negara Rp ..., risiko sasaran program tertunda)..."
+                                class="w-full p-2.5 text-xs md:text-sm rounded-lg border border-slate-200 bg-slate-50/50 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-slate-800 leading-relaxed custom-scrollbar transition-colors"></textarea>
+                        </div>
+
+                    </div>
                 </div>
 
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-semibold text-slate-700">Kode Temuan (Unique)</label>
-                    <input type="text" id="temuanFormKode" required placeholder="Contoh: T-INSP-25001..."
-                        class="w-full h-10 px-3 text-sm rounded-lg border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 font-mono font-semibold">
+                <!-- Modal Footer -->
+                <div class="px-6 py-3.5 bg-slate-50/90 border-t border-slate-200 flex items-center justify-between shrink-0">
+                    <span class="text-xs text-slate-500 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-info text-slate-400"></i>
+                        <span>Kolom bertanda <span class="text-rose-500 font-bold">*</span> wajib diisi.</span>
+                    </span>
+                    <div class="flex items-center gap-2.5">
+                        <button type="button" onclick="closeTemuanModal()"
+                            class="h-9 px-4 rounded-lg text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900 active:scale-95 transition-all">
+                            Batal
+                        </button>
+                        <button type="submit"
+                            class="h-9 px-5 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 active:scale-95 transition-all flex items-center gap-1.5 shadow-xs">
+                            <i class="fa-solid fa-floppy-disk text-xs"></i>
+                            <span>Simpan Temuan</span>
+                        </button>
+                    </div>
                 </div>
 
-                <!-- 1. KONDISI -->
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                        <span class="w-5 h-5 rounded bg-slate-100 text-slate-700 text-xs flex items-center justify-center font-bold border border-slate-300">1</span>
-                        Kondisi <span class="text-slate-400 font-normal">(Fakta Riil di Lapangan)</span> <span class="text-rose-500">*</span>
-                    </label>
-                    <textarea id="temuanFormKondisi" required rows="2"
-                        placeholder="Uraikan fakta nyata/kondisi riil yang ditemukan di lapangan saat audit..."
-                        class="w-full p-2.5 text-sm rounded-lg border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 leading-relaxed"></textarea>
-                </div>
-
-                <!-- 2. KRITERIA -->
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                        <span class="w-5 h-5 rounded bg-slate-100 text-slate-700 text-xs flex items-center justify-center font-bold border border-slate-300">2</span>
-                        Kriteria <span class="text-slate-400 font-normal">(Aturan / Standar / SOP yang Dilanggar)</span> <span class="text-rose-500">*</span>
-                    </label>
-                    <textarea id="temuanFormKriteria" required rows="2"
-                        placeholder="Uraikan peraturan, pasal keputusan menteri, atau SOP baku yang seharusnya dipatuhi..."
-                        class="w-full p-2.5 text-sm rounded-lg border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 leading-relaxed"></textarea>
-                </div>
-
-                <!-- 3. SEBAB -->
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                        <span class="w-5 h-5 rounded bg-slate-100 text-slate-700 text-xs flex items-center justify-center font-bold border border-slate-300">3</span>
-                        Sebab <span class="text-slate-400 font-normal">(Akar Penyebab Permasalahan)</span>
-                    </label>
-                    <textarea id="temuanFormSebab" rows="2"
-                        placeholder="Mengapa kondisi terjadi? (Contoh: Kelalaian PPK, ketiadaan SOP, keterbatasan kompetensi SDM...)"
-                        class="w-full p-2.5 text-sm rounded-lg border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 leading-relaxed"></textarea>
-                </div>
-
-                <!-- 4. AKIBAT -->
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
-                        <span class="w-5 h-5 rounded bg-slate-100 text-slate-700 text-xs flex items-center justify-center font-bold border border-slate-300">4</span>
-                        Akibat <span class="text-slate-400 font-normal">(Dampak Negatif / Risiko Kerugian)</span>
-                    </label>
-                    <textarea id="temuanFormAkibat" rows="2"
-                        placeholder="Apa akibatnya? (Contoh: Potensi Kerugian Keuangan Negara sebesar Rp ..., keterlambatan target program...)"
-                        class="w-full p-2.5 text-sm rounded-lg border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 leading-relaxed"></textarea>
-                </div>
-
-                <div class="flex gap-2.5 justify-end pt-3 border-t border-slate-200 mt-1">
-                    <button type="button" onclick="closeTemuanModal()"
-                        class="h-10 px-4 rounded-lg text-sm font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 active:scale-95 transition-all">Batal</button>
-                    <button type="submit"
-                        class="h-10 px-5 rounded-lg text-sm font-semibold bg-slate-900 text-white hover:bg-slate-800 active:scale-95 transition-all">Simpan Temuan</button>
-                </div>
             </form>
         </div>
     </div>
 
     <!-- 3. Rekomendasi Modal -->
-    <div id="rekomendasiModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden px-4">
-        <div class="bg-white rounded-xl max-w-lg w-full p-6 border border-slate-200 shadow-xl flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
-                <h3 id="rekomendasiModalTitle" class="text-base font-bold text-slate-900">Tambah Rekomendasi Baru</h3>
-                <button type="button" onclick="closeRekomendasiModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded transition-colors" aria-label="Tutup modal">
-                    <i class="fa-solid fa-xmark text-lg"></i>
+    <div id="rekomendasiModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs hidden p-4 sm:p-6 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-2xl w-full border border-slate-200/90 shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200 overflow-hidden my-auto">
+            
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-white shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
+                        <i class="fa-solid fa-clipboard-check text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 id="rekomendasiModalTitle" class="text-base font-bold text-slate-900 leading-tight">Tambah Rekomendasi Baru</h3>
+                        <p class="text-xs text-slate-500 font-normal mt-0.5">Penetapan butir rekomendasi, PIC pelaksana, dan target finansial</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeRekomendasiModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors" aria-label="Tutup modal">
+                    <i class="fa-solid fa-xmark text-base"></i>
                 </button>
             </div>
 
-            <form id="rekomendasiForm" onsubmit="handleRekomendasiFormSubmit(event)" class="flex flex-col gap-4">
+            <form id="rekomendasiForm" onsubmit="handleRekomendasiFormSubmit(event)" class="flex flex-col">
                 <input type="hidden" id="recFormIsEdit" value="false">
                 <input type="hidden" id="recFormOldKode" value="">
                 <input type="hidden" id="recFormTemuan" value="">
 
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-semibold text-slate-700">Kode Rekomendasi (Unique)</label>
-                    <input type="text" id="recFormKode" required placeholder="Contoh: R-INSP-25001-A..."
-                        class="w-full h-10 px-3 text-sm rounded-lg border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 font-mono">
-                </div>
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-semibold text-slate-700">Rekomendasi BPK / Inspektorat</label>
-                    <textarea id="recFormText" required rows="3" placeholder="Uraikan tindakan yang direkomendasikan..."
-                        class="w-full p-2.5 text-sm rounded-lg border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 leading-relaxed"></textarea>
-                </div>
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-semibold text-slate-700">PIC Unit Penanggung Jawab</label>
-                    <select id="recFormPic" required
-                        class="w-full h-10 px-3 text-sm rounded-lg border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 font-medium">
-                        <option value="Biro SDMO">Biro SDMO</option>
-                        <option value="Biro UKK">Biro UKK</option>
-                        <option value="Biro MKDI">Biro MKDI</option>
-                        <option value="HKS">HKS</option>
-                        <option value="Sesdep">Sesdep</option>
-                        <option value="Deputi 1">Deputi 1</option>
-                        <option value="Deputi 2">Deputi 2</option>
-                        <option value="Deputi 3">Deputi 3</option>
-                        <option value="Deputi 4">Deputi 4</option>
-                        <option value="Staf Ahli Bid. Konektifitas">Staf Ahli Bid. Konektifitas</option>
-                        <option value="Belum Ditentukan">Belum Ditentukan</option>
-                    </select>
-                </div>
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-semibold text-slate-700">Target Nominal Penyetoran (Untuk Rekomendasi Finansial) - Rp</label>
-                    <div class="relative flex items-center">
-                        <span class="absolute left-0 inset-y-0 flex items-center justify-center px-3.5 text-xs font-bold text-slate-700 bg-slate-100 border-r border-slate-300 rounded-l-lg select-none">
-                            Rp
-                        </span>
-                        <input type="text" inputmode="numeric" id="recFormNilaiTemuan" value="0"
-                            placeholder="0"
-                            oninput="formatRupiahInput(this, 'recFormNilaiPreview')"
-                            class="w-full h-10 pl-14 pr-3 text-sm font-semibold text-slate-800 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800">
+                <div class="p-6 flex flex-col gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+                        <div class="md:col-span-5 flex flex-col gap-1.5">
+                            <label class="text-xs font-semibold text-slate-700 flex items-center justify-between">
+                                <span>Kode Rekomendasi <span class="text-rose-500">*</span></span>
+                                <span class="text-[11px] font-mono text-slate-400">ID Unik</span>
+                            </label>
+                            <input type="text" id="recFormKode" required placeholder="Contoh: R-INSP-25001-A"
+                                class="w-full h-10 px-3 text-xs md:text-sm rounded-lg border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 font-mono font-semibold">
+                        </div>
+
+                        <div class="md:col-span-7 flex flex-col gap-1.5">
+                            <label class="text-xs font-semibold text-slate-700">
+                                PIC Unit Penanggung Jawab <span class="text-rose-500">*</span>
+                            </label>
+                            <select id="recFormPic" required
+                                class="w-full h-10 px-3 text-xs md:text-sm rounded-lg border border-slate-300 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 font-medium">
+                                <option value="Biro SDMO">Biro SDMO</option>
+                                <option value="Biro UKK">Biro UKK</option>
+                                <option value="Biro MKDI">Biro MKDI</option>
+                                <option value="HKS">HKS</option>
+                                <option value="Sesdep">Sesdep</option>
+                                <option value="Deputi 1">Deputi 1</option>
+                                <option value="Deputi 2">Deputi 2</option>
+                                <option value="Deputi 3">Deputi 3</option>
+                                <option value="Deputi 4">Deputi 4</option>
+                                <option value="Staf Ahli Bid. Konektifitas">Staf Ahli Bid. Konektifitas</option>
+                                <option value="Belum Ditentukan">Belum Ditentukan</option>
+                            </select>
+                        </div>
                     </div>
-                    <p id="recFormNilaiPreview" class="text-xs text-slate-500 mt-1">Isi <strong class="text-slate-700">0</strong> jika bukan temuan finansial. Otomatis memformat pemisah ribuan.</p>
+
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-semibold text-slate-700">
+                            Uraian Rekomendasi Audit <span class="text-rose-500">*</span>
+                        </label>
+                        <textarea id="recFormText" required rows="3" placeholder="Uraikan arahan tindakan korektif atau regulatif yang direkomendasikan..."
+                            class="w-full p-2.5 text-xs md:text-sm rounded-lg border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 leading-relaxed custom-scrollbar"></textarea>
+                    </div>
+
+                    <div class="bg-slate-50/70 p-3.5 rounded-xl border border-slate-200/80 flex flex-col gap-1.5">
+                        <label class="text-xs font-semibold text-slate-700 flex items-center justify-between">
+                            <span>Target Nominal Penyetoran (Untuk Rekomendasi Finansial)</span>
+                            <span class="text-[11px] text-slate-400">Isi 0 jika non-finansial</span>
+                        </label>
+                        <div class="relative flex items-center">
+                            <span class="absolute left-0 inset-y-0 flex items-center justify-center px-3.5 text-xs font-bold text-slate-700 bg-slate-100 border-r border-slate-300 rounded-l-lg select-none">
+                                Rp
+                            </span>
+                            <input type="text" inputmode="numeric" id="recFormNilaiTemuan" value="0"
+                                placeholder="0"
+                                oninput="formatRupiahInput(this, 'recFormNilaiPreview')"
+                                class="w-full h-10 pl-14 pr-3 text-xs md:text-sm font-semibold text-slate-800 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800">
+                        </div>
+                        <p id="recFormNilaiPreview" class="text-[11px] text-slate-500 mt-0.5">Isi <strong class="text-slate-700">0</strong> jika rekomendasi administratif tanpa kewajiban setor ke kas negara.</p>
+                    </div>
                 </div>
 
-                <div class="flex gap-2.5 justify-end pt-3 border-t border-slate-200 mt-1">
-                    <button type="button" onclick="closeRekomendasiModal()"
-                        class="h-10 px-4 rounded-lg text-sm font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 active:scale-95 transition-all">Batal</button>
-                    <button type="submit"
-                        class="h-10 px-5 rounded-lg text-sm font-semibold bg-slate-900 text-white hover:bg-slate-800 active:scale-95 transition-all">Simpan Rekomendasi</button>
+                <div class="px-6 py-3.5 bg-slate-50/90 border-t border-slate-200 flex items-center justify-between shrink-0">
+                    <span class="text-xs text-slate-500 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-info text-slate-400"></i>
+                        <span>Kolom bertanda <span class="text-rose-500 font-bold">*</span> wajib diisi.</span>
+                    </span>
+                    <div class="flex items-center gap-2.5">
+                        <button type="button" onclick="closeRekomendasiModal()"
+                            class="h-9 px-4 rounded-lg text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900 active:scale-95 transition-all">
+                            Batal
+                        </button>
+                        <button type="submit"
+                            class="h-9 px-5 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 active:scale-95 transition-all flex items-center gap-1.5 shadow-xs">
+                            <i class="fa-solid fa-floppy-disk text-xs"></i>
+                            <span>Simpan Rekomendasi</span>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- 4. Modal Rencana Aksi (RENAKSI) Unit Kerja (Satker) -->
-    <div id="renaksiModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden px-4">
-        <div class="bg-white rounded-xl max-w-lg w-full p-6 shadow-xl flex flex-col gap-4 border border-slate-200 animate-in fade-in zoom-in-95 duration-200">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-200">
-                <div>
-                    <h3 id="renaksiModalTitle" class="text-base font-bold text-slate-900">Rencana Aksi Unit Kerja (Renaksi)</h3>
-                    <p class="text-xs text-slate-500 font-medium mt-0.5">Tetapkan strategi dan target jadwal penyelesaian tindak lanjut</p>
+    <div id="renaksiModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs hidden p-4 sm:p-6 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-2xl w-full border border-slate-200/90 shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200 overflow-hidden my-auto">
+            
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-white shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
+                        <i class="fa-solid fa-calendar-check text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 id="renaksiModalTitle" class="text-base font-bold text-slate-900 leading-tight">Rencana Aksi Unit Kerja (Renaksi)</h3>
+                        <p class="text-xs text-slate-500 font-normal mt-0.5">Penetapan strategi implementasi dan jadwal penyelesaian tindak lanjut</p>
+                    </div>
                 </div>
-                <button type="button" onclick="closeRenaksiModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded transition-colors" aria-label="Tutup modal">
-                    <i class="fa-solid fa-xmark text-lg"></i>
+                <button type="button" onclick="closeRenaksiModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors" aria-label="Tutup modal">
+                    <i class="fa-solid fa-xmark text-base"></i>
                 </button>
             </div>
 
-            <!-- Info Rekomendasi yang sedang diisi -->
-            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs">
-                <div class="flex items-center gap-2 mb-1">
-                    <span id="renaksiRecKode" class="font-mono font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200"></span>
-                    <span id="renaksiRecPic" class="font-bold text-slate-600"></span>
+            <!-- Rekomendasi Context Banner -->
+            <div class="p-6 pb-0">
+                <div class="bg-slate-50/90 p-3.5 rounded-xl border border-slate-200 text-xs">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span id="renaksiRecKode" class="font-mono font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200"></span>
+                        <span id="renaksiRecPic" class="font-semibold text-slate-600"></span>
+                    </div>
+                    <p id="renaksiRecText" class="text-slate-700 line-clamp-2 mt-1 font-medium leading-relaxed"></p>
                 </div>
-                <p id="renaksiRecText" class="text-slate-700 line-clamp-2 mt-1 font-medium"></p>
             </div>
 
-            <form onsubmit="handleRenaksiFormSubmit(event)" class="flex flex-col gap-4">
+            <form onsubmit="handleRenaksiFormSubmit(event)" class="flex flex-col">
                 <input type="hidden" id="renaksiRecKodeHidden">
                 
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-semibold text-slate-700">
-                        Uraian Rencana Aksi (Renaksi) <span class="text-rose-500">*</span>
-                    </label>
-                    <textarea id="renaksiInputText" required rows="4" 
-                        placeholder="Jelaskan langkah-langkah konkret, koordinasi, atau regulasi yang akan disusun/dilaksanakan oleh unit kerja..."
-                        class="w-full p-2.5 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 text-slate-800 leading-relaxed"></textarea>
+                <div class="p-6 flex flex-col gap-4">
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-semibold text-slate-700 flex items-center justify-between">
+                            <span>Uraian Rencana Aksi (Renaksi) <span class="text-rose-500">*</span></span>
+                            <span class="text-[11px] text-slate-400">Langkah tindak lanjut konkret</span>
+                        </label>
+                        <textarea id="renaksiInputText" required rows="3" 
+                            placeholder="Jelaskan langkah-langkah konkret, koordinasi teknis, atau dokumen regulasi yang akan disusun/dilaksanakan..."
+                            class="w-full p-2.5 text-xs md:text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 text-slate-800 leading-relaxed custom-scrollbar"></textarea>
+                    </div>
+
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-semibold text-slate-700 flex items-center justify-between">
+                            <span>Target Jadwal Pelaksanaan <span class="text-rose-500">*</span></span>
+                            <span class="text-[11px] text-slate-400">Bulan / Triwulan / Hari kalender</span>
+                        </label>
+                        <input type="text" id="renaksiInputJadwal" required
+                            placeholder="Contoh: Triwulan I 2026, April 2026, atau 60 Hari Kalender"
+                            class="w-full h-10 px-3 text-xs md:text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 text-slate-800 font-medium">
+                    </div>
                 </div>
 
-                <div class="flex flex-col gap-1">
-                    <label class="text-xs font-semibold text-slate-700">
-                        Target Jadwal Pelaksanaan <span class="text-rose-500">*</span>
-                    </label>
-                    <input type="text" id="renaksiInputJadwal" required
-                        placeholder="Contoh: Triwulan I 2026, April 2026, atau 60 Hari Kalender"
-                        class="w-full h-10 px-3 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 text-slate-800 font-medium">
-                </div>
-
-                <div class="flex gap-2.5 justify-end pt-3 border-t border-slate-200 mt-1">
-                    <button type="button" onclick="closeRenaksiModal()"
-                        class="h-10 px-4 rounded-lg text-sm font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 active:scale-95 transition-all">Batal</button>
-                    <button type="submit"
-                        class="h-10 px-5 rounded-lg text-sm font-semibold bg-slate-900 text-white hover:bg-slate-800 active:scale-95 transition-all flex items-center gap-1.5">
-                        <i class="fa-solid fa-floppy-disk text-xs"></i> Simpan Rencana Aksi
-                    </button>
+                <div class="px-6 py-3.5 bg-slate-50/90 border-t border-slate-200 flex items-center justify-between shrink-0">
+                    <span class="text-xs text-slate-500 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-info text-slate-400"></i>
+                        <span>Kolom bertanda <span class="text-rose-500 font-bold">*</span> wajib diisi.</span>
+                    </span>
+                    <div class="flex items-center gap-2.5">
+                        <button type="button" onclick="closeRenaksiModal()"
+                            class="h-9 px-4 rounded-lg text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900 active:scale-95 transition-all">
+                            Batal
+                        </button>
+                        <button type="submit"
+                            class="h-9 px-5 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 active:scale-95 transition-all flex items-center gap-1.5 shadow-xs">
+                            <i class="fa-solid fa-floppy-disk text-xs"></i>
+                            <span>Simpan Rencana Aksi</span>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
