@@ -71,11 +71,17 @@ if (!empty($clean_path) && file_exists($frontendFile) && !is_dir($frontendFile))
         'ttf'  => 'font/ttf',
     ];
     header('Content-Type: ' . ($mimes[$ext] ?? 'text/plain'));
+    header('Cache-Control: no-cache, no-store, must-revalidate');
+    header('Pragma: no-cache');
+    header('Expires: 0');
     readfile($frontendFile);
     exit();
 }
 
 // 4. Default: Tampilkan halaman antarmuka utama frontend/index.html
 header('Content-Type: text/html; charset=UTF-8');
+header('Cache-Control: no-cache, no-store, must-revalidate');
+header('Pragma: no-cache');
+header('Expires: 0');
 include __DIR__ . '/frontend/index.html';
 exit();
