@@ -146,10 +146,7 @@ function applyDemoModeUI(showToast = false) {
             toggleBtn.className = "h-9 px-3 sm:px-3.5 rounded-lg text-xs font-bold border transition-all flex items-center gap-2 shadow-sm active:scale-95 bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100";
             toggleBtn.title = "Mode Demo Aktif. Klik untuk beralih ke Mode Produksi (Siap Rilis).";
             toggleBtn.innerHTML = `
-                <span class="relative flex h-2 w-2">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                </span>
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
                 <i class="fa-solid fa-flask text-amber-600"></i>
                 <span class="hidden sm:inline text-amber-700">Mode:</span>
                 <span class="uppercase tracking-wider font-extrabold text-amber-900">Demo</span>
@@ -597,15 +594,9 @@ function filterLhaStatusChip(status) {
         const btn = document.getElementById(`chipStatus${c}`);
         if (btn) {
             if (c === status) {
-                btn.className = "lha-status-chip active px-4 py-1.5 rounded-md text-sm font-bold bg-emerald-700 text-white transition-all shadow-sm shrink-0 border border-emerald-700";
+                btn.className = "lha-status-chip active px-3.5 py-1.5 rounded-md text-xs font-bold bg-white text-emerald-800 shadow-sm transition-all border border-slate-200/60";
             } else {
-                const colors = {
-                    'PROSES': 'text-amber-600 bg-amber-50 border border-amber-200 hover:bg-amber-100',
-                    'TUNTAS': 'text-emerald-600 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100',
-                    'PENDING': 'text-rose-600 bg-rose-50 border border-rose-200 hover:bg-rose-100',
-                    'ALL': 'text-slate-600 bg-slate-100 border border-slate-200 hover:bg-slate-200'
-                };
-                btn.className = `lha-status-chip px-4 py-1.5 rounded-md text-sm font-bold ${colors[c] || 'bg-gray-100 text-gray-700'} transition-all shrink-0`;
+                btn.className = "lha-status-chip px-3.5 py-1.5 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900 transition-all";
             }
         }
     });
@@ -1126,18 +1117,18 @@ function showLhaDetail(kodeLha) {
                     let financialHTML = "";
                     if (isFinancialRec) {
                         financialHTML = `
-                            <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
-                                <div class="p-2 rounded-lg bg-white border border-slate-100">
-                                    <p class="text-xs text-slate-500 font-semibold">Target Penyetoran</p>
-                                    <p class="text-base font-extrabold text-slate-900 mt-1">Rp ${(rec["Nilai Temuan"] || 0).toLocaleString('id-ID')}</p>
+                            <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-lg bg-slate-50 border border-slate-200">
+                                <div>
+                                    <span class="text-xs text-slate-500 font-medium block">Target Penyetoran</span>
+                                    <span class="text-base font-bold text-slate-900">Rp ${(rec["Nilai Temuan"] || 0).toLocaleString('id-ID')}</span>
                                 </div>
-                                <div class="p-2 rounded-lg bg-white border border-emerald-100">
-                                    <p class="text-xs text-emerald-700 font-semibold">Realisasi Setor</p>
-                                    <p class="text-base font-extrabold text-emerald-600 mt-1">Rp ${(rec["Nilai Realisasi"] || 0).toLocaleString('id-ID')}</p>
+                                <div>
+                                    <span class="text-xs text-emerald-700 font-medium block">Realisasi Setor</span>
+                                    <span class="text-base font-bold text-emerald-700">Rp ${(rec["Nilai Realisasi"] || 0).toLocaleString('id-ID')}</span>
                                 </div>
-                                <div class="p-2 rounded-lg bg-white border border-rose-100">
-                                    <p class="text-xs text-rose-700 font-semibold">Defisit / Selisih</p>
-                                    <p class="text-base font-extrabold text-rose-600 mt-1">Rp ${(rec["Selisih"] || 0).toLocaleString('id-ID')}</p>
+                                <div>
+                                    <span class="text-xs text-rose-700 font-medium block">Sisa Kewajiban</span>
+                                    <span class="text-base font-bold ${(rec["Selisih"] || 0) > 0 ? 'text-rose-700' : 'text-slate-700'}">Rp ${(rec["Selisih"] || 0).toLocaleString('id-ID')}</span>
                                 </div>
                             </div>
                         `;
@@ -1266,147 +1257,97 @@ function showLhaDetail(kodeLha) {
                     }
 
                     // Satker upload form — Dengan Tanggal Dokumen/Realisasi & Info Batas Waktu 60 Hari
+                    // Satker upload form — De-nested Clean Layout
                     let satkerInputFormHTML = "";
                     if (currentRole === "SATKER" && status !== "TUNTAS") {
                         const isFinancial = isFinancialRec;
                         const previewId = `filePreview_${safeRecId}`;
                         satkerInputFormHTML = `
-                            <div class="mt-4 p-5 bg-white rounded-xl border border-emerald-600/30">
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-4 border-b border-slate-100">
-                                    <div class="flex items-center gap-2.5">
-                                        <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
-                                            <i class="fa-solid fa-cloud-arrow-up text-base"></i>
-                                        </div>
-                                        <div>
-                                            <h6 class="text-sm font-bold text-slate-900">Formulir Unggah Bukti Tindak Lanjut</h6>
-                                            <p class="text-xs text-slate-500">Unggah dokumen pertanggungjawaban fisik tindak lanjut</p>
-                                        </div>
-                                    </div>
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                        <i class="fa-solid fa-shield-check text-amber-600"></i> Menunggu Verifikasi Itjen
+                            <div class="mt-4 pt-4 border-t border-slate-200">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                                    <h6 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                                        <i class="fa-solid fa-cloud-arrow-up text-emerald-700"></i> Form Bukti Tindak Lanjut
+                                    </h6>
+                                    <span class="text-xs text-slate-500 font-medium">
+                                        Batas Waktu: <strong class="text-slate-800">${recDeadline.deadlineText}</strong>
+                                        <span class="font-bold ${recDeadline.isOverdue ? 'text-rose-600' : 'text-emerald-700'}">(${recDeadline.statusBadgeText})</span>
                                     </span>
                                 </div>
 
-                                <form id="form_${rec["Kode Rekomendasi"]}" onsubmit="handleBuktiSubmit(event, '${rec["Kode Rekomendasi"]}')" class="flex flex-col gap-4">
+                                <form id="form_${rec["Kode Rekomendasi"]}" onsubmit="handleBuktiSubmit(event, '${rec["Kode Rekomendasi"]}')" class="flex flex-col gap-3.5 bg-slate-50 p-4 rounded-lg border border-slate-200">
                                     
-                                    <!-- Baris 1: Informasi Batas Waktu Regulasi & Tanggal Realisasi Fisik Dokumen -->
-                                    <div class="p-4 rounded-xl bg-slate-50/80 border border-slate-200 flex flex-col gap-3">
-                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-lg bg-slate-50/80 border border-slate-200/80 text-xs text-slate-900">
-                                            <div class="flex items-center gap-2">
-                                                <i class="fa-solid fa-scale-balanced text-slate-600 text-sm"></i>
-                                                <span><strong>Batas Waktu Yuridis (UU No. 15/2004):</strong> 60 hari kalender sejak LHA diterbitkan (Jatuh tempo: <strong>${recDeadline.deadlineText}</strong>)</span>
-                                            </div>
-                                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold text-xs ${recDeadline.isOverdue ? 'bg-rose-100 text-rose-800 border border-rose-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'}">
-                                                <i class="fa-solid fa-hourglass-half"></i> ${recDeadline.statusBadgeText}
-                                            </span>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="text-xs font-semibold text-slate-700 block mb-1">
+                                                Tanggal Dokumen / Realisasi Riil <span class="text-rose-500">*</span>
+                                            </label>
+                                            <input type="date" name="tanggal_realisasi" value="${todayISO}" required
+                                                class="w-full h-9 px-3 text-xs rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-1 focus:ring-emerald-600 font-medium text-slate-800">
+                                            <span class="text-xs text-slate-500 mt-0.5 block">Tanggal terbit dokumen kuitansi, SK, atau bukti fisik.</span>
                                         </div>
-
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <div>
-                                                <label class="text-xs font-semibold text-slate-700 block mb-1.5">
-                                                    <i class="fa-regular fa-calendar-check text-emerald-600 mr-1"></i> Tanggal Dokumen / Realisasi Riil <span class="text-rose-500">*</span>
-                                                </label>
-                                                <input type="date" name="tanggal_realisasi" value="${todayISO}" required
-                                                    class="w-full h-10 px-3 text-sm rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 font-medium text-slate-800">
-                                                <span class="text-xs text-slate-500 mt-1 block">Tanggal terbit dokumen surat dinas, kuitansi, atau bukti fisik pendukung.</span>
-                                            </div>
-                                            <div>
-                                                <label class="text-xs font-semibold text-slate-500 block mb-1.5">
-                                                    <i class="fa-regular fa-clock text-slate-400 mr-1"></i> Waktu Pengunggahan Sistem
-                                                </label>
-                                                <input type="text" value="Terekam Otomatis saat Unggah" disabled
-                                                    class="w-full h-10 px-3 text-sm rounded-lg border border-slate-200 bg-slate-100 font-medium text-slate-500 cursor-not-allowed">
-                                                <span class="text-xs text-slate-500 mt-1 block">Sistem otomatis mencatat timestamp untuk verifikasi ketepatan waktu.</span>
-                                            </div>
+                                        <div>
+                                            <label class="text-xs font-semibold text-slate-500 block mb-1">
+                                                Waktu Pengunggahan Sistem
+                                            </label>
+                                            <input type="text" value="Terekam Otomatis saat Submit" disabled
+                                                class="w-full h-9 px-3 text-xs rounded-lg border border-slate-200 bg-slate-100 font-medium text-slate-500 cursor-not-allowed">
+                                            <span class="text-xs text-slate-500 mt-0.5 block">Audit trail otomatis tercatat di sistem.</span>
                                         </div>
                                     </div>
 
                                     ${isFinancial ? `
-                                    <!-- Baris Khusus Finansial: Nomor NTPN & Nominal Penyetoran Rupiah -->
-                                    <div class="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200/60">
                                         <div>
-                                            <label class="text-xs font-semibold text-emerald-900 block mb-1.5">
-                                                <i class="fa-solid fa-receipt text-emerald-600 mr-1"></i> Nomor NTPN (Bukti Setoran Kas Negara) <span class="text-rose-500">*</span>
+                                            <label class="text-xs font-semibold text-slate-700 block mb-1">
+                                                Nomor NTPN (Bukti Setoran Kas Negara) <span class="text-rose-500">*</span>
                                             </label>
-                                            <input type="text" name="ntpn" required placeholder="Masukkan 16 digit kode NTPN..."
-                                                class="w-full h-10 px-3 text-sm rounded-lg border border-emerald-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 font-medium text-slate-800">
+                                            <input type="text" name="ntpn" required placeholder="16 digit kode NTPN..."
+                                                class="w-full h-9 px-3 text-xs rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-1 focus:ring-emerald-600 font-medium text-slate-800 font-mono">
                                         </div>
                                         <div>
-                                            <label class="text-xs font-semibold text-emerald-900 block mb-1.5">
-                                                <i class="fa-solid fa-money-bill-wave text-emerald-600 mr-1"></i> Nominal Setoran / Realisasi (Rp)
+                                            <label class="text-xs font-semibold text-slate-700 block mb-1">
+                                                Nominal Setoran / Realisasi (Rp)
                                             </label>
                                             <div class="relative flex items-center">
-                                                <span class="absolute left-3.5 text-sm font-extrabold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-md border border-emerald-200 select-none pointer-events-none">Rp</span>
+                                                <span class="absolute left-3 text-xs font-bold text-slate-500 select-none pointer-events-none">Rp</span>
                                                 <input type="text" name="nilai_setoran" inputmode="numeric" autocomplete="off"
                                                     value="${rec["Selisih"] > 0 ? formatRupiahNumber(rec["Selisih"]) : ''}"
                                                     placeholder="Contoh: 3.000.000"
                                                     oninput="formatRupiahInput(this)"
-                                                    class="w-full h-10 pl-14 pr-3 text-sm font-bold text-slate-900 rounded-lg border border-emerald-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                                                    class="w-full h-9 pl-9 pr-3 text-xs font-bold text-slate-800 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-1 focus:ring-emerald-600">
                                             </div>
                                         </div>
                                     </div>` : ''}
 
-                                    <!-- Baris 2: Uraian Progres -->
                                     <div>
-                                        <label class="text-xs font-semibold text-slate-700 block mb-1.5">
-                                            <i class="fa-solid fa-pen-to-square text-emerald-600 mr-1"></i> Uraian Progres / Tindak Lanjut Aktual <span class="text-rose-500">*</span>
+                                        <label class="text-xs font-semibold text-slate-700 block mb-1">
+                                            Uraian Progres / Hasil Tindak Lanjut <span class="text-rose-500">*</span>
                                         </label>
-                                        <textarea name="output_aktual" required rows="3"
-                                            placeholder="Jelaskan secara rinci tindakan nyata atau dokumen penyelesaian yang telah dilaksanakan oleh Unit Kerja..."
-                                            class="w-full p-3 text-sm rounded-lg border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-slate-800 leading-relaxed"></textarea>
+                                        <textarea name="output_aktual" required rows="2"
+                                            placeholder="Uraikan tindakan nyata atau dokumen regulasi/penyelesaian yang telah diterbitkan..."
+                                            class="w-full p-2.5 text-xs rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-1 focus:ring-emerald-600 text-slate-800 leading-relaxed"></textarea>
                                     </div>
 
-                                    <!-- Baris 3: Lampiran File Bukti Dukung dengan Informasi Spesifik -->
                                     <div>
-                                        <label class="text-xs font-semibold text-slate-700 block mb-1.5">
-                                            <i class="fa-solid fa-paperclip text-emerald-600 mr-1"></i> Unggah Berkas Bukti Dukung (Eviden)
+                                        <label class="text-xs font-semibold text-slate-700 block mb-1">
+                                            Berkas Bukti Dukung (Eviden)
                                         </label>
-                                        
-                                        <div class="p-4 rounded-xl bg-slate-50 border-2 border-dashed border-slate-300 hover:border-emerald-500 transition-colors">
-                                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                                                <div class="flex-1">
-                                                    <input type="file" name="file"
-                                                        accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"
-                                                        onchange="handleBuktiFileChange(this, '${previewId}')"
-                                                        class="w-full text-sm text-slate-700 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-emerald-700 file:text-white hover:file:bg-emerald-800 file:cursor-pointer">
-                                                </div>
-                                            </div>
-
-                                            <!-- Spesifikasi Ketentuan File -->
-                                            <div class="mt-3 pt-3 border-t border-slate-200/80 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600">
-                                                <div class="flex items-start gap-2">
-                                                    <i class="fa-solid fa-file-circle-check text-emerald-600 mt-0.5"></i>
-                                                    <div>
-                                                        <span class="font-bold text-slate-800">Format File Spesifik:</span>
-                                                        <div class="flex flex-wrap gap-1 mt-1">
-                                                            <span class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-bold">PDF (.pdf)</span>
-                                                            <span class="px-2 py-0.5 rounded bg-slate-50 text-slate-700 border border-slate-200 font-bold">Gambar (.png, .jpg, .jpeg)</span>
-                                                            <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-bold">Word (.doc, .docx)</span>
-                                                            <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">Excel (.xls, .xlsx)</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="flex items-start gap-2">
-                                                    <i class="fa-solid fa-hard-drive text-amber-600 mt-0.5"></i>
-                                                    <div>
-                                                        <span class="font-bold text-slate-800">Kapasitas & Ketentuan Unggah:</span>
-                                                        <p class="mt-1 text-slate-600">Ukuran maksimal <strong class="text-slate-900">10 MB</strong> per file (Maks. 1 file setiap pengiriman progres).</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Preview File Terpilih -->
+                                        <div class="flex flex-col gap-1.5">
+                                            <input type="file" name="file"
+                                                accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx"
+                                                onchange="handleBuktiFileChange(this, '${previewId}')"
+                                                class="w-full text-xs text-slate-700 cursor-pointer file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-slate-800 hover:file:bg-slate-300 file:cursor-pointer">
+                                            <span class="text-xs text-slate-500">Mendukung PDF, PNG, JPG, DOCX, XLSX (Maks. 10 MB per file).</span>
                                             <div id="${previewId}" class="hidden"></div>
                                         </div>
                                     </div>
 
-                                    <!-- Tombol Submit -->
-                                    <div class="flex items-center justify-end gap-3 pt-2">
-                                        <button type="reset" onclick="document.getElementById('${previewId}')?.classList.add('hidden')" class="px-4 py-2.5 rounded-lg border border-slate-200 text-slate-600 text-sm font-bold hover:bg-slate-100 transition-all">
-                                            Reset Form
+                                    <div class="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-200/60">
+                                        <button type="reset" onclick="document.getElementById('${previewId}')?.classList.add('hidden')" class="px-3.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-white transition-all cursor-pointer">
+                                            Reset
                                         </button>
-                                        <button type="submit" class="px-6 py-2.5 rounded-lg bg-md-primary text-white text-sm font-bold hover:bg-emerald-800 active:scale-95 transition-all flex items-center gap-2 cursor-pointer">
-                                            <i class="fa-solid fa-paper-plane"></i> Kirim Bukti Tindak Lanjut
+                                        <button type="submit" class="px-4 py-1.5 rounded-lg bg-md-primary text-white text-xs font-bold hover:bg-emerald-800 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm">
+                                            <i class="fa-solid fa-paper-plane text-xs"></i> Kirim Bukti
                                         </button>
                                     </div>
                                 </form>
@@ -1417,24 +1358,19 @@ function showLhaDetail(kodeLha) {
                     let auditorVerifyHTML = "";
                     if (currentRole === "AUDITOR") {
                         auditorVerifyHTML = `
-                            <div class="mt-4 bg-slate-50/70 rounded-xl border border-slate-200 p-4">
-                                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                                    <h6 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                        <i class="fa-solid fa-user-check text-slate-600"></i> Verifikasi Status Evaluasi (Auditor Itjen):
-                                    </h6>
-                                    <span class="text-xs font-bold ${isBpkAudit ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-slate-100 text-slate-800 border border-slate-200'} px-3 py-1 rounded-md">
-                                        ${isBpkAudit ? '🛡️ Mode Verifikasi BPK-RI' : '✏️ Audit Internal Itjen'}
-                                    </span>
-                                </div>
-                                <div class="flex flex-wrap items-center gap-2.5">
-                                    <button onclick="updateRecStatusDirect('${rec["Kode Rekomendasi"]}', 'TUNTAS', event)" class="px-4 py-2 text-xs font-bold rounded-lg bg-green-600 text-white hover:bg-green-700 active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5">
-                                        <i class="fa-solid fa-circle-check"></i> Setujui TUNTAS
+                            <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2.5">
+                                <span class="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-user-check text-slate-500"></i> Verifikasi Status Auditor:
+                                </span>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="updateRecStatusDirect('${rec["Kode Rekomendasi"]}', 'TUNTAS', event)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-green-600 text-white hover:bg-green-700 active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1">
+                                        <i class="fa-solid fa-check text-xs"></i> Setujui TUNTAS
                                     </button>
-                                    <button onclick="updateRecStatusDirect('${rec["Kode Rekomendasi"]}', 'PROSES', event)" class="px-4 py-2 text-xs font-bold rounded-lg bg-amber-600 text-white hover:bg-amber-700 active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5">
-                                        <i class="fa-solid fa-spinner"></i> Verifikasi PROSES
+                                    <button onclick="updateRecStatusDirect('${rec["Kode Rekomendasi"]}', 'PROSES', event)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-600 text-white hover:bg-amber-700 active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1">
+                                        <i class="fa-solid fa-spinner text-xs"></i> Verifikasi PROSES
                                     </button>
-                                    <button onclick="updateRecStatusDirect('${rec["Kode Rekomendasi"]}', 'PENDING', event)" class="px-4 py-2 text-xs font-bold rounded-lg bg-orange-600 text-white hover:bg-orange-700 active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5">
-                                        <i class="fa-solid fa-clock"></i> Set PENDING
+                                    <button onclick="updateRecStatusDirect('${rec["Kode Rekomendasi"]}', 'PENDING', event)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-600 text-white hover:bg-slate-700 active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1">
+                                        <i class="fa-solid fa-clock text-xs"></i> Belum TL
                                     </button>
                                 </div>
                             </div>
@@ -1449,83 +1385,71 @@ function showLhaDetail(kodeLha) {
                     const rst = recStatusConfig[status] || recStatusConfig["PENDING"];
 
                     return `
-                        <div class="p-5 rounded-xl bg-slate-50/90 border border-slate-200 flex flex-col gap-4">
+                        <div class="p-5 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col gap-3.5">
                             <!-- Header Rekomendasi -->
-                            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
+                            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
                                 <div class="flex items-center gap-2.5 flex-wrap">
-                                    <span class="font-mono text-sm font-bold text-slate-700 bg-slate-50 px-3 py-1 rounded-lg border border-slate-200">${rec["Kode Rekomendasi"]}</span>
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 text-sm font-bold">
+                                    <span class="font-mono text-xs font-bold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">${rec["Kode Rekomendasi"]}</span>
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
                                         <i class="fa-solid fa-building-user text-emerald-600"></i> PIC: ${rec["PIC"]}
                                     </span>
-                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg ${recDeadline.isOverdue ? 'bg-rose-50 text-rose-800 border-rose-200' : 'bg-white text-slate-700 border-slate-200'} border text-xs font-semibold">
-                                        <i class="fa-solid fa-hourglass-half ${recDeadline.isOverdue ? 'text-rose-600' : 'text-slate-600'}"></i>
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md ${recDeadline.isOverdue ? 'bg-rose-50 text-rose-800 border-rose-200' : 'bg-slate-50 text-slate-700 border-slate-200'} border text-xs font-semibold">
+                                        <i class="fa-solid fa-hourglass-half ${recDeadline.isOverdue ? 'text-rose-600' : 'text-slate-500'}"></i>
                                         Batas Waktu (60 Hari): <strong>${recDeadline.deadlineText}</strong>
                                         <span class="text-xs font-bold ${recDeadline.isOverdue ? 'text-rose-700' : 'text-emerald-700'}">(${recDeadline.statusBadgeText})</span>
                                     </span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border ${rst.bgColor} ${rst.textColor}">
+                                    <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-md border ${rst.bgColor} ${rst.textColor}">
                                         <span class="w-2 h-2 rounded-full ${rst.dotColor}"></span>
                                         ${rst.label}
                                     </span>
                                     ${currentRole === "AUDITOR" && !isBpkAudit ? `
-                                    <button onclick="openRekomendasiModal('${t["Kode Temuan"]}', true, '${rec["Kode Rekomendasi"]}')" class="p-2 rounded-lg text-slate-500 hover:text-slate-600 hover:bg-white transition-colors text-sm" title="Edit Rekomendasi"><i class="fa-solid fa-pen"></i></button>
-                                    <button onclick="triggerDeleteRekomendasi('${rec["Kode Rekomendasi"]}')" class="p-2 rounded-lg text-slate-500 hover:text-red-600 hover:bg-white transition-colors text-sm" title="Hapus Rekomendasi"><i class="fa-solid fa-trash"></i></button>
+                                    <button onclick="openRekomendasiModal('${t["Kode Temuan"]}', true, '${rec["Kode Rekomendasi"]}')" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors text-xs" title="Edit Rekomendasi"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="triggerDeleteRekomendasi('${rec["Kode Rekomendasi"]}')" class="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors text-xs" title="Hapus Rekomendasi"><i class="fa-solid fa-trash"></i></button>
                                     ` : ''}
                                 </div>
                             </div>
 
-                            <!-- Uraian Rekomendasi -->
-                            <div class="bg-white p-4 rounded-xl border border-slate-200/80">
-                                <h5 class="text-xs font-semibold text-slate-500 mb-1">Rekomendasi Audit:</h5>
-                                <p class="text-base text-slate-900 leading-relaxed font-semibold">${rec["Rekomendasi"]}</p>
+                            <!-- Uraian Rekomendasi (Direct Clean Text, No Nested Card) -->
+                            <div>
+                                <span class="text-xs font-semibold text-slate-500 block mb-1">Rekomendasi Audit:</span>
+                                <p class="text-sm font-semibold text-slate-900 leading-relaxed">${rec["Rekomendasi"]}</p>
                             </div>
 
-                            <!-- Rencana Aksi & Target Waktu -->
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <div class="md:col-span-2 bg-white p-4 rounded-xl border border-slate-200/80 flex flex-col justify-between">
-                                    <div>
-                                        <div class="flex items-center justify-between mb-1.5">
-                                            <h5 class="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
-                                                <i class="fa-solid fa-list-check text-emerald-600"></i>
-                                                Rencana Aksi Unit Kerja (Renaksi):
-                                            </h5>
-                                            ${currentRole === "SATKER" ? `
-                                            <button onclick="openRenaksiModal('${rec["Kode Rekomendasi"]}')" 
-                                                class="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95">
-                                                <i class="fa-solid fa-pen-to-square"></i> ${rec["Rencana Aksi"] ? 'Ubah Renaksi' : '+ Buat Renaksi'}
-                                            </button>` : ''}
-                                        </div>
-                                        <p class="text-sm text-slate-800 leading-relaxed font-medium">
-                                            ${rec["Rencana Aksi"] || '<span class="text-slate-400 italic font-normal">Belum ada rencana aksi yang dicatat oleh Unit Kerja.</span>'}
-                                        </p>
+                            <!-- Rencana Aksi & Target Waktu (Quiet 2-Column Metadata Strip) -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-3.5 rounded-lg bg-slate-50 border border-slate-200/70 text-xs">
+                                <div class="md:col-span-2">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="font-semibold text-slate-600 flex items-center gap-1.5">
+                                            <i class="fa-solid fa-list-check text-emerald-700"></i> Rencana Aksi Unit Kerja (Renaksi):
+                                        </span>
+                                        ${currentRole === "SATKER" ? `
+                                        <button onclick="openRenaksiModal('${rec["Kode Rekomendasi"]}')" 
+                                            class="px-2 py-0.5 font-bold rounded bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 transition-all cursor-pointer">
+                                            <i class="fa-solid fa-pen-to-square"></i> ${rec["Rencana Aksi"] ? 'Ubah Renaksi' : '+ Buat Renaksi'}
+                                        </button>` : ''}
                                     </div>
+                                    <p class="text-slate-800 leading-relaxed font-medium">
+                                        ${rec["Rencana Aksi"] || '<span class="text-slate-400 italic">Belum ada rencana aksi yang dicatat oleh Unit Kerja.</span>'}
+                                    </p>
                                 </div>
-                                <div class="bg-white p-4 rounded-xl border border-slate-200/80 flex flex-col justify-center gap-2">
-                                    <div>
-                                        <span class="text-xs font-semibold text-slate-500 block">Target Pelaksanaan:</span>
-                                        <span class="text-sm font-bold text-slate-800">${rec["Jadwal Pelaksanaan"] && rec["Jadwal Pelaksanaan"] !== "nan" ? rec["Jadwal Pelaksanaan"] : '<span class="text-slate-400 italic font-normal">Belum ditentukan</span>'}</span>
-                                    </div>
-                                    <div class="pt-2 border-t border-slate-100">
-                                        <span class="text-xs font-semibold text-slate-500 block">Batas Waktu Penyelesaian:</span>
-                                        <span class="text-sm font-bold ${recDeadline.isOverdue ? 'text-rose-600' : 'text-slate-900'}">${recDeadline.deadlineText}</span>
-                                        <span class="text-xs font-semibold block ${recDeadline.isOverdue ? 'text-rose-600' : 'text-slate-500'}">${recDeadline.statusText}</span>
-                                    </div>
+                                <div class="border-t md:border-t-0 md:border-l border-slate-200/80 pt-2.5 md:pt-0 md:pl-3 flex flex-col justify-center">
+                                    <span class="font-semibold text-slate-500">Target Pelaksanaan:</span>
+                                    <span class="font-bold text-slate-800 mt-0.5">${rec["Jadwal Pelaksanaan"] && rec["Jadwal Pelaksanaan"] !== "nan" ? rec["Jadwal Pelaksanaan"] : '<span class="text-slate-400 italic font-normal">Belum ditentukan</span>'}</span>
+                                    <span class="text-slate-400 mt-0.5">Jatuh Tempo: ${recDeadline.deadlineText}</span>
                                 </div>
                             </div>
 
                             ${currentRole === "SATKER" && !rec["Rencana Aksi"] ? `
-                            <!-- Banner Pengingat Satker untuk Menyusun Renaksi -->
-                            <div class="mt-3 p-4 rounded-xl bg-amber-50/90 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-900">
-                                <div class="flex items-start gap-2.5">
-                                    <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 text-base"></i>
-                                    <div>
-                                        <p class="text-xs font-bold">Rencana Aksi (Renaksi) Belum Disusun</p>
-                                        <p class="text-xs text-amber-800 mt-0.5">Unit Kerja dianjurkan menyusun Rencana Aksi dan target jadwal terlebih dahulu untuk acuan evaluasi pemantauan.</p>
-                                    </div>
+                            <!-- Pengingat Satker Menyusun Renaksi -->
+                            <div class="p-3 rounded-lg bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-amber-900 text-xs">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-circle-exclamation text-amber-600"></i>
+                                    <span><strong>Rencana Aksi Belum Disusun:</strong> Unit Kerja dianjurkan menyusun Renaksi dan target jadwal untuk acuan evaluasi.</span>
                                 </div>
-                                <button onclick="openRenaksiModal('${rec["Kode Rekomendasi"]}')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white shrink-0 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer">
-                                    <i class="fa-solid fa-plus"></i> Susun Renaksi Sekarang
+                                <button onclick="openRenaksiModal('${rec["Kode Rekomendasi"]}')" class="px-3 py-1 font-bold rounded-md bg-amber-600 hover:bg-amber-700 text-white shrink-0 transition-all active:scale-95 flex items-center gap-1 cursor-pointer">
+                                    <i class="fa-solid fa-plus text-xs"></i> Buat Renaksi
                                 </button>
                             </div>` : ''}
 
